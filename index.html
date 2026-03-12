@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Vault — Your Sports Card Collection, Supercharged</title>
+  <meta name="description" content="AI-powered sports card collection management. Scan, identify, value and track your cards in seconds." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --orange: #ff6b35;
+      --orange-dim: #ff6b3580;
+      --gold: #f0c040;
+      --dark: #07070f;
+      --dark2: #0d0d1a;
+      --dark3: #12121f;
+      --border: #ffffff0a;
+      --text: #f0f0f0;
+      --muted: #555;
+      --muted2: #333;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      background: linear-gradient(180deg, rgba(7,7,15,0.95) 0%, transparent 100%);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px; letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 32px; list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted); font-size: 13px; font-weight: 600;
+      text-decoration: none; letter-spacing: 1px; text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: var(--orange); color: #fff !important;
+      padding: 8px 20px; border-radius: 8px;
+      font-weight: 700 !important; letter-spacing: 1px;
+      transition: opacity 0.2s !important;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ─── HERO ─── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 120px 24px 80px;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,53,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(240,192,64,0.06) 0%, transparent 60%),
+        linear-gradient(180deg, var(--dark) 0%, var(--dark2) 100%);
+    }
+
+    /* Diagonal stripe accent */
+    .hero-stripe {
+      position: absolute; top: 0; right: -10%; width: 45%; height: 100%;
+      background: linear-gradient(135deg, transparent 45%, rgba(255,107,53,0.04) 45%, rgba(255,107,53,0.04) 55%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative; z-index: 1;
+      text-align: center; max-width: 900px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--orange);
+      background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.2);
+      padding: 6px 14px; border-radius: 20px; margin-bottom: 24px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(72px, 12vw, 160px);
+      line-height: 0.9; letter-spacing: 2px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    .hero-title span {
+      display: block;
+      background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-title .accent {
+      background: linear-gradient(135deg, var(--orange) 0%, var(--gold) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 22px);
+      color: #777; line-height: 1.6; margin: 24px auto 40px;
+      max-width: 560px; font-weight: 400;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--orange); color: #fff;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; text-decoration: none;
+      padding: 14px 32px; border-radius: 10px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(255,107,53,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,107,53,0.45); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--text);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; text-decoration: none;
+      padding: 14px 32px; border-radius: 10px;
+      border: 1px solid #ffffff18;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-secondary:hover { border-color: #ffffff35; background: #ffffff08; }
+
+    .hero-stats {
+      display: flex; gap: 40px; justify-content: center;
+      margin-top: 56px; flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px; letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-stat-label {
+      font-size: 11px; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 2px; font-weight: 600; margin-top: 2px;
+    }
+
+    /* ─── APP EMBED SECTION ─── */
+    #app-section {
+      position: relative; padding: 100px 24px;
+      background: linear-gradient(180deg, var(--dark2) 0%, var(--dark) 100%);
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 4px;
+      text-transform: uppercase; color: var(--orange);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(40px, 7vw, 80px);
+      letter-spacing: 2px; line-height: 0.95;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 16px; color: #666; max-width: 500px; line-height: 1.7;
+    }
+
+    .app-embed-wrapper {
+      max-width: 1100px; margin: 60px auto 0;
+      display: grid; grid-template-columns: 1fr 1.6fr; gap: 48px;
+      align-items: start;
+    }
+
+    .app-embed-text { padding-top: 16px; }
+
+    .app-embed-frame {
+      position: relative; border-radius: 20px; overflow: hidden;
+      border: 1px solid rgba(255,107,53,0.2);
+      box-shadow: 0 0 80px rgba(255,107,53,0.1), 0 0 0 1px rgba(255,255,255,0.04);
+      background: var(--dark3);
+    }
+
+    .app-embed-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px; background: #0a0a14;
+      border-bottom: 1px solid #ffffff08;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #28c941; }
+    .url-bar {
+      flex: 1; background: #111; border-radius: 6px;
+      padding: 4px 12px; font-size: 11px; color: #444;
+      font-family: monospace;
+    }
+
+    .app-embed-frame iframe {
+      width: 100%; height: 620px; border: none; display: block;
+    }
+
+    .embed-feature-list {
+      list-style: none; margin-top: 32px; display: flex;
+      flex-direction: column; gap: 16px;
+    }
+
+    .embed-feature-list li {
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 14px; color: #888; line-height: 1.5;
+    }
+
+    .feature-icon {
+      width: 32px; height: 32px; border-radius: 8px; flexShrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; background: rgba(255,107,53,0.1);
+      border: 1px solid rgba(255,107,53,0.2); flex-shrink: 0;
+    }
+
+    .feature-icon-label { font-weight: 600; color: #ccc; font-size: 13px; }
+
+    /* ─── FEATURES GRID ─── */
+    #features {
+      padding: 100px 24px;
+      background: var(--dark);
+      position: relative; overflow: hidden;
+    }
+
+    #features::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.3), transparent);
+    }
+
+    .features-header {
+      max-width: 1100px; margin: 0 auto 60px;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      flex-wrap: wrap; gap: 24px;
+    }
+
+    .features-grid {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    }
+
+    .feature-card {
+      background: var(--dark2); padding: 36px 32px;
+      position: relative; overflow: hidden;
+      transition: background 0.2s;
+    }
+    .feature-card:hover { background: var(--dark3); }
+
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--orange), transparent);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-number {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px; color: rgba(255,107,53,0.15);
+      line-height: 1; margin-bottom: 16px; letter-spacing: 2px;
+    }
+
+    .feature-emoji { font-size: 28px; margin-bottom: 14px; display: block; }
+
+    .feature-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: #fff; margin-bottom: 8px;
+    }
+
+    .feature-desc { font-size: 14px; color: #666; line-height: 1.7; }
+
+    /* ─── DOWNLOAD SECTION ─── */
+    #download {
+      padding: 100px 24px;
+      background: linear-gradient(135deg, var(--dark2) 0%, var(--dark3) 100%);
+      position: relative; overflow: hidden;
+    }
+
+    #download::after {
+      content: 'THE VAULT';
+      position: absolute; bottom: -20px; right: -20px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 180px;
+      color: rgba(255,107,53,0.03); letter-spacing: 8px;
+      pointer-events: none; line-height: 1;
+    }
+
+    .download-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: center;
+    }
+
+    .download-badge {
+      display: inline-flex; align-items: center; gap: 14px;
+      background: #0a0a14; border: 1px solid #1a1a28;
+      border-radius: 14px; padding: 16px 24px;
+      text-decoration: none; color: var(--text);
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .download-badge:hover {
+      border-color: rgba(255,107,53,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .badge-icon { font-size: 36px; flex-shrink: 0; }
+
+    .badge-text-small {
+      font-size: 10px; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 1.5px; font-weight: 600;
+    }
+
+    .badge-text-large {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px; font-weight: 700; letter-spacing: 1px;
+      color: #fff; line-height: 1;
+    }
+
+    .coming-soon-pill {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
+      background: rgba(255,107,53,0.15); color: var(--orange);
+      border: 1px solid rgba(255,107,53,0.3);
+      padding: 3px 8px; border-radius: 20px; margin-top: 4px;
+    }
+
+    .download-badges { display: flex; flex-direction: column; gap: 14px; margin-top: 40px; }
+
+    /* ─── WAITLIST ─── */
+    #waitlist {
+      padding: 100px 24px;
+      background: var(--dark);
+      position: relative;
+    }
+
+    #waitlist::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.3), transparent);
+    }
+
+    .waitlist-inner {
+      max-width: 600px; margin: 0 auto; text-align: center;
+    }
+
+    .waitlist-form {
+      display: flex; gap: 10px; margin-top: 36px; flex-wrap: wrap;
+    }
+
+    .waitlist-input {
+      flex: 1; min-width: 220px;
+      background: var(--dark2); border: 1px solid #1a1a28;
+      color: var(--text); font-size: 15px;
+      padding: 14px 20px; border-radius: 10px;
+      outline: none; font-family: 'Barlow', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .waitlist-input:focus { border-color: rgba(255,107,53,0.4); }
+    .waitlist-input::placeholder { color: #333; }
+
+    .waitlist-btn {
+      background: var(--orange); color: #fff; border: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 14px 28px;
+      border-radius: 10px; cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 4px 20px rgba(255,107,53,0.3);
+    }
+    .waitlist-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .waitlist-note { font-size: 12px; color: #333; margin-top: 14px; }
+
+    .waitlist-success {
+      display: none; margin-top: 20px;
+      background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.3);
+      border-radius: 10px; padding: 14px 20px;
+      color: #4caf50; font-size: 14px; font-weight: 600;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      padding: 40px 48px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .footer-copy { font-size: 12px; color: #2a2a3a; }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      .app-embed-wrapper { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .download-inner { grid-template-columns: 1fr; gap: 48px; }
+      footer { padding: 32px 24px; }
+    }
+
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">🏀 The Vault</a>
+    <ul class="nav-links">
+      <li><a href="#app-section">Try It</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#download">Download</a></li>
+      <li><a href="#waitlist" class="nav-cta">Join Waitlist</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-stripe"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">🏀 AI-Powered Card Intelligence</div>
+      <h1 class="hero-title">
+        <span>YOUR</span>
+        <span>COLLECTION.</span>
+        <span class="accent">UNLEASHED.</span>
+      </h1>
+      <p class="hero-sub">
+        Scan any sports card. AI identifies the exact set, parallel, condition and player in seconds. Live eBay pricing. PSA grading advice. All in one vault.
+      </p>
+      <div class="hero-actions">
+        <a href="#app-section" class="btn-primary">▶ &nbsp;Try The App</a>
+        <a href="#waitlist" class="btn-secondary">Join the Waitlist</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">3s</div>
+          <div class="hero-stat-label">Avg Scan Time</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">AI</div>
+          <div class="hero-stat-label">Powered ID</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">eBay</div>
+          <div class="hero-stat-label">Live Pricing</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">FREE</div>
+          <div class="hero-stat-label">To Start</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP EMBED -->
+  <section id="app-section">
+    <div class="app-embed-wrapper">
+      <div class="app-embed-text">
+        <div class="section-label">Live Demo</div>
+        <h2 class="section-title">Try it<br/><span style="color:var(--orange)">right now.</span></h2>
+        <p class="section-sub">No sign-up needed. Drop a card photo and watch the AI go to work.</p>
+        <ul class="embed-feature-list">
+          <li>
+            <div class="feature-icon">🔍</div>
+            <div>
+              <div class="feature-icon-label">AI Card Identification</div>
+              <div>Reads set, year, brand, parallel and card number directly from the image</div>
+            </div>
+          </li>
+          <li>
+            <div class="feature-icon">💰</div>
+            <div>
+              <div class="feature-icon-label">Live eBay Pricing</div>
+              <div>See what your card is actually selling for right now — not guesses</div>
+            </div>
+          </li>
+          <li>
+            <div class="feature-icon">🏆</div>
+            <div>
+              <div class="feature-icon-label">PSA Grading Advice</div>
+              <div>AI tells you whether grading is worth it based on condition and value</div>
+            </div>
+          </li>
+          <li>
+            <div class="feature-icon">📦</div>
+            <div>
+              <div class="feature-icon-label">Bulk Upload</div>
+              <div>Drop your whole collection at once — each card identified automatically</div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="app-embed-frame">
+        <div class="app-embed-bar">
+          <div class="dot dot-r"></div>
+          <div class="dot dot-y"></div>
+          <div class="dot dot-g"></div>
+          <div class="url-bar">app.thevault.com</div>
+        </div>
+        <!-- Replace src with your actual Vercel deployment URL -->
+        <iframe
+          src="./app-embed.html"
+          title="The Vault App"
+          allow="camera"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="features-header">
+      <div>
+        <div class="section-label">Why The Vault</div>
+        <h2 class="section-title">Everything a<br/>collector needs.</h2>
+      </div>
+      <p class="section-sub" style="max-width:340px">Built for the serious collector and the weekend hobbyist. Free to start, powerful when you go Pro.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-number">01</div>
+        <span class="feature-emoji">🤖</span>
+        <div class="feature-title">AI Card Scanner</div>
+        <p class="feature-desc">Point your camera at any card. Our AI reads the exact set, parallel, serial number, rookie designation and condition — no manual entry.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">02</div>
+        <span class="feature-emoji">💰</span>
+        <div class="feature-title">Live eBay Pricing</div>
+        <p class="feature-desc">Real sold comps pulled directly from eBay. See what your specific card — right parallel, right year — actually sold for this week.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">03</div>
+        <span class="feature-emoji">🏆</span>
+        <div class="feature-title">PSA Grading Advisor</div>
+        <p class="feature-desc">AI evaluates condition, rarity and market value to tell you whether PSA grading is financially worth it for each card.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">04</div>
+        <span class="feature-emoji">🔔</span>
+        <div class="feature-title">Price Spike Alerts</div>
+        <p class="feature-desc">Get notified the moment a card in your vault spikes in value. Never miss the window to sell at peak price. <span class="coming-soon-pill">Pro</span></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">05</div>
+        <span class="feature-emoji">📊</span>
+        <div class="feature-title">Portfolio Tracker</div>
+        <p class="feature-desc">See your entire collection's value at a glance. Track performance over time. Know exactly what you own and what it's worth. <span class="coming-soon-pill">Pro</span></p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">06</div>
+        <span class="feature-emoji">📦</span>
+        <div class="feature-title">Bulk Upload</div>
+        <p class="feature-desc">Drop your entire binder in one go. Each card scanned and identified automatically in sequence — no waiting between shots.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section id="download">
+    <div class="download-inner">
+      <div>
+        <div class="section-label">Get The App</div>
+        <h2 class="section-title">Take your<br/><span style="color:var(--orange)">vault</span><br/>everywhere.</h2>
+        <p class="section-sub" style="margin-top:16px">Scan cards at shows, shops, and trades. Your full collection always in your pocket. Available soon on iOS and Android.</p>
+      </div>
+      <div>
+        <p style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:600;">Available on</p>
+        <div class="download-badges">
+          <a href="#waitlist" class="download-badge">
+            <div class="badge-icon">🍎</div>
+            <div>
+              <div class="badge-text-small">Download on the</div>
+              <div class="badge-text-large">App Store</div>
+              <div class="coming-soon-pill">Coming Soon</div>
+            </div>
+          </a>
+          <a href="#waitlist" class="download-badge">
+            <div class="badge-icon">▶</div>
+            <div>
+              <div class="badge-text-small">Get it on</div>
+              <div class="badge-text-large">Google Play</div>
+              <div class="coming-soon-pill">Coming Soon</div>
+            </div>
+          </a>
+          <a href="#app-section" class="download-badge" style="border-color:rgba(255,107,53,0.3)">
+            <div class="badge-icon">🌐</div>
+            <div>
+              <div class="badge-text-small">Use it now on</div>
+              <div class="badge-text-large">Web App</div>
+              <div style="font-size:9px;color:#4caf50;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Live Now</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section id="waitlist">
+    <div class="waitlist-inner">
+      <div class="section-label" style="text-align:center">Early Access</div>
+      <h2 class="section-title" style="text-align:center">Be first<br/><span style="color:var(--orange)">in the vault.</span></h2>
+      <p class="section-sub" style="margin: 16px auto 0; text-align:center">Join the waitlist for early access, launch pricing, and collector-exclusive features.</p>
+      <div class="waitlist-form" id="waitlistForm">
+        <input type="email" class="waitlist-input" id="emailInput" placeholder="your@email.com" />
+        <button class="waitlist-btn" onclick="submitWaitlist()">Join Now</button>
+      </div>
+      <div class="waitlist-success" id="waitlistSuccess">
+        🎉 You're on the list! We'll be in touch before launch.
+      </div>
+      <p class="waitlist-note">No spam. Just launch updates and early access. Unsubscribe anytime.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">🏀 The Vault</div>
+    <div class="footer-copy">© 2025 Abaza Business Services. All rights reserved.</div>
+    <div style="font-size:12px;color:#2a2a3a;">Built for collectors, by collectors.</div>
+  </footer>
+
+  <script>
+    function submitWaitlist() {
+      const email = document.getElementById('emailInput').value;
+      if (!email || !email.includes('@')) {
+        document.getElementById('emailInput').style.borderColor = 'rgba(255,68,68,0.5)';
+        return;
+      }
+      // Replace this with your actual email service (Mailchimp, ConvertKit, etc.)
+      document.getElementById('waitlistForm').style.display = 'none';
+      document.getElementById('waitlistSuccess').style.display = 'block';
+      console.log('Waitlist signup:', email);
+    }
+
+    // Enter key on input
+    document.getElementById('emailInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submitWaitlist();
+    });
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(el => {
+        if (el.isIntersecting) {
+          el.target.style.opacity = '1';
+          el.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature-card, .download-badge').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
