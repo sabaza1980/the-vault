@@ -435,20 +435,36 @@ CRITICAL RULES:
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!imageFiles.length) return;
 
-    // Read all files to base64 first
+    // Resize + compress each image to stay well under Vercel's 4.5MB limit
+    const resizeImage = (file) => new Promise((resolve) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX = 1200;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+          else { width = Math.round(width * MAX / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        resolve({ base64: dataUrl.split(",")[1], mediaType: "image/jpeg", previewSrc: dataUrl });
+      };
+      img.src = objectUrl;
+    });
+
     const newItems = await Promise.all(imageFiles.map(async (file) => {
-      const base64 = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result.split(",")[1]);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+      const { base64, mediaType, previewSrc } = await resizeImage(file);
       return {
         id: Date.now() + Math.random(),
         file,
         base64,
-        mediaType: file.type || "image/jpeg",
-        previewSrc: `data:${file.type || "image/jpeg"};base64,${base64}`,
+        mediaType,
+        previewSrc,
         name: file.name,
         status: "pending"
       };
