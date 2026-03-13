@@ -27,13 +27,24 @@
       var error = params.get('error');
       var errorDesc = params.get('error_description');
 
+      // PRIMARY: write to localStorage — works even when window.opener is unavailable
+      // (browsers sometimes null opener after cross-origin navigation through auth.ebay.com)
+      try {
+        localStorage.setItem('_vault_ebay_auth', JSON.stringify({ code: code, error: error || null }));
+      } catch (e) {}
+
+      // FALLBACK: also try postMessage in case opener is still available
       if (window.opener && window.opener !== window) {
-        window.opener.postMessage(
-          { type: 'EBAY_AUTH_CODE', code: code, error: error || null },
-          window.location.origin
-        );
-        // Delay close so the parent has time to start processing before the window disappears
-        setTimeout(function () { window.close(); }, 1500);
+        try {
+          window.opener.postMessage(
+            { type: 'EBAY_AUTH_CODE', code: code, error: error || null },
+            window.location.origin
+          );
+        } catch (e) {}
+        setTimeout(function () { window.close(); }, 800);
+      } else if (window.opener == null) {
+        // opener was nulled — close immediately, localStorage already written
+        window.close();
       } else {
         // Opened directly (no opener) — show a message
         var root = document.getElementById('root');

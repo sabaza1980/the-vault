@@ -46,7 +46,6 @@ export function useEbayAuth(user) {
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState(null);
   const popupRef = useRef(null);
-  const codeReceivedRef = useRef(false); // set true the moment the auth code postMessage arrives
 
   const authDocRef = user ? doc(db, "users", user.uid, "settings", "ebayAuth") : null;
 
@@ -60,73 +59,73 @@ export function useEbayAuth(user) {
       .finally(() => setAuthLoading(false));
   }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Handle postMessage from the OAuth popup ───────────────────────────────
+  // ── Shared auth-code processor (stored in a ref so polls/listeners share it) ──
+  //    Using a ref means both the localStorage poll and the postMessage fallback
+  //    always call the latest version without stale-closure issues.
+  const processCodeRef = useRef(null);
+  processCodeRef.current = async ({ code, error }) => {
+    if (error || !code) {
+      setConnectError(error ? `eBay declined: ${error}` : "No auth code received");
+      setConnecting(false);
+      return;
+    }
+    setConnectError(null);
+    try {
+      // 1. Exchange auth code for user tokens (server-side — keeps secret safe)
+      const tokenRes = await fetch("/api/ebay-token", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ code }),
+      });
+      if (!tokenRes.ok) {
+        const d = await tokenRes.json().catch(() => ({}));
+        throw new Error(d.error || "Token exchange failed");
+      }
+      const tokenData = await tokenRes.json();
+
+      // 2. Fetch seller policies & ensure a merchant location exists
+      const policiesRes = await fetch("/api/ebay-policies", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ accessToken: tokenData.accessToken }),
+      });
+      const policiesData = await policiesRes.json();
+
+      const authData = {
+        ...tokenData,
+        ...policiesData,
+        connectedAt: new Date().toISOString(),
+      };
+
+      // 3. Persist to Firestore
+      if (authDocRef) await setDoc(authDocRef, authData);
+      setEbayAuth(authData);
+    } catch (err) {
+      console.error("eBay connect error:", err);
+      setConnectError(err.message || "Failed to connect eBay");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  // ── postMessage fallback (works when window.opener is available) ───────────
   useEffect(() => {
-    const handleMessage = async (event) => {
+    const handleMessage = (event) => {
       if (event.origin !== window.location.origin) return;
       if (!event.data || event.data.type !== "EBAY_AUTH_CODE") return;
-
-      const { code, error } = event.data;
-
-      if (error || !code) {
-        setConnectError(error ? `eBay declined: ${error}` : "No auth code received");
-        setConnecting(false);
-        return;
-      }
-
-      // Mark code as received immediately — prevents the popup-closed poll from
-      // firing a false "closed early" error while token exchange is in flight.
-      codeReceivedRef.current = true;
-      setConnectError(null);
-
-      try {
-        // 1. Exchange auth code for user tokens (server-side — keeps secret safe)
-        const tokenRes = await fetch("/api/ebay-token", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ code }),
-        });
-        if (!tokenRes.ok) {
-          const d = await tokenRes.json().catch(() => ({}));
-          throw new Error(d.error || "Token exchange failed");
-        }
-        const tokenData = await tokenRes.json();
-
-        // 2. Fetch seller policies & ensure a merchant location exists
-        const policiesRes = await fetch("/api/ebay-policies", {
-          method:  "POST",
-          headers: { "Content-Type": "application/json" },
-          body:    JSON.stringify({ accessToken: tokenData.accessToken }),
-        });
-        const policiesData = await policiesRes.json();
-
-        const authData = {
-          ...tokenData,
-          ...policiesData,
-          connectedAt: new Date().toISOString(),
-        };
-
-        // 3. Persist to Firestore
-        if (authDocRef) await setDoc(authDocRef, authData);
-        setEbayAuth(authData);
-      } catch (err) {
-        console.error("eBay connect error:", err);
-        setConnectError(err.message || "Failed to connect eBay");
-      } finally {
-        setConnecting(false);
-      }
+      // Clear localStorage entry so the storage poll doesn't also fire
+      localStorage.removeItem("_vault_ebay_auth");
+      processCodeRef.current(event.data);
     };
-
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Open the eBay OAuth consent popup ────────────────────────────────────
   const connect = useCallback(() => {
     if (!user) return;
     setConnecting(true);
     setConnectError(null);
-    codeReceivedRef.current = false;
 
     const clientId = import.meta.env.VITE_EBAY_CLIENT_ID;
     const ruName   = import.meta.env.VITE_EBAY_RU_NAME;
@@ -137,6 +136,9 @@ export function useEbayAuth(user) {
       return;
     }
 
+    // Clear any stale result from a previous attempt
+    localStorage.removeItem("_vault_ebay_auth");
+
     const params = new URLSearchParams({
       client_id:     clientId,
       redirect_uri:  ruName,
@@ -144,20 +146,39 @@ export function useEbayAuth(user) {
       scope:         EBAY_SCOPES,
     });
 
-    const url    = `${EBAY_AUTH_URL}?${params}`;
-    const popup  = window.open(url, "ebay-auth", "width=620,height=720,scrollbars=yes,resizable=yes");
+    const url   = `${EBAY_AUTH_URL}?${params}`;
+    const popup = window.open(url, "ebay-auth", "width=620,height=720,scrollbars=yes,resizable=yes");
     popupRef.current = popup;
 
-    // If the popup is closed without completing auth, clean up
+    // ── Primary: poll localStorage (reliable even when window.opener is nulled) ──
+    // The callback page writes { code, error } to _vault_ebay_auth in localStorage.
+    let codeHandled = false;
+    const pollStorage = setInterval(() => {
+      const raw = localStorage.getItem("_vault_ebay_auth");
+      if (!raw) return;
+      clearInterval(pollStorage);
+      localStorage.removeItem("_vault_ebay_auth");
+      codeHandled = true;
+      try {
+        processCodeRef.current(JSON.parse(raw));
+      } catch (e) {
+        setConnectError("Failed to parse eBay auth response.");
+        setConnecting(false);
+      }
+    }, 300);
+
+    // ── Fallback: detect popup closed before code arrived ────────────────────
     const pollClosed = setInterval(() => {
       if (!popup || popup.closed) {
         clearInterval(pollClosed);
-        // Only fire the error if we never received the auth code.
-        // If we did receive it, token exchange may still be in flight — don't interrupt.
-        if (!codeReceivedRef.current) {
-          setConnecting(false);
-          setConnectError("Popup was closed before authorization completed.");
-        }
+        clearInterval(pollStorage);
+        // Give a short grace period in case the storage poll fires at the same tick
+        setTimeout(() => {
+          if (!codeHandled && !localStorage.getItem("_vault_ebay_auth")) {
+            setConnecting(false);
+            setConnectError("Popup was closed before authorisation completed.");
+          }
+        }, 600);
       }
     }, 800);
   }, [user]);
