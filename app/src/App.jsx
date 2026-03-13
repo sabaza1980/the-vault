@@ -7,6 +7,29 @@ import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
 
+function resizeImageFile(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const MAX = 800;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+        else { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.80);
+      resolve({ base64: dataUrl.split(",")[1], mediaType: "image/jpeg", previewSrc: dataUrl });
+    };
+    img.src = objectUrl;
+  });
+}
+
 async function fetchEbaySales(cardInfo) {
   try {
     const res = await fetch("/api/ebay-sales", {
@@ -102,12 +125,15 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-function CardItem({ card, onDelete }) {
+function CardItem({ card, onDelete, onUpdate, user }) {
   const [expanded, setExpanded] = useState(false);
-  const [lightbox, setLightbox] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
   const [ebayData, setEbayData] = useState(null);
   const [ebayLoading, setEbayLoading] = useState(false);
   const [ebayFetched, setEbayFetched] = useState(false);
+  const [localNotes, setLocalNotes] = useState(card.userNotes || "");
+  const [backAnalyzing, setBackAnalyzing] = useState(false);
+  const backFileRef = useRef();
 
   const handleExpand = useCallback(async () => {
     const next = !expanded;
@@ -121,6 +147,71 @@ function CardItem({ card, onDelete }) {
     }
   }, [expanded, ebayFetched, card]);
 
+  const handleBackFile = async (file) => {
+    if (!file) return;
+    setBackAnalyzing(true);
+    try {
+      const { base64: backBase64, mediaType: backMediaType } = await resizeImageFile(file);
+
+      // Upload back image to Firebase Storage (fall back to data URL if not signed in)
+      let backImageUrl = `data:${backMediaType};base64,${backBase64}`;
+      if (user) {
+        try {
+          const storageRef = ref(storage, `users/${user.uid}/cards/${card.id}_back.jpg`);
+          await uploadString(storageRef, backBase64, "base64", { contentType: "image/jpeg" });
+          backImageUrl = await getDownloadURL(storageRef);
+        } catch (e) {
+          console.warn("Back image storage upload failed", e);
+        }
+      }
+
+      // Build message content — try to include the front image for better accuracy
+      const content = [];
+      let hasFrontImage = false;
+      try {
+        const resp = await fetch(card.imageUrl);
+        const blob = await resp.blob();
+        const frontBase64 = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result.split(",")[1]);
+          reader.onerror = rej;
+          reader.readAsDataURL(blob);
+        });
+        content.push({ type: "image", source: { type: "base64", media_type: blob.type || "image/jpeg", data: frontBase64 } });
+        content.push({ type: "text", text: "FRONT of card." });
+        hasFrontImage = true;
+      } catch (e) {
+        console.warn("Could not include front image in re-analysis", e);
+      }
+
+      content.push({ type: "image", source: { type: "base64", media_type: backMediaType, data: backBase64 } });
+      const sideNote = hasFrontImage
+        ? "You have both the FRONT (above) and BACK (this image) of the same card."
+        : "You have the BACK of this card.";
+      content.push({
+        type: "text",
+        text: `${sideNote} The back of a card often reveals: serial number stamps (written as X/Y e.g. 45/99), autograph signatures, certification holograms, and set details not visible on the front. Re-examine all evidence from both sides and update your analysis.\n\nOutput a single valid JSON object (no markdown, no extra text) with these exact fields: playerName, fullCardName, pack, team, year, brand, series, parallel, cardNumber, serialNumber (exact X/Y stamp or null), isRookie, hasAutograph, autographType (On-Card/Sticker/null), rarity (Common/Uncommon/Rare/Very Rare/Ultra Rare/Legendary), condition (Mint/Near Mint/Excellent/Good/Fair/Poor/Unknown), conditionDetail, playerContext, confidenceLevel (High/Medium/Low), notes.`
+      });
+
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 1500, messages: [{ role: "user", content }] })
+      });
+      if (!response.ok) throw new Error(`API ${response.status}`);
+      const data = await response.json();
+      const rawText = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+      let newInfo = {};
+      try { newInfo = JSON.parse(rawText.replace(/```json|```/g, "").trim()); } catch { /* keep existing data */ }
+
+      onUpdate(card.id, { backImageUrl, ...newInfo });
+    } catch (err) {
+      console.error("Back image analysis error:", err);
+    } finally {
+      setBackAnalyzing(false);
+    }
+  };
+
   const rarityColors = {
     "Common": "#555", "Uncommon": "#4caf50", "Rare": "#2196f3",
     "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", "Legendary": "#f44336", "Unknown": "#444"
@@ -133,7 +224,7 @@ function CardItem({ card, onDelete }) {
 
   return (
     <>
-      {lightbox && <Lightbox imageUrl={card.imageUrl} playerName={card.playerName} onClose={() => setLightbox(false)} />}
+      {lightboxSrc && <Lightbox imageUrl={lightboxSrc} playerName={card.playerName} onClose={() => setLightboxSrc(null)} />}
 
       <div style={{
         background: "linear-gradient(160deg, #0e0e1c 0%, #12121f 100%)",
@@ -149,7 +240,7 @@ function CardItem({ card, onDelete }) {
 
           {/* Thumbnail — click = lightbox */}
           <div
-            onClick={() => setLightbox(true)}
+            onClick={() => setLightboxSrc(card.imageUrl)}
             title="Click to zoom"
             style={{
               width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0,
@@ -212,6 +303,55 @@ function CardItem({ card, onDelete }) {
         {/* Expanded panel */}
         {expanded && (
           <div style={{ borderTop: "1px solid #ffffff06", padding: "14px 14px 14px" }}>
+
+            {/* Back of Card */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                Back of Card
+                {backAnalyzing && (
+                  <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#ff6b35", fontSize: 8, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                    <div style={{ width: 8, height: 8, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    Re-analyzing…
+                  </span>
+                )}
+              </div>
+              <input ref={backFileRef} type="file" accept="image/*" style={{ display: "none" }}
+                onChange={e => { handleBackFile(e.target.files[0]); e.target.value = ""; }} />
+              {card.backImageUrl ? (
+                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  <div
+                    onClick={() => setLightboxSrc(card.backImageUrl)}
+                    title="Click to zoom"
+                    style={{ width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid #1c1c2e", cursor: "zoom-in" }}
+                  >
+                    <img src={card.backImageUrl} alt="back" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
+                    <span style={{ fontSize: 11, color: "#4caf50" }}>✓ Analysis updated with back</span>
+                    <button
+                      onClick={() => backFileRef.current?.click()}
+                      disabled={backAnalyzing}
+                      style={{ background: "transparent", border: "1px solid #1c1c2e", color: "#555", borderRadius: 8, padding: "4px 12px", cursor: "pointer", fontSize: 11 }}
+                    >Replace</button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => backFileRef.current?.click()}
+                  disabled={backAnalyzing}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7, width: "100%",
+                    background: "#0a0a14", border: "1px dashed #1c1c2e",
+                    color: backAnalyzing ? "#333" : "#555", borderRadius: 10,
+                    padding: "10px 16px", cursor: backAnalyzing ? "not-allowed" : "pointer",
+                    fontSize: 12, fontWeight: 500
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>📷</span>
+                  Upload back of card — AI will re-analyze with both sides
+                </button>
+              )}
+            </div>
 
             {/* Player context */}
             {card.playerContext && (
@@ -293,6 +433,23 @@ function CardItem({ card, onDelete }) {
               {!ebayLoading && !ebayData && ebayFetched && (
                 <div style={{ fontSize: 12, color: "#3a3a5a", fontStyle: "italic" }}>No recent eBay sales found for this card.</div>
               )}
+            </div>
+
+            {/* My Notes */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>My Notes</div>
+              <textarea
+                value={localNotes}
+                onChange={e => setLocalNotes(e.target.value)}
+                onBlur={() => { if (localNotes !== (card.userNotes || "")) onUpdate(card.id, { userNotes: localNotes }); }}
+                placeholder="Add your own notes about this card…"
+                rows={3}
+                style={{
+                  width: "100%", background: "#0a0a14", border: "1px solid #1a1a28",
+                  borderRadius: 8, color: "#aaa", fontSize: 12, padding: "8px 10px",
+                  resize: "vertical", outline: "none", fontFamily: "inherit", lineHeight: 1.6
+                }}
+              />
             </div>
 
             <button
@@ -448,34 +605,16 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     setTimeout(() => setQueue([]), 2500);
   }, [analyzeCard]);
 
+  const handleUpdate = useCallback((id, updates) => {
+    setCards(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updates } : c));
+  }, []);
+
   const handleFiles = useCallback(async (files) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!imageFiles.length) return;
 
-    // Resize + compress each image to stay well under Vercel's 4.5MB limit
-    const resizeImage = (file) => new Promise((resolve) => {
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        const MAX = 800;
-        let { width, height } = img;
-        if (width > MAX || height > MAX) {
-          if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
-          else { width = Math.round(width * MAX / height); height = MAX; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.80);
-        resolve({ base64: dataUrl.split(",")[1], mediaType: "image/jpeg", previewSrc: dataUrl });
-      };
-      img.src = objectUrl;
-    });
-
     const newItems = await Promise.all(imageFiles.map(async (file) => {
-      const { base64, mediaType, previewSrc } = await resizeImage(file);
+      const { base64, mediaType, previewSrc } = await resizeImageFile(file);
       return {
         id: Date.now() + Math.random(),
         file,
@@ -749,7 +888,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
