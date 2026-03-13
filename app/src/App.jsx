@@ -342,53 +342,52 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
-          max_tokens: 1000,
+          max_tokens: 1500,
           messages: [{
             role: "user",
             content: [
               { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
               {
                 type: "text",
-                text: `You are a strict sports card authenticator. Analyze this card image and return ONLY a valid JSON object. No markdown, no backticks, no explanation.
+                text: `You are an expert sports card authenticator and grader with deep knowledge of every major card brand, set, parallel, and autograph program. Analyze this card image with extreme care.
 
-CRITICAL RULES:
-1. ONLY report what you can ACTUALLY READ on the card. Never guess or fabricate.
-2. If you cannot clearly read a field, use null or "Unknown".
-3. "fullCardName" is the most important field. Format it exactly as a price guide would: "[Year] [Brand] [Series]" e.g. "2023-24 Panini Prizm", "1996-97 Topps Chrome", "2021 Bowman Draft". Read year, brand and series directly from the card.
-4. "pack" = the product/pack type if identifiable (e.g. "Hobby Box", "Blaster Box", "Mega Box") or null.
-5. RARITY defaults to "Common" — only upgrade with explicit physical evidence:
-   - "Uncommon" = visible parallel finish / colored border
-   - "Rare" = refractor / prizm / chrome / foil clearly visible
-   - "Very Rare" = serial number /299 or lower printed on card
-   - "Ultra Rare" = serial number /25 or lower
-   - "Legendary" = 1/1 or on-card autograph + serial /10 or lower
-   - NEVER assign Rare+ based on player name or fame.
-6. isRookie = true ONLY if "ROOKIE", "RC", or "Rated Rookie" is physically printed on the card.
-7. hasAutograph = true ONLY if a physical signature is visible on the card.
-8. condition = one of: Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown — based strictly on what you can see.
-9. conditionDetail = a 1-2 sentence assessment of the card's physical condition based on the image. Comment specifically on: corners (sharp/worn/dinged), surface finish (clean/scratched/print defects), and centering (well-centered/slightly off/noticeably off). Only describe what is visible.
-10. playerContext = 2-3 sentences about who this player is and why this card is or isn't particularly significant. Include: their career highlights/status (active star, legend, prospect, journeyman, etc.), whether this is a notable year for them, and any reason the card itself is or isn't collectible beyond the base version.
-11. parallel = exact finish name (Base, Silver Prizm, Gold Prizm, Red Wave, Holo, Refractor, etc.) or "Base".
+STEP 1 — VISUAL SCAN (do this mentally before filling the JSON):
+- PLAYER & CARD ID: Read the player name, team, year, brand, and set name directly from the card front and back.
+- AUTOGRAPH CHECK: Carefully scan the ENTIRE card surface — front AND back. Look for: ink signatures (any color, often blue/black/silver), sticker autographs (glossy rectangle with ink), hard-signed on-card autographs. An autograph may be subtle on a dark background. hasAutograph = true if ANY signature is present.
+- SERIAL NUMBER CHECK: Scan all four corners, borders, and the back of the card. Serial numbers are stamped, foil-printed, or handwritten as "X/Y" (e.g. "45/99", "12/25", "1/1"). If found, record it exactly including the total (e.g. "45/99").
+- PARALLEL / FINISH: Identify the specific parallel by the border color, foil type, and finish. Examples: Silver Prizm (silver foil border), Gold Prizm (gold foil), Red/Blue/Green wave refractor, Holo, Hyper, etc. Only use "Base" if there is no special finish.
+- ROOKIE INDICATOR: Look for text: "ROOKIE", "RC", "Rated Rookie", "RPA", "Rookie Patch Auto" physically printed on the card.
+
+STEP 2 — RARITY (assign based strictly on physical evidence):
+- "Common" = Base card, no special finish
+- "Uncommon" = Colored parallel / non-base finish visible
+- "Rare" = Refractor / Prizm / Chrome / foil finish clearly visible
+- "Very Rare" = Serial numbered /100–/299 printed on card
+- "Ultra Rare" = Serial numbered /10–/99 printed on card
+- "Legendary" = 1/1, logoman, or on-card auto + serial /10 or lower
+
+STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text outside the JSON.
 
 {
-  "playerName": "Exact name as printed, or 'Unknown Player'",
-  "fullCardName": "e.g. '2023-24 Panini Prizm' — year + brand + series as on card",
-  "pack": "Pack/product name or null",
+  "playerName": "Exact name as printed on card",
+  "fullCardName": "Year + Brand + Series as it appears on the card, e.g. '2023-24 Panini Prizm' or '2021 Topps Chrome'",
+  "pack": "Product/pack type if identifiable, or null",
   "team": "Team name as printed, or 'Unknown'",
-  "year": "Year or season e.g. '2023-24', or 'Unknown'",
-  "brand": "Panini | Topps | Upper Deck | Fleer | Bowman | etc., or 'Unknown'",
-  "series": "Exact set name e.g. 'Prizm' | 'Select' | 'Hoops' | 'Chrome', or null",
-  "parallel": "Base | Silver Prizm | Gold Prizm | etc.",
-  "cardNumber": "Card number as printed or null",
-  "serialNumber": "e.g. '45/99' or null",
+  "year": "Year or season e.g. '2023-24'",
+  "brand": "Panini | Topps | Upper Deck | Fleer | Bowman | Donruss | Score | other",
+  "series": "Exact set name e.g. 'Prizm' | 'Select' | 'Hoops' | 'Chrome' | 'Optic'",
+  "parallel": "Exact parallel name e.g. 'Silver Prizm' | 'Gold Prizm' | 'Red Wave' | 'Holo' | 'Base'",
+  "cardNumber": "Card number as printed e.g. '#278', or null",
+  "serialNumber": "Serial stamp exactly as printed e.g. '45/99' | '1/1', or null",
   "isRookie": false,
   "hasAutograph": false,
-  "rarity": "Common",
+  "autographType": "'On-Card' | 'Sticker' | null — only if hasAutograph is true",
+  "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
   "condition": "Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown",
-  "conditionDetail": "e.g. 'Corners appear sharp with no visible wear. Surface is clean with good finish. Centering is slightly left-heavy but acceptable.'",
-  "playerContext": "e.g. 'LeBron James is an all-time great and 4x NBA champion. This 2003-04 Topps card is from his rookie season, making it one of the most sought-after modern cards. Base versions are common but still desirable.'",
+  "conditionDetail": "1-2 sentences: describe corners (sharp/worn/dinged), surface (clean/scratched), centering (well-centered/off). Only describe what is visible.",
+  "playerContext": "2-3 sentences: player career status, why this card is or isn't significant, any notable value drivers.",
   "confidenceLevel": "High | Medium | Low",
-  "notes": "Any other factual observations — print lines, staining, foil damage, etc."
+  "notes": "Any other observations: print defects, surface damage, foil scratches, staining, etc. or null"
 }`
               }
             ]
