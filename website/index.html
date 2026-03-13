@@ -676,15 +676,93 @@
     <div class="waitlist-inner">
       <div class="section-label" style="text-align:center">Early Access</div>
       <h2 class="section-title" style="text-align:center">Be first<br/><span style="color:var(--orange)">in the vault.</span></h2>
-      <p class="section-sub" style="margin: 16px auto 0; text-align:center">Join the waitlist for early access, launch pricing, and collector-exclusive features.</p>
-      <div class="waitlist-form" id="waitlistForm">
-        <input type="email" class="waitlist-input" id="emailInput" placeholder="your@email.com" />
-        <button class="waitlist-btn" onclick="submitWaitlist()">Join Now</button>
-      </div>
-      <div class="waitlist-success" id="waitlistSuccess">
-        🎉 You're on the list! We'll be in touch before launch.
-      </div>
-      <p class="waitlist-note">No spam. Just launch updates and early access. Unsubscribe anytime.</p>
+      <p class="section-sub" style="margin: 16px auto 24px; text-align:center">Join the waitlist for early access, launch pricing, and collector-exclusive features.</p>
+
+      <style>@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');</style><div class="newsletter-form-container"><form class="newsletter-form" action="https://app.loops.so/api/newsletter-form/cmmo488pk0kfu0i34lpt1alon" method="POST" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;"><input class="newsletter-form-input" placeholder="you@example.com" required="" type="email" name="newsletter-form-input" style="font-family: Inter, sans-serif; color: rgb(0, 0, 0); font-size: 14px; margin: 0px 0px 10px; width: 100%; max-width: 300px; min-width: 100px; background: rgb(255, 255, 255); border: 1px solid rgb(209, 213, 219); box-sizing: border-box; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; padding: 8px 12px;"><button type="submit" class="newsletter-form-button" style="background: rgb(13, 148, 136); font-size: 14px; color: rgb(255, 255, 255); font-family: Inter, sans-serif; display: flex; width: 100%; max-width: 300px; white-space: normal; height: 38px; align-items: center; justify-content: center; flex-direction: row; padding: 9px 17px; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; text-align: center; font-style: normal; font-weight: 500; line-height: 20px; border: none; cursor: pointer;">Join Waitlist</button><button type="button" class="newsletter-loading-button" style="background: rgb(13, 148, 136); font-size: 14px; color: rgb(255, 255, 255); font-family: Inter, sans-serif; display: none; width: 100%; max-width: 300px; white-space: normal; height: 38px; align-items: center; justify-content: center; flex-direction: row; padding: 9px 17px; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; text-align: center; font-style: normal; font-weight: 500; line-height: 20px; border: none; cursor: pointer;">Please wait...</button></form><div class="newsletter-success" style="display: none; align-items: center; justify-content: center; width: 100%;"><p class="newsletter-success-message" style="font-family: Inter, sans-serif; color: rgb(0, 0, 0); font-size: 14px;">Thanks! We'll be in touch!</p></div><div class="newsletter-error" style="display: none; align-items: center; justify-content: center; width: 100%;"><p class="newsletter-error-message" style="font-family: Inter, sans-serif; color: rgb(185, 28, 28); font-size: 14px;">Oops! Something went wrong, please try again</p></div>
+<button class='newsletter-back-button' type='button' style='color:#6b7280;font: 14px, Inter, sans-serif;margin:10px auto;text-align:center;display:none;background:transparent;border:none;cursor:pointer' onmouseout='this.style.textDecoration="none"' onmouseover='this.style.textDecoration="underline"'>&larr; Back</button>
+</div><script>
+function submitHandler(event) {
+  event.preventDefault();
+  var container = event.target.parentNode;
+  var form = container.querySelector(".newsletter-form");
+  var formInput = container.querySelector(".newsletter-form-input");
+  var success = container.querySelector(".newsletter-success");
+  var errorContainer = container.querySelector(".newsletter-error");
+  var errorMessage = container.querySelector(".newsletter-error-message");
+  var backButton = container.querySelector(".newsletter-back-button");
+  var submitButton = container.querySelector(".newsletter-form-button");
+  var loadingButton = container.querySelector(".newsletter-loading-button");
+  const rateLimit = () => {
+    errorContainer.style.display = "flex";
+    errorMessage.innerText = "Too many signups, please try again in a little while";
+    submitButton.style.display = "none";
+    formInput.style.display = "none";
+    backButton.style.display = "block";
+  }
+  var time = new Date();
+  var timestamp = time.valueOf();
+  var previousTimestamp = localStorage.getItem("loops-form-timestamp");
+  if (previousTimestamp && Number(previousTimestamp) + 60000 > timestamp) { rateLimit(); return; }
+  localStorage.setItem("loops-form-timestamp", timestamp);
+  submitButton.style.display = "none";
+  loadingButton.style.display = "flex";
+  var formBody = "userGroup=&mailingLists=&email=" + encodeURIComponent(formInput.value);
+  fetch(event.target.action, {
+    method: "POST",
+    body: formBody,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  })
+    .then((res) => [res.ok, res.json(), res])
+    .then(([ok, dataPromise, res]) => {
+      if (ok) {
+        success.style.display = "flex";
+        form.reset();
+      } else {
+        dataPromise.then(data => {
+          errorContainer.style.display = "flex";
+          errorMessage.innerText = data.message ? data.message : res.statusText;
+        });
+      }
+    })
+    .catch(error => {
+      if (error.message === "Failed to fetch") { rateLimit(); return; }
+      errorContainer.style.display = "flex";
+      if (error.message) errorMessage.innerText = error.message;
+      localStorage.setItem("loops-form-timestamp", '');
+    })
+    .finally(() => {
+      formInput.style.display = "none";
+      loadingButton.style.display = "none";
+      backButton.style.display = "block";
+    });
+}
+function resetFormHandler(event) {
+  var container = event.target.parentNode;
+  var formInput = container.querySelector(".newsletter-form-input");
+  var success = container.querySelector(".newsletter-success");
+  var errorContainer = container.querySelector(".newsletter-error");
+  var errorMessage = container.querySelector(".newsletter-error-message");
+  var backButton = container.querySelector(".newsletter-back-button");
+  var submitButton = container.querySelector(".newsletter-form-button");
+  success.style.display = "none";
+  errorContainer.style.display = "none";
+  errorMessage.innerText = "Oops! Something went wrong, please try again";
+  backButton.style.display = "none";
+  formInput.style.display = "flex";
+  submitButton.style.display = "flex";
+}
+var formContainers = document.getElementsByClassName("newsletter-form-container");
+for (var i = 0; i < formContainers.length; i++) {
+  var formContainer = formContainers[i];
+  var handlersAdded = formContainer.classList.contains('newsletter-handlers-added');
+  if (handlersAdded) continue;
+  formContainer.querySelector(".newsletter-form").addEventListener("submit", submitHandler);
+  formContainer.querySelector(".newsletter-back-button").addEventListener("click", resetFormHandler);
+  formContainer.classList.add('newsletter-handlers-added');
+}
+<\/script>
+
+      <p style="font-size:12px;color:#333;margin-top:14px;text-align:center">No spam. Just launch updates and early access.</p>
     </div>
   </section>
 
@@ -696,23 +774,6 @@
   </footer>
 
   <script>
-    function submitWaitlist() {
-      const email = document.getElementById('emailInput').value;
-      if (!email || !email.includes('@')) {
-        document.getElementById('emailInput').style.borderColor = 'rgba(255,68,68,0.5)';
-        return;
-      }
-      // Replace this with your actual email service (Mailchimp, ConvertKit, etc.)
-      document.getElementById('waitlistForm').style.display = 'none';
-      document.getElementById('waitlistSuccess').style.display = 'block';
-      console.log('Waitlist signup:', email);
-    }
-
-    // Enter key on input
-    document.getElementById('emailInput').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') submitWaitlist();
-    });
-
     // Scroll reveal
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(el => {
