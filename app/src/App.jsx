@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
+import { storage } from "./firebase";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
 
@@ -325,6 +327,7 @@ export default function App() {
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
   const [search, setSearch] = useState("");
+  const [view, setView] = useState("cards"); // "cards" | "table"
   const fileRef = useRef();
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
@@ -411,13 +414,27 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         cardInfo = { playerName: "Unknown Player", fullCardName: "Unknown Card", team: "Unknown", year: "Unknown", brand: "Unknown", rarity: "Unknown", condition: "Unknown", confidenceLevel: "Low" };
       }
 
-      setCards(prev => [{ id: Date.now(), imageUrl, ...cardInfo, addedAt: new Date().toISOString() }, ...prev]);
+      const cardId = Date.now();
+
+      // Upload image to Firebase Storage so it persists; fall back to data URL if not signed in.
+      let persistedImageUrl = imageUrl;
+      if (user) {
+        try {
+          const storageRef = ref(storage, `users/${user.uid}/cards/${cardId}.jpg`);
+          await uploadString(storageRef, base64, "base64", { contentType: "image/jpeg" });
+          persistedImageUrl = await getDownloadURL(storageRef);
+        } catch (e) {
+          console.warn("Storage upload failed, using data URL", e);
+        }
+      }
+
+      setCards(prev => [{ id: cardId, imageUrl: persistedImageUrl, ...cardInfo, addedAt: new Date().toISOString() }, ...prev]);
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "done" } : q));
     } catch (err) {
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "error", errorMsg: err.message } : q));
       console.error(err);
     }
-  }, []);
+  }, [user]);
 
   const runQueue = useCallback(async () => {
     if (isProcessing.current) return;
@@ -713,29 +730,102 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <option value="player">Player A–Z</option>
               <option value="set">Set Name</option>
             </select>
+            <div style={{ display: "flex", gap: 4 }}>
+              {["cards", "table"].map(v => (
+                <button key={v} onClick={() => setView(v)} style={{
+                  padding: "4px 10px", borderRadius: 8, border: "1px solid",
+                  borderColor: view === v ? "#ff6b35" : "#1a1a28",
+                  background: view === v ? "#ff6b3515" : "transparent",
+                  color: view === v ? "#ff6b35" : "#444",
+                  cursor: "pointer", fontSize: 13
+                }}>{v === "cards" ? "⊞" : "☰"}</button>
+              ))}
+            </div>
           </div>
         )}
 
         {/* Card List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filteredCards.map(card => (
-            <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-              <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} />
-            </div>
-          ))}
-          {cards.length === 0 && queue.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <div style={{ fontSize: 44, marginBottom: 10 }}>🃏</div>
-              <div style={{ fontSize: 13, color: "#2a2a3a" }}>Your vault is empty — upload your first card</div>
-            </div>
-          )}
-          {cards.length > 0 && filteredCards.length === 0 && (
-            <div style={{ textAlign: "center", padding: "40px 0" }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-              <div style={{ fontSize: 13, color: "#2a2a3a" }}>No cards match your search</div>
-            </div>
-          )}
-        </div>
+        {view === "cards" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {filteredCards.map(card => (
+              <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} />
+              </div>
+            ))}
+            {cards.length === 0 && queue.length === 0 && (
+              <div style={{ textAlign: "center", padding: "60px 0" }}>
+                <div style={{ fontSize: 44, marginBottom: 10 }}>🃏</div>
+                <div style={{ fontSize: 13, color: "#2a2a3a" }}>Your vault is empty — upload your first card</div>
+              </div>
+            )}
+            {cards.length > 0 && filteredCards.length === 0 && (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                <div style={{ fontSize: 13, color: "#2a2a3a" }}>No cards match your search</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Table View */}
+        {view === "table" && (
+          <div style={{ overflowX: "auto" }}>
+            {cards.length === 0 && queue.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "60px 0" }}>
+                <div style={{ fontSize: 44, marginBottom: 10 }}>🃏</div>
+                <div style={{ fontSize: 13, color: "#2a2a3a" }}>Your vault is empty — upload your first card</div>
+              </div>
+            ) : filteredCards.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "40px 0" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+                <div style={{ fontSize: 13, color: "#2a2a3a" }}>No cards match your search</div>
+              </div>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: "1px solid #1a1a2e" }}>
+                    {["Player", "Set", "Team", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
+                      <th key={h} style={{ padding: "8px 10px", color: "#444", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCards.map((card, i) => {
+                    const rarityColor = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#ff6b35" }[card.rarity] || "#555";
+                    return (
+                      <tr key={card.id} style={{ borderBottom: "1px solid #0d0d1a", background: i % 2 === 0 ? "transparent" : "#0a0a1200" }}>
+                        <td style={{ padding: "9px 10px", color: "#ddd", fontWeight: 600, whiteSpace: "nowrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {card.imageUrl && <img src={card.imageUrl} alt="" style={{ width: 28, height: 38, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} />}
+                            <span>{card.playerName || "—"}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: "9px 10px", color: "#888", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.fullCardName || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "#888", whiteSpace: "nowrap" }}>{card.team || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "#666", whiteSpace: "nowrap" }}>{card.year || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "#666", whiteSpace: "nowrap" }}>{card.parallel || "Base"}</td>
+                        <td style={{ padding: "9px 10px", color: "#ff9800", fontWeight: 600, whiteSpace: "nowrap" }}>{card.serialNumber || "—"}</td>
+                        <td style={{ padding: "9px 10px", textAlign: "center" }}>{card.hasAutograph ? <span style={{ color: "#4caf50" }}>✓</span> : <span style={{ color: "#2a2a3a" }}>—</span>}</td>
+                        <td style={{ padding: "9px 10px", whiteSpace: "nowrap" }}>
+                          <span style={{ color: rarityColor, fontWeight: 600 }}>{card.rarity || "—"}</span>
+                        </td>
+                        <td style={{ padding: "9px 10px", color: "#666", whiteSpace: "nowrap" }}>{card.condition || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "#4caf50", fontWeight: 600, whiteSpace: "nowrap" }}>
+                          {card.ebayData?.avg ? `$${card.ebayData.avg}` : "—"}
+                        </td>
+                        <td style={{ padding: "9px 10px" }}>
+                          <button onClick={() => setCards(prev => prev.filter(c => c.id !== card.id))} style={{
+                            background: "none", border: "none", color: "#2a2a3a", cursor: "pointer", fontSize: 14, padding: 2
+                          }} title="Delete">✕</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
       </div>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
