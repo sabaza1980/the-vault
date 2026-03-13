@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
+import VaultChat from "./VaultChat";
 import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -529,6 +530,7 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [view, setView] = useState("cards"); // "cards" | "table"
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
+  const [showChat, setShowChat] = useState(false);
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
     localStorage.setItem("vault-theme", next);
@@ -784,6 +786,20 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 {rareCounts > 0 && <StatBadge label="Rare+" value={rareCounts} color="#9c27b0" />}
               </>
             )}
+            <button
+              onClick={() => setShowChat(v => !v)}
+              title="Ask The Vault AI"
+              style={{
+                background: showChat ? "#ff6b3518" : "var(--gbg)",
+                border: `1px solid ${showChat ? "#ff6b3550" : "var(--gb)"}`,
+                borderRadius: 20, padding: "5px 12px",
+                color: showChat ? "#ff6b35" : "var(--gc)",
+                fontSize: 11, fontWeight: 700, cursor: "pointer",
+                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5
+              }}
+            >
+              <span style={{ fontSize: 13 }}>✦</span> Ask AI
+            </button>
             <button
               onClick={toggleTheme}
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
@@ -1096,6 +1112,11 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         )}
       </div>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      <VaultChat
+        cards={cards}
+        isOpen={showChat}
+        onClose={() => setShowChat(false)}
+      />
     </div>
   );
 }
