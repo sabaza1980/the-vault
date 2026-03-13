@@ -10,8 +10,19 @@ export default function AuthModal({ onClose }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleGoogleSignIn = () => {
-    signInWithGoogle(); // triggers redirect — page will navigate away
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+      onClose();
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+        setError(`${err.message ?? 'Something went wrong'} [${err.code ?? 'unknown'}]`);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEmailSubmit = async (e) => {
