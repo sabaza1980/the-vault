@@ -17,7 +17,7 @@ export default function AuthModal({ onClose }) {
       await signInWithGoogle();
       onClose();
     } catch (err) {
-      setError(friendlyError(err.code) + ` [${err.code}]`);
+      setError(`${friendlyError(err.code)} [${err.code ?? 'no-code'}] ${err.message ?? ''}`);
     } finally {
       setLoading(false);
     }
