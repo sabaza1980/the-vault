@@ -32,8 +32,8 @@
           { type: 'EBAY_AUTH_CODE', code: code, error: error || null },
           window.location.origin
         );
-        // Short delay so the user can see the message before close
-        setTimeout(function () { window.close(); }, 600);
+        // Delay close so the parent has time to start processing before the window disappears
+        setTimeout(function () { window.close(); }, 1500);
       } else {
         // Opened directly (no opener) — show a message
         var root = document.getElementById('root');

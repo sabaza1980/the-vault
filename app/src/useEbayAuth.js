@@ -46,6 +46,7 @@ export function useEbayAuth(user) {
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState(null);
   const popupRef = useRef(null);
+  const codeReceivedRef = useRef(false); // set true the moment the auth code postMessage arrives
 
   const authDocRef = user ? doc(db, "users", user.uid, "settings", "ebayAuth") : null;
 
@@ -73,6 +74,9 @@ export function useEbayAuth(user) {
         return;
       }
 
+      // Mark code as received immediately — prevents the popup-closed poll from
+      // firing a false "closed early" error while token exchange is in flight.
+      codeReceivedRef.current = true;
       setConnectError(null);
 
       try {
@@ -122,6 +126,7 @@ export function useEbayAuth(user) {
     if (!user) return;
     setConnecting(true);
     setConnectError(null);
+    codeReceivedRef.current = false;
 
     const clientId = import.meta.env.VITE_EBAY_CLIENT_ID;
     const ruName   = import.meta.env.VITE_EBAY_RU_NAME;
@@ -147,11 +152,12 @@ export function useEbayAuth(user) {
     const pollClosed = setInterval(() => {
       if (!popup || popup.closed) {
         clearInterval(pollClosed);
-        // Only clear connecting if the postMessage handler hasn't already resolved it
-        setConnecting((prev) => {
-          if (prev) setConnectError("Popup was closed before authorization completed.");
-          return false;
-        });
+        // Only fire the error if we never received the auth code.
+        // If we did receive it, token exchange may still be in flight — don't interrupt.
+        if (!codeReceivedRef.current) {
+          setConnecting(false);
+          setConnectError("Popup was closed before authorization completed.");
+        }
       }
     }, 800);
   }, [user]);
