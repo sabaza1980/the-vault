@@ -143,9 +143,10 @@ function CardItem({ card, onDelete, onUpdate, user }) {
       setEbayFetched(true);
       const result = await fetchEbaySales(card);
       setEbayData(result);
+      if (result?.avg) onUpdate(card.id, { estimatedValue: result.avg });
       setEbayLoading(false);
     }
-  }, [expanded, ebayFetched, card]);
+  }, [expanded, ebayFetched, card, onUpdate]);
 
   const handleBackFile = async (file) => {
     if (!file) return;
@@ -325,6 +326,21 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               {card.confidenceLevel === "Low" && <Badge label="⚠ Low Confidence" color="#ff6666" />}
             </div>
           </div>
+
+          {/* Favourite star */}
+          <button
+            onClick={e => { e.stopPropagation(); onUpdate(card.id, { isFavourite: !card.isFavourite }); }}
+            title={card.isFavourite ? "Remove from favourites" : "Add to favourites"}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 20, lineHeight: 1, padding: "2px 4px",
+              color: card.isFavourite ? "#f0c040" : "#252535",
+              alignSelf: "flex-start", marginTop: 10,
+              transition: "color 0.15s, transform 0.1s"
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "#444"}
+            onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "#252535"}
+          >{card.isFavourite ? "★" : "☆"}</button>
         </div>
 
         {/* Expanded panel */}
@@ -664,10 +680,19 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  const teams = ["All", ...new Set(cards.map(c => c.team).filter(t => t && t !== "Unknown"))];
+  const teams = ["All", "Favourites", ...new Set(cards.map(c => c.team).filter(t => t && t !== "Unknown"))];
+
+  const top10 = [...cards]
+    .filter(c => c.estimatedValue > 0)
+    .sort((a, b) => b.estimatedValue - a.estimatedValue)
+    .slice(0, 10);
 
   const filteredCards = cards
-    .filter(c => filter === "All" || c.team === filter)
+    .filter(c => {
+      if (filter === "All") return true;
+      if (filter === "Favourites") return c.isFavourite === true;
+      return c.team === filter;
+    })
     .filter(c => {
       if (!search.trim()) return true;
       const q = search.toLowerCase();
@@ -767,6 +792,40 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       </div>
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px" }}>
+
+        {/* Top 10 by Value Hero */}
+        {top10.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              Top 10 by Value
+              <span style={{ fontSize: 8, color: "#252535", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>based on recent eBay sales</span>
+            </div>
+            <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "thin", scrollbarColor: "#1a1a2e transparent" }}>
+              {top10.map((card, i) => {
+                const rarityColors = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#f44336" };
+                const rc = rarityColors[card.rarity] || "#555";
+                return (
+                  <div key={card.id} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5 }}>
+                    <div style={{ position: "relative", width: 90, height: 124, borderRadius: 10, overflow: "hidden", border: `1px solid ${rc}40`, boxShadow: `0 0 14px ${rc}18` }}>
+                      <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div style={{
+                        position: "absolute", top: 5, left: 5,
+                        background: "rgba(0,0,0,0.75)", borderRadius: 5,
+                        fontSize: 9, fontWeight: 800, color: "#fff",
+                        padding: "1px 5px", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 0.5
+                      }}>#{i + 1}</div>
+                      {card.isFavourite && (
+                        <div style={{ position: "absolute", top: 3, right: 5, fontSize: 12, color: "#f0c040" }}>★</div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#ccc", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.playerName}</div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 0.5 }}>${card.estimatedValue.toFixed(2)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Upload Zone */}
         <div
@@ -878,15 +937,19 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               )}
             </div>
             <div style={{ display: "flex", gap: 5, flex: 1, flexWrap: "wrap" }}>
-              {teams.map(t => (
-                <button key={t} onClick={() => setFilter(t)} style={{
-                  padding: "4px 12px", borderRadius: 20, border: "1px solid",
-                  borderColor: filter === t ? "#ff6b35" : "#1a1a28",
-                  background: filter === t ? "#ff6b3515" : "transparent",
-                  color: filter === t ? "#ff6b35" : "#555",
-                  cursor: "pointer", fontSize: 11, fontWeight: 600
-                }}>{t}</button>
-              ))}
+              {teams.map(t => {
+                const isFav = t === "Favourites";
+                const activeColor = isFav ? "#f0c040" : "#ff6b35";
+                return (
+                  <button key={t} onClick={() => setFilter(t)} style={{
+                    padding: "4px 12px", borderRadius: 20, border: "1px solid",
+                    borderColor: filter === t ? activeColor : "#1a1a28",
+                    background: filter === t ? `${activeColor}15` : "transparent",
+                    color: filter === t ? activeColor : "#555",
+                    cursor: "pointer", fontSize: 11, fontWeight: 600
+                  }}>{isFav ? "★ Faves" : t}</button>
+                );
+              })}
             </div>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
               background: "#0a0a10", border: "1px solid #1a1a28", color: "#666",
@@ -950,7 +1013,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid #1a1a2e" }}>
-                    {["Player", "Set", "Team", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
+                    {["★", "Player", "Set", "Team", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
                       <th key={h} style={{ padding: "8px 10px", color: "#444", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
                     ))}
                   </tr>
@@ -960,6 +1023,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                     const rarityColor = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#ff6b35" }[card.rarity] || "#555";
                     return (
                       <tr key={card.id} style={{ borderBottom: "1px solid #0d0d1a", background: i % 2 === 0 ? "transparent" : "#0a0a1200" }}>
+                        <td style={{ padding: "9px 6px", textAlign: "center" }}>
+                          <button onClick={() => handleUpdate(card.id, { isFavourite: !card.isFavourite })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 2, color: card.isFavourite ? "#f0c040" : "#252535" }} title={card.isFavourite ? "Unfavourite" : "Favourite"}>{card.isFavourite ? "★" : "☆"}</button>
+                        </td>
                         <td style={{ padding: "9px 10px", color: "#ddd", fontWeight: 600, whiteSpace: "nowrap" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             {card.imageUrl && <img src={card.imageUrl} alt="" style={{ width: 28, height: 38, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} />}
