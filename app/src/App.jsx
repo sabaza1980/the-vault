@@ -458,7 +458,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(objectUrl);
-        const MAX = 1200;
+        const MAX = 800;
         let { width, height } = img;
         if (width > MAX || height > MAX) {
           if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
@@ -468,7 +468,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         canvas.width = width;
         canvas.height = height;
         canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.80);
         resolve({ base64: dataUrl.split(",")[1], mediaType: "image/jpeg", previewSrc: dataUrl });
       };
       img.src = objectUrl;
