@@ -371,14 +371,9 @@ export default function App() {
       const mediaType = item.mediaType;
       const imageUrl = `data:${mediaType};base64,${base64}`;
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/analyze", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-allow-browser": "true",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
           max_tokens: 1000,
