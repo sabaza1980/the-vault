@@ -324,6 +324,7 @@ export default function App() {
   const [dragOver, setDragOver] = useState(false);
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("newest");
+  const [search, setSearch] = useState("");
   const fileRef = useRef();
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
@@ -484,6 +485,19 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
 
   const filteredCards = cards
     .filter(c => filter === "All" || c.team === filter)
+    .filter(c => {
+      if (!search.trim()) return true;
+      const q = search.toLowerCase();
+      return (
+        (c.playerName || "").toLowerCase().includes(q) ||
+        (c.fullCardName || "").toLowerCase().includes(q) ||
+        (c.team || "").toLowerCase().includes(q) ||
+        (c.series || "").toLowerCase().includes(q) ||
+        (c.year || "").toLowerCase().includes(q) ||
+        (c.parallel || "").toLowerCase().includes(q) ||
+        (c.serialNumber || "").toLowerCase().includes(q)
+      );
+    })
     .sort((a, b) => {
       if (sortBy === "newest") return b.id - a.id;
       if (sortBy === "player") return a.playerName.localeCompare(b.playerName);
@@ -660,6 +674,26 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         {/* Filters */}
         {cards.length > 0 && (
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ position: "relative", width: "100%", marginBottom: 6 }}>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#444", pointerEvents: "none" }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search player, set, team, parallel, serial…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: "100%", padding: "8px 12px 8px 34px",
+                  background: "#0d0d1a", border: "1px solid #1a1a2e",
+                  borderRadius: 10, color: "#fff", fontSize: 13, outline: "none"
+                }}
+              />
+              {search && (
+                <button onClick={() => setSearch("")} style={{
+                  position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+                  background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 16, lineHeight: 1
+                }}>×</button>
+              )}
+            </div>
             <div style={{ display: "flex", gap: 5, flex: 1, flexWrap: "wrap" }}>
               {teams.map(t => (
                 <button key={t} onClick={() => setFilter(t)} style={{
@@ -693,6 +727,12 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             <div style={{ textAlign: "center", padding: "60px 0" }}>
               <div style={{ fontSize: 44, marginBottom: 10 }}>🃏</div>
               <div style={{ fontSize: 13, color: "#2a2a3a" }}>Your vault is empty — upload your first card</div>
+            </div>
+          )}
+          {cards.length > 0 && filteredCards.length === 0 && (
+            <div style={{ textAlign: "center", padding: "40px 0" }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+              <div style={{ fontSize: 13, color: "#2a2a3a" }}>No cards match your search</div>
             </div>
           )}
         </div>
