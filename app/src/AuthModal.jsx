@@ -10,17 +10,8 @@ export default function AuthModal({ onClose }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleGoogleSignIn = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await signInWithGoogle();
-      onClose();
-    } catch (err) {
-      setError(`${friendlyError(err.code)} [${err.code ?? 'no-code'}] ${err.message ?? ''}`);
-    } finally {
-      setLoading(false);
-    }
+  const handleGoogleSignIn = () => {
+    signInWithGoogle(); // triggers redirect — page will navigate away
   };
 
   const handleEmailSubmit = async (e) => {

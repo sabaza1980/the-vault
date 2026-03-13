@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -15,11 +17,13 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = loading
 
   useEffect(() => {
+    // Handle redirect result from Google sign-in
+    getRedirectResult(auth).catch(() => {});
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u ?? null));
     return unsubscribe;
   }, []);
 
-  const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+  const signInWithGoogle = () => signInWithRedirect(auth, googleProvider);
   const signOut = () => firebaseSignOut(auth);
   const signUpWithEmail = (email, password, displayName) =>
     createUserWithEmailAndPassword(auth, email, password).then((cred) =>
