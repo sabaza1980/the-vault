@@ -4,54 +4,20 @@ import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
-const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
-const EBAY_CLIENT_ID = import.meta.env.VITE_EBAY_CLIENT_ID;
-const EBAY_CLIENT_SECRET = import.meta.env.VITE_EBAY_CLIENT_SECRET;
-
-// eBay OAuth token cache
-const ebayToken = { value: null, expiry: 0 };
-
-async function getEbayToken() {
-  if (ebayToken.value && Date.now() < ebayToken.expiry) return ebayToken.value;
-  const credentials = btoa(`${EBAY_CLIENT_ID}:${EBAY_CLIENT_SECRET}`);
-  const res = await fetch("https://api.ebay.com/identity/v1/oauth2/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": `Basic ${credentials}`
-    },
-    body: "grant_type=client_credentials&scope=https%3A%2F%2Fapi.ebay.com%2Foauth%2Fapi_scope"
-  });
-  if (!res.ok) throw new Error("eBay auth failed");
-  const data = await res.json();
-  ebayToken.value = data.access_token;
-  ebayToken.expiry = Date.now() + (data.expires_in - 60) * 1000;
-  return ebayToken.value;
-}
 
 async function fetchEbaySales(cardInfo) {
   try {
-    const token = await getEbayToken();
-    const q = [cardInfo.playerName, cardInfo.fullCardName, cardInfo.parallel !== "Base" ? cardInfo.parallel : ""].filter(Boolean).join(" ").trim();
-    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=conditionIds%3A%7B3000%7D&sort=newlyListed&limit=5`;
-    const res = await fetch(url, {
-      headers: { "Authorization": `Bearer ${token}`, "X-EBAY-C-MARKETPLACE-ID": "EBAY_US" }
+    const res = await fetch("/api/ebay-sales", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerName: cardInfo.playerName,
+        fullCardName: cardInfo.fullCardName,
+        parallel: cardInfo.parallel,
+      }),
     });
     if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.itemSummaries || data.itemSummaries.length === 0) return null;
-    const sales = data.itemSummaries
-      .filter(item => item.price)
-      .map(item => ({
-        title: item.title,
-        price: parseFloat(item.price.value),
-        currency: item.price.currency,
-        url: item.itemWebUrl,
-        date: item.itemEndDate || null
-      }));
-    if (sales.length === 0) return null;
-    const avg = sales.reduce((s, i) => s + i.price, 0) / sales.length;
-    return { sales, avg: Math.round(avg * 100) / 100 };
+    return await res.json();
   } catch (e) {
     console.error("eBay fetch error:", e);
     return null;
