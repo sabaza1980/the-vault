@@ -1,8 +1,10 @@
 import { useState, useRef, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
+import AuthModal from "./AuthModal";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+const ANTHROPIC_API_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
 const EBAY_CLIENT_ID = import.meta.env.VITE_EBAY_CLIENT_ID;
 const EBAY_CLIENT_SECRET = import.meta.env.VITE_EBAY_CLIENT_SECRET;
 
@@ -349,7 +351,8 @@ function Badge({ label, color }) {
 }
 
 export default function App() {
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
   const [cards, setCards] = useState([]);
   const [queue, setQueue] = useState([]); // [{id, file, previewBase64, status}]
   const [dragOver, setDragOver] = useState(false);
@@ -370,7 +373,12 @@ export default function App() {
 
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-allow-browser": "true",
+        },
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
           max_tokens: 1000,
@@ -427,7 +435,10 @@ CRITICAL RULES:
         })
       });
 
-      if (!response.ok) throw new Error(`API error ${response.status}`);
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        throw new Error(`API ${response.status}: ${errBody.slice(0, 200)}`);
+      }
       const data = await response.json();
       const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
 
@@ -442,7 +453,7 @@ CRITICAL RULES:
       setCards(prev => [{ id: Date.now(), imageUrl, ...cardInfo, addedAt: new Date().toISOString() }, ...prev]);
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "done" } : q));
     } catch (err) {
-      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "error" } : q));
+      setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "error", errorMsg: err.message } : q));
       console.error(err);
     }
   }, []);
@@ -567,7 +578,7 @@ CRITICAL RULES:
               </button>
             ) : (
               <button
-                onClick={signInWithGoogle}
+                onClick={() => setShowAuth(true)}
                 style={{
                   background: "#ffffff0a", border: "1px solid #ff6b3530",
                   borderRadius: 20, padding: "5px 14px",
@@ -664,6 +675,9 @@ CRITICAL RULES:
             borderRadius: 10, padding: "10px 14px", color: "#ff6666", fontSize: 12, marginBottom: 16
           }}>
             {queue.filter(q => q.status === "error").length} card{queue.filter(q => q.status === "error").length > 1 ? "s" : ""} failed to identify — try uploading again.
+            {queue.filter(q => q.status === "error" && q.errorMsg).map(q => (
+              <div key={q.id} style={{ marginTop: 4, fontSize: 11, opacity: 0.8, wordBreak: "break-all" }}>{q.errorMsg}</div>
+            ))}
           </div>
         )}
 
@@ -707,6 +721,7 @@ CRITICAL RULES:
           )}
         </div>
       </div>
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
 }
