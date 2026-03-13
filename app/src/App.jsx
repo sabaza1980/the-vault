@@ -190,13 +190,34 @@ function CardItem({ card, onDelete, onUpdate, user }) {
         : "You have the BACK of this card.";
       content.push({
         type: "text",
-        text: `${sideNote} The back of a card often reveals: serial number stamps (written as X/Y e.g. 45/99), autograph signatures, certification holograms, and set details not visible on the front. Re-examine all evidence from both sides and update your analysis.\n\nOutput a single valid JSON object (no markdown, no extra text) with these exact fields: playerName, fullCardName, pack, team, year, brand, series, parallel, cardNumber, serialNumber (exact X/Y stamp or null), isRookie, hasAutograph, autographType (On-Card/Sticker/null), rarity (Common/Uncommon/Rare/Very Rare/Ultra Rare/Legendary), condition (Mint/Near Mint/Excellent/Good/Fair/Poor/Unknown), conditionDetail, playerContext, confidenceLevel (High/Medium/Low), notes.`
+        text: `${sideNote}
+
+Focus ONLY on what the back of the card reveals that the front may not have shown. Look carefully for:
+- SERIAL NUMBER: Any "X/Y" stamp (e.g. 45/99, 1/1) — check all edges, corners, and printed text
+- AUTOGRAPH: Any ink signature, sticker auto, or hologram certification confirming an autograph
+- PARALLEL: Any foil, color, or finish details confirming the specific parallel variant
+- CARD NUMBER: The card number printed on the back (e.g. #278)
+- CONDITION: Any damage, scratches, or print defects visible on this side
+
+Output ONLY a valid JSON object — no markdown, no extra text — with these fields (omit any field you are not updating, use null if unsure):
+{
+  "serialNumber": "exact X/Y stamp as printed, or null",
+  "hasAutograph": true or false,
+  "autographType": "On-Card" | "Sticker" | null,
+  "parallel": "confirmed parallel name or null",
+  "cardNumber": "card number as printed, or null",
+  "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
+  "condition": "Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown",
+  "conditionDetail": "1-2 sentences on what this side of the card shows about condition, or null",
+  "confidenceLevel": "High | Medium | Low",
+  "notes": "any additional observations from the back, or null"
+}`
       });
 
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 1500, messages: [{ role: "user", content }] })
+        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 600, messages: [{ role: "user", content }] })
       });
       if (!response.ok) throw new Error(`API ${response.status}`);
       const data = await response.json();
@@ -204,7 +225,13 @@ function CardItem({ card, onDelete, onUpdate, user }) {
       let newInfo = {};
       try { newInfo = JSON.parse(rawText.replace(/```json|```/g, "").trim()); } catch { /* keep existing data */ }
 
-      onUpdate(card.id, { backImageUrl, ...newInfo });
+      // Only apply card-authentication fields — never overwrite player identity/context
+      const CARD_FIELDS = ["serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes"];
+      const filtered = Object.fromEntries(
+        Object.entries(newInfo).filter(([k, v]) => CARD_FIELDS.includes(k) && v !== null && v !== undefined)
+      );
+
+      onUpdate(card.id, { backImageUrl, ...filtered });
     } catch (err) {
       console.error("Back image analysis error:", err);
     } finally {
