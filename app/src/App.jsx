@@ -88,16 +88,16 @@ function Lightbox({ imageUrl, playerName, onClose }) {
 function CardSkeleton() {
   return (
     <div style={{
-      background: "#0d0d1a", border: "1px solid #1a1a2e",
+      background: "var(--card)", border: "1px solid var(--b)",
       borderRadius: 16, padding: 16, display: "flex", gap: 14,
       animation: "pulse 1.5s ease-in-out infinite"
     }}>
-      <div style={{ width: 80, height: 110, borderRadius: 8, background: "#1a1a2e", flexShrink: 0 }} />
+      <div style={{ width: 80, height: 110, borderRadius: 8, background: "var(--sk)", flexShrink: 0 }} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
-        <div style={{ height: 10, width: "40%", borderRadius: 4, background: "#1a1a2e" }} />
-        <div style={{ height: 22, width: "65%", borderRadius: 4, background: "#1a1a2e" }} />
-        <div style={{ height: 12, width: "50%", borderRadius: 4, background: "#1a1a2e" }} />
-        <div style={{ height: 10, width: "35%", borderRadius: 4, background: "#1a1a2e" }} />
+        <div style={{ height: 10, width: "40%", borderRadius: 4, background: "var(--sk)" }} />
+        <div style={{ height: 22, width: "65%", borderRadius: 4, background: "var(--sk)" }} />
+        <div style={{ height: 12, width: "50%", borderRadius: 4, background: "var(--sk)" }} />
+        <div style={{ height: 10, width: "35%", borderRadius: 4, background: "var(--sk)" }} />
       </div>
     </div>
   );
@@ -111,7 +111,7 @@ function StatBadge({ label, value, color }) {
       borderRadius: 10, padding: "8px 16px", minWidth: 72
     }}>
       <span style={{ fontSize: 18, fontWeight: 800, color, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{value}</span>
-      <span style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
+      <span style={{ fontSize: 10, color: "var(--tm)", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
     </div>
   );
 }
@@ -119,8 +119,8 @@ function StatBadge({ label, value, color }) {
 function DetailRow({ label, value, color }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <span style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
-      <span style={{ fontSize: 12, color: color || "#999", fontWeight: 600 }}>{value}</span>
+      <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
+      <span style={{ fontSize: 12, color: color || "var(--ts)", fontWeight: 600 }}>{value}</span>
     </div>
   );
 }
@@ -255,8 +255,8 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
       {lightboxSrc && <Lightbox imageUrl={lightboxSrc} playerName={card.playerName} onClose={() => setLightboxSrc(null)} />}
 
       <div style={{
-        background: "linear-gradient(160deg, #0e0e1c 0%, #12121f 100%)",
-        border: `1px solid ${expanded ? rColor + "40" : "#1c1c2e"}`,
+        background: `linear-gradient(160deg, var(--card) 0%, var(--card2) 100%)`,
+        border: `1px solid ${expanded ? rColor + "40" : "var(--bs)"}`,
         borderRadius: 16, overflow: "hidden",
         transition: "border-color 0.2s, box-shadow 0.2s, transform 0.15s",
         boxShadow: expanded ? `0 6px 28px ${rColor}15` : "none"
@@ -291,16 +291,16 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={handleExpand}>
 
             {/* Set name — top line */}
-            <div style={{ fontSize: 10, color: "#4a4a6a", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3 }}>
+            <div style={{ fontSize: 10, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3 }}>
               {fullCardName}
               {parallelLabel && <span style={{ color: "#ff6b3580" }}> · {parallelLabel}</span>}
-              {card.pack && <span style={{ color: "#3a3a5a" }}> · {card.pack}</span>}
+              {card.pack && <span style={{ color: "var(--tg)" }}> · {card.pack}</span>}
             </div>
 
             {/* Player name + rarity badge */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
               <h3 style={{
-                margin: 0, fontSize: 20, fontWeight: 800, color: "#f0f0f0",
+                margin: 0, fontSize: 20, fontWeight: 800, color: "var(--t)",
                 fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1.5, lineHeight: 1
               }}>{card.playerName}</h3>
               {card.rarity !== "Common" && (
@@ -314,7 +314,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
 
             {/* Team */}
             {card.team && card.team !== "Unknown" && (
-              <div style={{ color: "#555", fontSize: 12, marginTop: 3 }}>{card.team}</div>
+              <div style={{ color: "var(--tm)", fontSize: 12, marginTop: 3 }}>{card.team}</div>
             )}
 
             {/* Badges */}
@@ -334,22 +334,22 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             style={{
               background: "none", border: "none", cursor: "pointer",
               fontSize: 20, lineHeight: 1, padding: "2px 4px",
-              color: card.isFavourite ? "#f0c040" : "#252535",
+              color: card.isFavourite ? "#f0c040" : "var(--so)",
               alignSelf: "flex-start", marginTop: 10,
               transition: "color 0.15s, transform 0.1s"
             }}
-            onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "#444"}
-            onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "#252535"}
+            onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--sh)"}
+            onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--so)"}
           >{card.isFavourite ? "★" : "☆"}</button>
         </div>
 
         {/* Expanded panel */}
         {expanded && (
-          <div style={{ borderTop: "1px solid #ffffff06", padding: "14px 14px 14px" }}>
+          <div style={{ borderTop: "1px solid var(--bf)", padding: "14px 14px 14px" }}>
 
             {/* Back of Card */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
                 Back of Card
                 {backAnalyzing && (
                   <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#ff6b35", fontSize: 8, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
@@ -365,7 +365,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   <div
                     onClick={() => setLightboxSrc(card.backImageUrl)}
                     title="Click to zoom"
-                    style={{ width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid #1c1c2e", cursor: "zoom-in" }}
+                    style={{ width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid var(--bs)", cursor: "zoom-in" }}
                   >
                     <img src={card.backImageUrl} alt="back" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
@@ -374,7 +374,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     <button
                       onClick={() => backFileRef.current?.click()}
                       disabled={backAnalyzing}
-                      style={{ background: "transparent", border: "1px solid #1c1c2e", color: "#555", borderRadius: 8, padding: "4px 12px", cursor: "pointer", fontSize: 11 }}
+                      style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tm)", borderRadius: 8, padding: "4px 12px", cursor: "pointer", fontSize: 11 }}
                     >Replace</button>
                   </div>
                 </div>
@@ -384,8 +384,8 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   disabled={backAnalyzing}
                   style={{
                     display: "flex", alignItems: "center", gap: 7, width: "100%",
-                    background: "#0a0a14", border: "1px dashed #1c1c2e",
-                    color: backAnalyzing ? "#333" : "#555", borderRadius: 10,
+                    background: "var(--deep)", border: "1px dashed var(--bs)",
+                    color: backAnalyzing ? "var(--tf)" : "var(--tm)", borderRadius: 10,
                     padding: "10px 16px", cursor: backAnalyzing ? "not-allowed" : "pointer",
                     fontSize: 12, fontWeight: 500
                   }}
@@ -399,8 +399,8 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {/* Player context */}
             {card.playerContext && (
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 5 }}>About This Card</div>
-                <p style={{ margin: 0, fontSize: 12, color: "#888", lineHeight: 1.7 }}>{card.playerContext}</p>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 5 }}>About This Card</div>
+                <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.playerContext}</p>
               </div>
             )}
 
@@ -408,7 +408,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {card.conditionDetail && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                  <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Condition Assessment</div>
+                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Condition Assessment</div>
                   {card.condition && (
                     <span style={{
                       fontSize: 9, padding: "2px 7px", borderRadius: 6, fontWeight: 700,
@@ -418,7 +418,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     }}>{card.condition}</span>
                   )}
                 </div>
-                <p style={{ margin: 0, fontSize: 12, color: "#888", lineHeight: 1.7 }}>{card.conditionDetail}</p>
+                <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.conditionDetail}</p>
               </div>
             )}
 
@@ -432,17 +432,17 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             </div>
 
             {card.notes && (
-              <p style={{ margin: "0 0 12px", fontSize: 11, color: "#3a3a5a", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
+              <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
             )}
 
             {/* eBay Live Pricing */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
                 Recent eBay Sales
-                <span style={{ fontSize: 8, color: "#2a2a4a", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>live data</span>
+                <span style={{ fontSize: 8, color: "var(--tf)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>live data</span>
               </div>
               {ebayLoading && (
-                <div style={{ fontSize: 12, color: "#3a3a5a", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                   Fetching eBay sales...
                 </div>
@@ -453,20 +453,20 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     <span style={{ fontSize: 22, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
                       ${ebayData.avg.toFixed(2)}
                     </span>
-                    <span style={{ fontSize: 10, color: "#555" }}>avg of {ebayData.sales.length} recent sales</span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ebayData.sales.length} recent sales</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {ebayData.sales.slice(0, 4).map((sale, i) => (
                       <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
                         display: "flex", justifyContent: "space-between", alignItems: "center",
-                        padding: "6px 10px", borderRadius: 8, background: "#0a0a14",
-                        border: "1px solid #1a1a28", textDecoration: "none",
+                        padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
+                        border: "1px solid var(--b)", textDecoration: "none",
                         transition: "border-color 0.15s"
                       }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = "#4caf5040"}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = "#1a1a28"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
                       >
-                        <span style={{ fontSize: 11, color: "#666", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 8 }}>{sale.title}</span>
+                        <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 8 }}>{sale.title}</span>
                         <span style={{ fontSize: 12, fontWeight: 700, color: "#4caf50", flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
                       </a>
                     ))}
@@ -474,13 +474,13 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                 </>
               )}
               {!ebayLoading && !ebayData && ebayFetched && (
-                <div style={{ fontSize: 12, color: "#3a3a5a", fontStyle: "italic" }}>No recent eBay sales found for this card.</div>
+                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No recent eBay sales found for this card.</div>
               )}
             </div>
 
             {/* My Notes */}
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>My Notes</div>
+              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>My Notes</div>
               <textarea
                 value={localNotes}
                 onChange={e => setLocalNotes(e.target.value)}
@@ -488,8 +488,8 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                 placeholder="Add your own notes about this card…"
                 rows={3}
                 style={{
-                  width: "100%", background: "#0a0a14", border: "1px solid #1a1a28",
-                  borderRadius: 8, color: "#aaa", fontSize: 12, padding: "8px 10px",
+                  width: "100%", background: "var(--deep)", border: "1px solid var(--b)",
+                  borderRadius: 8, color: "var(--ts)", fontSize: 12, padding: "8px 10px",
                   resize: "vertical", outline: "none", fontFamily: "inherit", lineHeight: 1.6
                 }}
               />
@@ -528,6 +528,12 @@ export default function App() {
   const [sortBy, setSortBy] = useState("newest");
   const [search, setSearch] = useState("");
   const [view, setView] = useState("cards"); // "cards" | "table"
+  const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
+  const toggleTheme = () => setTheme(t => {
+    const next = t === "dark" ? "light" : "dark";
+    localStorage.setItem("vault-theme", next);
+    return next;
+  });
   const fileRef = useRef();
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
@@ -720,7 +726,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   const doneCount = queue.filter(q => q.status === "done").length;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#07070f", color: "#fff", fontFamily: "'Inter', sans-serif" }}>
+    <div data-theme={theme} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--t)", fontFamily: "'Inter', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -728,14 +734,34 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0a0a10; }
-        ::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: var(--scroll-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 3px; }
+        [data-theme="dark"] {
+          --bg:#07070f; --surface:#09090e; --card:#0e0e1c; --card2:#12121f;
+          --input:#0d0d1a; --deep:#0a0a14;
+          --b:#1a1a2e; --bs:#1c1c2e; --bf:rgba(255,255,255,0.024);
+          --t:#f0f0f0; --ts:#888; --tm:#555; --td:#444; --tg:#3a3a5a; --tf:#2a2a3a; --tl:#4a4a6a;
+          --hbg:linear-gradient(180deg,#09090f 0%,transparent 100%); --hb:rgba(255,255,255,0.024);
+          --sk:#1a1a2e; --so:#252535; --sh:#444;
+          --gbg:rgba(255,255,255,0.04); --gb:rgba(255,255,255,0.08); --gc:#888;
+          --scroll-track:#0a0a10; --scroll-thumb:#222;
+        }
+        [data-theme="light"] {
+          --bg:#f2f2f8; --surface:#f6f6fc; --card:#ffffff; --card2:#f9f9fc;
+          --input:#ebebf5; --deep:#e0e0f0;
+          --b:#d8d8ea; --bs:#d0d0e6; --bf:rgba(0,0,0,0.06);
+          --t:#111120; --ts:#505060; --tm:#70709a; --td:#88889a; --tg:#8888aa; --tf:#b0b0c8; --tl:#9090b4;
+          --hbg:linear-gradient(180deg,#f2f2f8 0%,transparent 100%); --hb:rgba(0,0,0,0.08);
+          --sk:#d8d8ea; --so:#cacada; --sh:#888;
+          --gbg:rgba(0,0,0,0.04); --gb:rgba(0,0,0,0.1); --gc:#555;
+          --scroll-track:#e4e4f2; --scroll-thumb:#c0c0d8;
+        }
       `}</style>
 
       {/* Header */}
       <div style={{
-        background: "linear-gradient(180deg, #09090f 0%, transparent 100%)",
-        borderBottom: "1px solid #ffffff06", padding: "22px 24px 18px",
+        background: "var(--hbg)",
+        borderBottom: "1px solid var(--hb)", padding: "22px 24px 18px",
         position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(20px)"
       }}>
         <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -749,7 +775,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
               }}>The Vault</h1>
             </div>
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: "#383850" }}>AI card identification · eBay pricing</p>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · eBay pricing</p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {cards.length > 0 && (
@@ -758,14 +784,24 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 {rareCounts > 0 && <StatBadge label="Rare+" value={rareCounts} color="#9c27b0" />}
               </>
             )}
+            <button
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              style={{
+                background: "var(--gbg)", border: "1px solid var(--gb)",
+                borderRadius: 20, padding: "5px 10px",
+                color: "var(--gc)", fontSize: 15, cursor: "pointer",
+                display: "flex", alignItems: "center"
+              }}
+            >{theme === "dark" ? "☀️" : "🌙"}</button>
             {user === undefined ? null : user ? (
               <button
                 onClick={signOut}
                 title={`Signed in as ${user.displayName || user.email}`}
                 style={{
-                  background: "#ffffff0a", border: "1px solid #ffffff15",
+                  background: "var(--gbg)", border: "1px solid var(--gb)",
                   borderRadius: 20, padding: "5px 12px",
-                  color: "#888", fontSize: 11, fontWeight: 600,
+                  color: "var(--gc)", fontSize: 11, fontWeight: 600,
                   cursor: "pointer", display: "flex", alignItems: "center", gap: 6
                 }}
               >
@@ -778,7 +814,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <button
                 onClick={() => setShowAuth(true)}
                 style={{
-                  background: "#ffffff0a", border: "1px solid #ff6b3530",
+                  background: "var(--gbg)", border: "1px solid #ff6b3530",
                   borderRadius: 20, padding: "5px 14px",
                   color: "#ff6b35", fontSize: 11, fontWeight: 700,
                   cursor: "pointer", letterSpacing: 0.4
@@ -796,9 +832,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         {/* Top 10 by Value Hero */}
         {top10.length > 0 && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 9, color: "#3a3a5a", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
               Top 10 by Value
-              <span style={{ fontSize: 8, color: "#252535", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>based on recent eBay sales</span>
+              <span style={{ fontSize: 8, color: "var(--tf)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>based on recent eBay sales</span>
             </div>
             <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "thin", scrollbarColor: "#1a1a2e transparent" }}>
               {top10.map((card, i) => {
@@ -818,7 +854,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                         <div style={{ position: "absolute", top: 3, right: 5, fontSize: 12, color: "#f0c040" }}>★</div>
                       )}
                     </div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: "#ccc", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.playerName}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ts)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.playerName}</div>
                     <div style={{ fontSize: 13, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 0.5 }}>${card.estimatedValue.toFixed(2)}</div>
                   </div>
                 );
@@ -834,9 +870,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           onDrop={handleDrop}
           onClick={() => fileRef.current?.click()}
           style={{
-            border: `2px dashed ${dragOver ? "#ff6b35" : "#1a1a28"}`,
+            border: `2px dashed ${dragOver ? "#ff6b35" : "var(--b)"}`,
             borderRadius: 18, padding: "24px 24px", textAlign: "center",
-            cursor: "pointer", background: dragOver ? "#ff6b3506" : "#09090e",
+            cursor: "pointer", background: dragOver ? "#ff6b3506" : "var(--surface)",
             transition: "all 0.2s", marginBottom: 20
           }}
         >
@@ -895,8 +931,8 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           ) : (
             <>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
-              <div style={{ color: "#aaa", fontWeight: 600, fontSize: 14 }}>Drop card photos here</div>
-              <div style={{ color: "#333", fontSize: 12, marginTop: 3 }}>Select one or multiple — each card is identified automatically</div>
+              <div style={{ color: "var(--ts)", fontWeight: 600, fontSize: 14 }}>Drop card photos here</div>
+              <div style={{ color: "var(--td)", fontSize: 12, marginTop: 3 }}>Select one or multiple — each card is identified automatically</div>
             </>
           )}
         </div>
@@ -917,7 +953,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         {cards.length > 0 && (
           <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
             <div style={{ position: "relative", width: "100%", marginBottom: 6 }}>
-              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#444", pointerEvents: "none" }}>🔍</span>
+              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--td)", pointerEvents: "none" }}>🔍</span>
               <input
                 type="text"
                 placeholder="Search player, set, team, parallel, serial…"
@@ -925,14 +961,14 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 onChange={e => setSearch(e.target.value)}
                 style={{
                   width: "100%", padding: "8px 12px 8px 34px",
-                  background: "#0d0d1a", border: "1px solid #1a1a2e",
-                  borderRadius: 10, color: "#fff", fontSize: 13, outline: "none"
+                  background: "var(--input)", border: "1px solid var(--b)",
+                  borderRadius: 10, color: "var(--t)", fontSize: 13, outline: "none"
                 }}
               />
               {search && (
                 <button onClick={() => setSearch("")} style={{
                   position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                  background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 16, lineHeight: 1
+                  background: "none", border: "none", color: "var(--tm)", cursor: "pointer", fontSize: 16, lineHeight: 1
                 }}>×</button>
               )}
             </div>
@@ -943,16 +979,16 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 return (
                   <button key={t} onClick={() => setFilter(t)} style={{
                     padding: "4px 12px", borderRadius: 20, border: "1px solid",
-                    borderColor: filter === t ? activeColor : "#1a1a28",
+                    borderColor: filter === t ? activeColor : "var(--b)",
                     background: filter === t ? `${activeColor}15` : "transparent",
-                    color: filter === t ? activeColor : "#555",
+                    color: filter === t ? activeColor : "var(--tm)",
                     cursor: "pointer", fontSize: 11, fontWeight: 600
                   }}>{isFav ? "★ Faves" : t}</button>
                 );
               })}
             </div>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
-              background: "#0a0a10", border: "1px solid #1a1a28", color: "#666",
+              background: "var(--deep)", border: "1px solid var(--b)", color: "var(--ts)",
               borderRadius: 8, padding: "4px 10px", fontSize: 11, cursor: "pointer"
             }}>
               <option value="newest">Newest</option>
@@ -963,9 +999,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               {["cards", "table"].map(v => (
                 <button key={v} onClick={() => setView(v)} style={{
                   padding: "4px 10px", borderRadius: 8, border: "1px solid",
-                  borderColor: view === v ? "#ff6b35" : "#1a1a28",
+                  borderColor: view === v ? "#ff6b35" : "var(--b)",
                   background: view === v ? "#ff6b3515" : "transparent",
-                  color: view === v ? "#ff6b35" : "#444",
+                  color: view === v ? "#ff6b35" : "var(--td)",
                   cursor: "pointer", fontSize: 13
                 }}>{v === "cards" ? "⊞" : "☰"}</button>
               ))}
@@ -984,13 +1020,13 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             {cards.length === 0 && queue.length === 0 && (
               <div style={{ textAlign: "center", padding: "60px 0" }}>
                 <div style={{ fontSize: 44, marginBottom: 10 }}>🃏</div>
-                <div style={{ fontSize: 13, color: "#2a2a3a" }}>Your vault is empty — upload your first card</div>
+                <div style={{ fontSize: 13, color: "var(--tf)" }}>Your vault is empty — upload your first card</div>
               </div>
             )}
             {cards.length > 0 && filteredCards.length === 0 && (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-                <div style={{ fontSize: 13, color: "#2a2a3a" }}>No cards match your search</div>
+                <div style={{ fontSize: 13, color: "var(--tf)" }}>No cards match your search</div>
               </div>
             )}
           </div>
@@ -1002,19 +1038,19 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             {cards.length === 0 && queue.length === 0 ? (
               <div style={{ textAlign: "center", padding: "60px 0" }}>
                 <div style={{ fontSize: 44, marginBottom: 10 }}>🃏</div>
-                <div style={{ fontSize: 13, color: "#2a2a3a" }}>Your vault is empty — upload your first card</div>
+                <div style={{ fontSize: 13, color: "var(--tf)" }}>Your vault is empty — upload your first card</div>
               </div>
             ) : filteredCards.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
-                <div style={{ fontSize: 13, color: "#2a2a3a" }}>No cards match your search</div>
+                <div style={{ fontSize: 13, color: "var(--tf)" }}>No cards match your search</div>
               </div>
             ) : (
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid #1a1a2e" }}>
+                  <tr style={{ borderBottom: "1px solid var(--b)" }}>
                     {["★", "Player", "Set", "Team", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
-                      <th key={h} style={{ padding: "8px 10px", color: "#444", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                      <th key={h} style={{ padding: "8px 10px", color: "var(--td)", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1022,32 +1058,32 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                   {filteredCards.map((card, i) => {
                     const rarityColor = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#ff6b35" }[card.rarity] || "#555";
                     return (
-                      <tr key={card.id} style={{ borderBottom: "1px solid #0d0d1a", background: i % 2 === 0 ? "transparent" : "#0a0a1200" }}>
+                      <tr key={card.id} style={{ borderBottom: "1px solid var(--b)", background: "transparent" }}>
                         <td style={{ padding: "9px 6px", textAlign: "center" }}>
-                          <button onClick={() => handleUpdate(card.id, { isFavourite: !card.isFavourite })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 2, color: card.isFavourite ? "#f0c040" : "#252535" }} title={card.isFavourite ? "Unfavourite" : "Favourite"}>{card.isFavourite ? "★" : "☆"}</button>
+                          <button onClick={() => handleUpdate(card.id, { isFavourite: !card.isFavourite })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 2, color: card.isFavourite ? "#f0c040" : "var(--so)" }} title={card.isFavourite ? "Unfavourite" : "Favourite"}>{card.isFavourite ? "★" : "☆"}</button>
                         </td>
-                        <td style={{ padding: "9px 10px", color: "#ddd", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "9px 10px", color: "var(--t)", fontWeight: 600, whiteSpace: "nowrap" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                             {card.imageUrl && <img src={card.imageUrl} alt="" style={{ width: 28, height: 38, objectFit: "cover", borderRadius: 3, flexShrink: 0 }} />}
                             <span>{card.playerName || "—"}</span>
                           </div>
                         </td>
-                        <td style={{ padding: "9px 10px", color: "#888", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.fullCardName || "—"}</td>
-                        <td style={{ padding: "9px 10px", color: "#888", whiteSpace: "nowrap" }}>{card.team || "—"}</td>
-                        <td style={{ padding: "9px 10px", color: "#666", whiteSpace: "nowrap" }}>{card.year || "—"}</td>
-                        <td style={{ padding: "9px 10px", color: "#666", whiteSpace: "nowrap" }}>{card.parallel || "Base"}</td>
+                        <td style={{ padding: "9px 10px", color: "var(--ts)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.fullCardName || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "var(--ts)", whiteSpace: "nowrap" }}>{card.team || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "var(--td)", whiteSpace: "nowrap" }}>{card.year || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "var(--td)", whiteSpace: "nowrap" }}>{card.parallel || "Base"}</td>
                         <td style={{ padding: "9px 10px", color: "#ff9800", fontWeight: 600, whiteSpace: "nowrap" }}>{card.serialNumber || "—"}</td>
-                        <td style={{ padding: "9px 10px", textAlign: "center" }}>{card.hasAutograph ? <span style={{ color: "#4caf50" }}>✓</span> : <span style={{ color: "#2a2a3a" }}>—</span>}</td>
+                        <td style={{ padding: "9px 10px", textAlign: "center" }}>{card.hasAutograph ? <span style={{ color: "#4caf50" }}>✓</span> : <span style={{ color: "var(--tf)" }}>—</span>}</td>
                         <td style={{ padding: "9px 10px", whiteSpace: "nowrap" }}>
                           <span style={{ color: rarityColor, fontWeight: 600 }}>{card.rarity || "—"}</span>
                         </td>
-                        <td style={{ padding: "9px 10px", color: "#666", whiteSpace: "nowrap" }}>{card.condition || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "var(--ts)", whiteSpace: "nowrap" }}>{card.condition || "—"}</td>
                         <td style={{ padding: "9px 10px", color: "#4caf50", fontWeight: 600, whiteSpace: "nowrap" }}>
                           {card.ebayData?.avg ? `$${card.ebayData.avg}` : "—"}
                         </td>
                         <td style={{ padding: "9px 10px" }}>
                           <button onClick={() => setCards(prev => prev.filter(c => c.id !== card.id))} style={{
-                            background: "none", border: "none", color: "#2a2a3a", cursor: "pointer", fontSize: 14, padding: 2
+                            background: "none", border: "none", color: "var(--tf)", cursor: "pointer", fontSize: 14, padding: 2
                           }} title="Delete">✕</button>
                         </td>
                       </tr>
