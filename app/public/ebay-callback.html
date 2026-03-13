@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connecting to eBay…</title>
+  <style>
+    body { margin: 0; font-family: 'Inter', sans-serif; background: #07070f; color: #f0f0f0;
+           display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { text-align: center; padding: 40px 32px; max-width: 340px; }
+    .icon { font-size: 44px; margin-bottom: 16px; }
+    h1 { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+    p  { font-size: 13px; color: #888; margin: 0; line-height: 1.6; }
+    .error { color: #ff6666; }
+  </style>
+</head>
+<body>
+  <div class="card" id="root">
+    <div class="icon">🔄</div>
+    <h1>Connecting to eBay…</h1>
+    <p>This window will close automatically.</p>
+  </div>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var code  = params.get('code');
+      var error = params.get('error');
+      var errorDesc = params.get('error_description');
+
+      if (window.opener && window.opener !== window) {
+        window.opener.postMessage(
+          { type: 'EBAY_AUTH_CODE', code: code, error: error || null },
+          window.location.origin
+        );
+        // Short delay so the user can see the message before close
+        setTimeout(function () { window.close(); }, 600);
+      } else {
+        // Opened directly (no opener) — show a message
+        var root = document.getElementById('root');
+        if (error) {
+          root.innerHTML = '<div class="icon">✕</div><h1 class="error">Connection failed</h1><p>' +
+            (errorDesc || error) + '</p>';
+        } else {
+          root.innerHTML = '<div class="icon">✓</div><h1>eBay connected</h1><p>You can close this window.</p>';
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

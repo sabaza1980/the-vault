@@ -3,6 +3,7 @@ import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
+import EbayListingModal from "./EbayListingModal";
 import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -126,7 +127,7 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-function CardItem({ card, onDelete, onUpdate, user }) {
+function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [ebayData, setEbayData] = useState(null);
@@ -267,25 +268,35 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
       >
         <div style={{ display: "flex", gap: 14, padding: 14 }}>
 
-          {/* Thumbnail — click = lightbox */}
+          {/* Thumbnail — click = lightbox or bundle toggle */}
           <div
-            onClick={() => setLightboxSrc(card.imageUrl)}
-            title="Click to zoom"
+            onClick={() => bundleMode ? onToggleBundle(String(card.id)) : setLightboxSrc(card.imageUrl)}
+            title={bundleMode ? (inBundle ? "Remove from bundle" : "Add to bundle") : "Click to zoom"}
             style={{
               width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0,
-              border: `2px solid ${rColor}40`, boxShadow: `0 0 14px ${rColor}18`,
-              cursor: "zoom-in", position: "relative", display: "flex", alignItems: "center", justifyContent: "center"
+              border: bundleMode ? `2px solid ${inBundle ? "#e53935" : "var(--b)"}` : `2px solid ${rColor}40`,
+              boxShadow: bundleMode ? (inBundle ? "0 0 14px #e5393540" : "none") : `0 0 14px ${rColor}18`,
+              cursor: bundleMode ? "pointer" : "zoom-in", position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "border-color 0.15s, box-shadow 0.15s"
             }}
           >
             <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            <div style={{
-              position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-              background: "rgba(0,0,0,0)", transition: "background 0.15s",
-              fontSize: 20, color: "#fff", opacity: 0
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.5)"; e.currentTarget.style.opacity = 1; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0)"; e.currentTarget.style.opacity = 0; }}
-            >🔍</div>
+            {bundleMode ? (
+              <div style={{
+                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                background: inBundle ? "rgba(229,57,53,0.55)" : "rgba(0,0,0,0.35)",
+                fontSize: 28, color: "#fff", fontWeight: 700
+              }}>{inBundle ? "✓" : "○"}</div>
+            ) : (
+              <div style={{
+                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                background: "rgba(0,0,0,0)", transition: "background 0.15s",
+                fontSize: 20, color: "#fff", opacity: 0
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.5)"; e.currentTarget.style.opacity = 1; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0)"; e.currentTarget.style.opacity = 0; }}
+              >🔍</div>
+            )}
           </div>
 
           {/* Info — click = expand */}
@@ -325,6 +336,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
               {card.cardNumber && <Badge label={`#${card.cardNumber}`} color="#555" />}
               {card.confidenceLevel === "Low" && <Badge label="⚠ Low Confidence" color="#ff6666" />}
+              {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
             </div>
           </div>
 
@@ -496,6 +508,27 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               />
             </div>
 
+            {/* Sell on eBay */}
+            {!bundleMode && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Sell</div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <button
+                    onClick={() => onSell(card)}
+                    style={{
+                      background: "#e53935", border: "none", color: "#fff",
+                      borderRadius: 8, padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 700
+                    }}
+                  >{card.ebayListingUrl ? "Re-list on eBay" : "Sell on eBay"}</button>
+                  {card.ebayListingUrl && (
+                    <a href={card.ebayListingUrl} target="_blank" rel="noopener noreferrer" style={{
+                      fontSize: 11, color: "#e53935", textDecoration: "none", fontWeight: 600
+                    }}>↗ View listing</a>
+                  )}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={() => onDelete(card.id)}
               style={{
@@ -531,6 +564,9 @@ export default function App() {
   const [view, setView] = useState("cards"); // "cards" | "table"
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
   const [showChat, setShowChat] = useState(false);
+  const [bundleMode, setBundleMode] = useState(false);
+  const [bundleCardIds, setBundleCardIds] = useState(new Set());
+  const [sellModalCards, setSellModalCards] = useState(null);
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
     localStorage.setItem("vault-theme", next);
@@ -659,6 +695,21 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   const handleUpdate = useCallback((id, updates) => {
     setCards(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updates } : c));
   }, []);
+
+  const handleSellCard = useCallback((card) => setSellModalCards([card]), []);
+  const handleBundleToggle = useCallback((id) => setBundleCardIds(prev => {
+    const next = new Set(prev);
+    next.has(String(id)) ? next.delete(String(id)) : next.add(String(id));
+    return next;
+  }), []);
+  const cancelBundleMode = useCallback(() => { setBundleMode(false); setBundleCardIds(new Set()); }, []);
+  const openBundleSell = useCallback(() => {
+    setSellModalCards(cards.filter(c => bundleCardIds.has(String(c.id))));
+  }, [cards, bundleCardIds]);
+  const handleSellSuccess = useCallback((cardIds, listingUrl) => {
+    cardIds.forEach(id => handleUpdate(id, { ebayListingUrl: listingUrl, listedAt: new Date().toISOString() }));
+    cancelBundleMode();
+  }, [handleUpdate, cancelBundleMode]);
 
   const handleFiles = useCallback(async (files) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
@@ -1022,6 +1073,18 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 }}>{v === "cards" ? "⊞" : "☰"}</button>
               ))}
             </div>
+            {view === "cards" && (
+              <button
+                onClick={() => { setBundleMode(v => !v); setBundleCardIds(new Set()); }}
+                style={{
+                  padding: "4px 12px", borderRadius: 8, border: "1px solid",
+                  borderColor: bundleMode ? "#e53935" : "var(--b)",
+                  background: bundleMode ? "#e5393515" : "transparent",
+                  color: bundleMode ? "#e53935" : "var(--td)",
+                  cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
+                }}
+              >{bundleMode ? "✕ Cancel Bundle" : "Bundle Sell"}</button>
+            )}
           </div>
         )}
 
@@ -1030,7 +1093,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
@@ -1111,6 +1174,38 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           </div>
         )}
       </div>
+      {/* Floating bundle action bar */}
+      {bundleMode && (
+        <div style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+          zIndex: 50, background: "var(--card)", border: "1px solid var(--b)",
+          borderRadius: 40, padding: "10px 20px", display: "flex", alignItems: "center", gap: 12,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)", whiteSpace: "nowrap"
+        }}>
+          <span style={{ fontSize: 12, color: "var(--ts)" }}>
+            {bundleCardIds.size === 0 ? "Tap cards to add to bundle" : `${bundleCardIds.size} card${bundleCardIds.size > 1 ? "s" : ""} selected`}
+          </span>
+          {bundleCardIds.size >= 2 && (
+            <button onClick={openBundleSell} style={{
+              background: "#e53935", border: "none", color: "#fff",
+              borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer"
+            }}>List Bundle →</button>
+          )}
+          <button onClick={cancelBundleMode} style={{
+            background: "var(--gbg)", border: "1px solid var(--gb)", color: "var(--gc)",
+            borderRadius: 20, padding: "6px 12px", fontSize: 11, cursor: "pointer"
+          }}>Cancel</button>
+        </div>
+      )}
+
+      {sellModalCards && (
+        <EbayListingModal
+          cards={sellModalCards}
+          user={user}
+          onClose={() => setSellModalCards(null)}
+          onSuccess={handleSellSuccess}
+        />
+      )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
       <VaultChat
         cards={cards}
