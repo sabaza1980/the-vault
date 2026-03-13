@@ -18,6 +18,7 @@ export const PERSONAS = {
     shortDescription: "Easygoing hobby knowledge, serious card insight.",
     accentColor: "#ff6b35",
     avatarEmoji: "🏀",
+    avatarImage: "/panini-avatar.png",
     personalityTraits: ["relaxed", "sharp", "warm", "honest", "hobby-native"],
     voiceStyle:
       "Casual, direct, conversational. Sounds like a trusted friend at a card show — not trying too hard, just knows the hobby.",
@@ -81,6 +82,7 @@ You: "Maybe, but not automatically. The math only works if the card is clean eno
     shortDescription: "Smart collector instincts, clean card analysis.",
     accentColor: "#9c27b0",
     avatarEmoji: "✨",
+    avatarImage: "/toppsy-avatar.png",
     personalityTraits: ["analytical", "warm", "clear", "confident", "strategically sharp"],
     voiceStyle:
       "Warm but analytical. Clear and friendly. Confident without being condescending. Lightly playful when it fits naturally.",

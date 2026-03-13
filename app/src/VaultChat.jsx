@@ -30,8 +30,19 @@ function PersonaCard({ persona, onSelect }) {
         gap: 8,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 22 }}>{persona.avatarEmoji}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img
+          src={persona.avatarImage}
+          alt={persona.avatarName}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            objectFit: "cover",
+            border: `2px solid ${persona.accentColor}50`,
+            flexShrink: 0,
+          }}
+        />
         <span
           style={{
             fontSize: 15,
@@ -71,18 +82,14 @@ function MessageBubble({ msg, persona }) {
             width: 28,
             height: 28,
             borderRadius: "50%",
-            background: `${persona.accentColor}20`,
+            overflow: "hidden",
             border: `1px solid ${persona.accentColor}40`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 13,
             flexShrink: 0,
             marginRight: 8,
             alignSelf: "flex-end",
           }}
         >
-          {persona.avatarEmoji}
+          <img src={persona.avatarImage} alt={persona.avatarName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </div>
       )}
       <div
@@ -381,21 +388,18 @@ export default function VaultChat({ cards, isOpen, onClose }) {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {persona && (
-              <span
+              <div
                 style={{
-                  fontSize: 18,
-                  width: 28,
-                  height: 28,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 30,
+                  height: 30,
                   borderRadius: "50%",
-                  background: `${persona.accentColor}20`,
-                  border: `1px solid ${persona.accentColor}40`,
+                  overflow: "hidden",
+                  border: `1px solid ${persona.accentColor}50`,
+                  flexShrink: 0,
                 }}
               >
-                {persona.avatarEmoji}
-              </span>
+                <img src={persona.avatarImage} alt={persona.avatarName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
             )}
             <div>
               <div
@@ -458,6 +462,17 @@ export default function VaultChat({ cards, isOpen, onClose }) {
         {!persona ? (
           // ── Persona selector ──────────────────────────────────────────────
           <div style={{ padding: "20px 16px", overflowY: "auto" }}>
+            <img
+              src="/toppsyandpanini.png"
+              alt="PJ and Toppsy"
+              style={{
+                width: "100%",
+                borderRadius: 12,
+                objectFit: "cover",
+                marginBottom: 16,
+                display: "block",
+              }}
+            />
             <div
               style={{
                 fontSize: 10,
