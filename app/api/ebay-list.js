@@ -30,9 +30,10 @@ const CONDITION_MAP = {
 
 function authHeaders(accessToken) {
   return {
-    'Authorization':          `Bearer ${accessToken}`,
+    'Authorization':           `Bearer ${accessToken}`,
     'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
-    'Content-Type':           'application/json',
+    'Content-Type':            'application/json',
+    'Accept-Language':         'en-US',
   };
 }
 

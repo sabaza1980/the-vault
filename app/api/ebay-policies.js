@@ -10,13 +10,16 @@
 const API = 'https://api.ebay.com';
 const MARKETPLACE = 'EBAY_US';
 
+const EBAY_HEADERS = (accessToken) => ({
+  'Authorization':           `Bearer ${accessToken}`,
+  'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
+  'Content-Type':            'application/json',
+  'Accept-Language':         'en-US',
+});
+
 async function ebayGet(path, accessToken) {
   const res = await fetch(`${API}${path}`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
-      'Content-Type': 'application/json',
-    },
+    headers: EBAY_HEADERS(accessToken),
   });
   return { status: res.status, data: await res.json() };
 }
@@ -24,11 +27,7 @@ async function ebayGet(path, accessToken) {
 async function ebayPost(path, accessToken, body) {
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
-      'Content-Type': 'application/json',
-    },
+    headers: EBAY_HEADERS(accessToken),
     body: JSON.stringify(body),
   });
   return { status: res.status, data: await res.json() };
@@ -37,11 +36,7 @@ async function ebayPost(path, accessToken, body) {
 async function ebayPut(path, accessToken, body) {
   const res = await fetch(`${API}${path}`, {
     method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
-      'Content-Type': 'application/json',
-    },
+    headers: EBAY_HEADERS(accessToken),
     body: JSON.stringify(body),
   });
   return { status: res.status, ok: res.ok };
