@@ -15,6 +15,7 @@ const EBAY_HEADERS = (accessToken) => ({
   'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
   'Content-Type':            'application/json',
   'Accept-Language':         'en-US',
+  'Content-Language':        'en-US',
 });
 
 async function ebayGet(path, accessToken) {
