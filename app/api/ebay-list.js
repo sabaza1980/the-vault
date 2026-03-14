@@ -128,25 +128,43 @@ export default async function handler(req, res) {
     ? `vault-bundle-${Date.now()}`
     : `vault-${cards[0].id}`;
 
-  const ebayCondition = condition || CONDITION_MAP[cards[0]?.condition] || 'USED_GOOD';
+  const ebayCondition = CONDITION_MAP[condition] || CONDITION_MAP[cards[0]?.condition] || 'USED_GOOD';
   const imageUrls     = getImageUrls(cards);
   const description   = buildDescription(cards, conditionDescription);
   const cleanTitle    = truncateTitle(title.trim());
 
   const headers = authHeaders(accessToken);
 
+  // Build item aspects from card data — eBay requires these for category 183050
+  function buildAspects(cards) {
+    const c = cards[0];
+    const aspects = {};
+    if (c.playerName)                              aspects['Player/Athlete']       = [c.playerName];
+    if (c.year)                                    aspects['Season']               = [String(c.year)];
+    if (c.brand)                                   aspects['Card Manufacturer']    = [c.brand];
+    if (c.series)                                  aspects['Set']                  = [c.series];
+    if (c.cardNumber)                              aspects['Card Number']           = [String(c.cardNumber)];
+    if (c.parallel && c.parallel !== 'Base')       aspects['Parallel/Variety']     = [c.parallel];
+    if (c.serialNumber)                            aspects['Print Run']             = [String(c.serialNumber)];
+    if (c.hasAutograph)                            aspects['Autograph']             = ['Yes'];
+    if (c.isRookie)                                aspects['Rookie']                = ['Yes'];
+    if (c.team)                                    aspects['Team']                  = [c.team];
+    aspects['Sport'] = ['Basketball'];
+    aspects['Type']  = cards.length > 1 ? ['Lot'] : ['Base Set Card'];
+    return aspects;
+  }
+
   try {
     // ── Step 1: Create / update inventory item ───────────────────────────────
     const inventoryBody = {
       availability: { shipToLocationAvailability: { quantity: 1 } },
       condition: ebayCondition,
-      product: {
-        title:       cleanTitle,
-        description,
-        ...(imageUrls.length > 0 ? { imageUrls } : {}),
-        aspects: {},
-      },
       ...(conditionDescription ? { conditionDescription } : {}),
+      product: {
+        title:    cleanTitle,
+        aspects:  buildAspects(cards),
+        ...(imageUrls.length > 0 ? { imageUrls } : {}),
+      },
     };
 
     const inventoryRes = await fetch(`${API}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`, {
@@ -157,9 +175,14 @@ export default async function handler(req, res) {
 
     // 204 = created, 200 = updated — both are OK
     if (inventoryRes.status !== 200 && inventoryRes.status !== 204) {
-      const errData = await inventoryRes.json().catch(() => ({}));
-      const msg = errData.errors?.[0]?.longMessage || errData.errors?.[0]?.message || JSON.stringify(errData);
-      return res.status(inventoryRes.status).json({ error: `Inventory item creation failed: ${msg}` });
+      const rawText = await inventoryRes.text();
+      console.error('eBay inventory PUT body sent:', JSON.stringify(inventoryBody, null, 2));
+      console.error('eBay inventory error response:', rawText);
+      // Return the raw eBay response verbatim so the client can display it
+      return res.status(inventoryRes.status).json({
+        error: `eBay said: ${rawText}`,
+        sentBody: inventoryBody,
+      });
     }
 
     // ── Step 2: Create offer ─────────────────────────────────────────────────

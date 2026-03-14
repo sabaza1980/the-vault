@@ -104,7 +104,7 @@ function CardThumbnail({ card }) {
 
 export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
   const {
-    ebayConnected, hasPolicies, missingPolicies,
+    ebayConnected, hasPolicies, missingPolicies, refreshPolicies,
     authLoading, connecting, connectError,
     connect, disconnect, getValidToken, ebayAuth,
   } = useEbayAuth(user);
@@ -155,7 +155,10 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Listing failed (${res.status})`);
+      if (!res.ok) {
+        console.error('eBay list error - sent body:', data.sentBody);
+        throw new Error(data.error || `Listing failed (${res.status})`);
+      }
 
       setResult(data);
       setStepText("");
@@ -308,7 +311,7 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
               </a>
               <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
                 <button
-                  onClick={() => connect()}
+                  onClick={refreshPolicies}
                   disabled={connecting}
                   style={{ fontSize: 11, color: "#ff6b35", background: "transparent", border: "1px solid #ff6b3540", borderRadius: 8, padding: "6px 14px", cursor: "pointer" }}
                 >

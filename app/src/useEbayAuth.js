@@ -171,17 +171,53 @@ export function useEbayAuth(user) {
     const pollClosed = setInterval(() => {
       if (!popup || popup.closed) {
         clearInterval(pollClosed);
-        clearInterval(pollStorage);
-        // Give a short grace period in case the storage poll fires at the same tick
+        // Keep pollStorage running a bit longer — the callback page may have written
+        // to localStorage just before the popup closed and we haven't read it yet.
+        // After 1.5 s, do a final check and process whatever we find.
         setTimeout(() => {
-          if (!codeHandled && !localStorage.getItem("_vault_ebay_auth")) {
+          clearInterval(pollStorage);
+          if (codeHandled) return;
+          const raw = localStorage.getItem("_vault_ebay_auth");
+          if (raw) {
+            localStorage.removeItem("_vault_ebay_auth");
+            try {
+              processCodeRef.current(JSON.parse(raw));
+            } catch (e) {
+              setConnectError("Failed to parse eBay auth response.");
+              setConnecting(false);
+            }
+          } else {
             setConnecting(false);
             setConnectError("Popup was closed before authorisation completed.");
           }
-        }, 600);
+        }, 1500);
       }
     }, 800);
   }, [user]);
+
+  // ── Re-fetch policies using the existing token (no new OAuth popup needed) ──
+  const refreshPolicies = useCallback(async () => {
+    if (!ebayAuth?.accessToken) return;
+    setConnecting(true);
+    setConnectError(null);
+    try {
+      const accessToken = await getValidToken();
+      const policiesRes = await fetch("/api/ebay-policies", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ accessToken }),
+      });
+      const policiesData = await policiesRes.json();
+      const updated = { ...ebayAuth, ...policiesData };
+      if (authDocRef) await setDoc(authDocRef, updated);
+      setEbayAuth(updated);
+    } catch (err) {
+      console.error("refreshPolicies error:", err);
+      setConnectError(err.message || "Failed to refresh policies");
+    } finally {
+      setConnecting(false);
+    }
+  }, [ebayAuth, user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Disconnect eBay ───────────────────────────────────────────────────────
   const disconnect = useCallback(async () => {
@@ -233,5 +269,6 @@ export function useEbayAuth(user) {
     connect,
     disconnect,
     getValidToken,
+    refreshPolicies,
   };
 }
