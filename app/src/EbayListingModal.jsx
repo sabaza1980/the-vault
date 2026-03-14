@@ -5,7 +5,12 @@ import { useEbayAuth } from "./useEbayAuth.js";
 
 const CONDITION_OPTIONS = ["Mint", "Near Mint", "Excellent", "Good", "Fair", "Poor", "Unknown"];
 
-const EBAY_POLICIES_URL = "https://www.ebay.com/sh/pol/overview";
+const EBAY_POLICIES_URL = "https://www.ebay.com.au/sh/pol/overview";
+const EBAY_POLICY_DEEP_LINKS = {
+  "shipping policy":  "https://www.ebay.com.au/sh/pol/create?policyType=SHIPPING",
+  "payment policy":  "https://www.ebay.com.au/sh/pol/create?policyType=PAYMENT",
+  "return policy":   "https://www.ebay.com.au/sh/pol/create?policyType=RETURN",
+};
 
 function buildTitle(cards) {
   if (cards.length === 1) {
@@ -274,18 +279,32 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
                 eBay seller policies needed
               </div>
               <div style={{ fontSize: 12, color: "var(--ts)", lineHeight: 1.65, marginBottom: 14 }}>
-                Before listing, your eBay account needs at least one each of: shipping (fulfillment), payment, and return policies.
+                Before listing, your eBay account needs at least one each of: shipping, payment, and return policies.
                 {missingPolicies && (
                   <span style={{ color: "#ff9800" }}> Missing: {missingPolicies.join(", ")}.</span>
                 )}
+              </div>
+              {/* Deep-link to create each missing policy directly */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                {(missingPolicies && missingPolicies.length > 0 ? missingPolicies : Object.keys(EBAY_POLICY_DEEP_LINKS)).map(p => (
+                  <a
+                    key={p}
+                    href={EBAY_POLICY_DEEP_LINKS[p] || EBAY_POLICIES_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: "inline-block", background: "#e53935", color: "#fff", fontWeight: 700, fontSize: 12, padding: "9px 18px", borderRadius: 8, textDecoration: "none", textTransform: "capitalize" }}
+                  >
+                    Create {p} on eBay →
+                  </a>
+                ))}
               </div>
               <a
                 href={EBAY_POLICIES_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: "inline-block", background: "#e53935", color: "#fff", fontWeight: 700, fontSize: 12, padding: "9px 18px", borderRadius: 8, textDecoration: "none" }}
+                style={{ fontSize: 11, color: "var(--tm)", textDecoration: "underline" }}
               >
-                Set up selling policies on eBay →
+                Or view all policies in eBay Seller Hub
               </a>
               <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
                 <button

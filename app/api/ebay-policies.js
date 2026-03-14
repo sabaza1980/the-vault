@@ -8,7 +8,7 @@
  */
 
 const API = 'https://api.ebay.com';
-const MARKETPLACE = 'EBAY_US';
+const MARKETPLACE = 'EBAY_AU';
 
 async function ebayGet(path, accessToken) {
   const res = await fetch(`${API}${path}`, {
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
     if (!merchantLocationKey) {
       const key = 'vault-default';
       const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
-        location:               { address: { country: 'US' } },
+        location:               { address: { country: 'AU' } },
         name:                   'The Vault',
         merchantLocationStatus: 'ENABLED',
         locationTypes:          ['WAREHOUSE'],
