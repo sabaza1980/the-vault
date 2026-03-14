@@ -5,11 +5,11 @@ import { useEbayAuth } from "./useEbayAuth.js";
 
 const CONDITION_OPTIONS = ["Mint", "Near Mint", "Excellent", "Good", "Fair", "Poor", "Unknown"];
 
-const EBAY_POLICIES_URL = "https://www.ebay.com.au/sh/pol/overview";
+const EBAY_POLICIES_URL = "https://www.ebay.nl/sh/pol/overview";
 const EBAY_POLICY_DEEP_LINKS = {
-  "shipping policy":  "https://www.ebay.com.au/sh/pol/create?policyType=SHIPPING",
-  "payment policy":  "https://www.ebay.com.au/sh/pol/create?policyType=PAYMENT",
-  "return policy":   "https://www.ebay.com.au/sh/pol/create?policyType=RETURN",
+  "shipping policy":  "https://www.ebay.nl/sh/pol/create?policyType=SHIPPING",
+  "payment policy":  "https://www.ebay.nl/sh/pol/create?policyType=PAYMENT",
+  "return policy":   "https://www.ebay.nl/sh/pol/create?policyType=RETURN",
 };
 
 function buildTitle(cards) {
