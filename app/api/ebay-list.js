@@ -13,7 +13,7 @@
  */
 
 const API = 'https://api.ebay.com';
-const MARKETPLACE  = 'EBAY_NL';
+const MARKETPLACE  = 'EBAY_US';
 const CATEGORY_ID  = '183050'; // Sports Trading Cards
 const LISTING_DURATION = 'GTC'; // Good Till Cancelled
 
@@ -177,7 +177,7 @@ export default async function handler(req, res) {
         returnPolicyId,
       },
       pricingSummary: {
-        price: { currency: 'EUR', value: price.toFixed(2) },
+        price: { currency: 'USD', value: price.toFixed(2) },
       },
       ...(merchantLocationKey ? { merchantLocationKey } : {}),
     };
