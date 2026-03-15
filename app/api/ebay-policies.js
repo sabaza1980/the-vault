@@ -42,7 +42,6 @@ async function ebayPut(path, accessToken, body) {
   });
   return { status: res.status, ok: res.ok };
 }
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -71,14 +70,15 @@ export default async function handler(req, res) {
     // Ensure a merchant location exists; create a minimal one if not
     let merchantLocationKey = locations[0]?.merchantLocationKey || null;
     if (!merchantLocationKey) {
-      const key = 'vault_default';
+      const key = 'vaultdefault';
       const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
-        location:               { address: { country: 'US' } },
-        name:                   'The Vault',
-        merchantLocationStatus: 'ENABLED',
-        locationTypes:          ['WAREHOUSE'],
+        location: { address: { country: 'US' } },
+        name:     'The Vault',
       });
-      if (createRes.ok) merchantLocationKey = key;
+      // Accept success or already-exists; if it fails still proceed — listing will retry
+      if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
+        merchantLocationKey = key;
+      }
     }
 
     // Build a human-readable list of what's missing so the UI can show a clear error
