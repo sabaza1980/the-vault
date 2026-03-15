@@ -4,15 +4,15 @@
  * The Trading API has a direct <Country> field so no merchant location is needed.
  *
  * Required Vercel env vars (in addition to the OAuth ones):
- *   EBAY_DEV_ID   — your Developer ID from the eBay developer portal keyset
- *   EBAY_CERT_ID  — your Cert ID from the eBay developer portal keyset
- *   (VITE_EBAY_CLIENT_ID is your App ID — already set)
+ *   EBAY_DEV_ID   ï¿½ your Developer ID from the eBay developer portal keyset
+ *   EBAY_CERT_ID  ï¿½ your Cert ID from the eBay developer portal keyset
+ *   (VITE_EBAY_CLIENT_ID is your App ID ï¿½ already set)
  */
 
 const API             = 'https://api.ebay.com';
 const TRADING_API_URL = 'https://api.ebay.com/ws/api.dll';
 const TRADING_COMPAT  = '1119';
-const CATEGORY_ID     = '183050'; // Sports Trading Cards — eBay auto-maps for non-US sites
+const CATEGORY_ID     = '183050'; // Sports Trading Cards ï¿½ eBay auto-maps for non-US sites
 
 // Map eBay marketplace IDs to Trading API site IDs
 const SITE_IDS = {
@@ -55,14 +55,17 @@ async function getSellerInfo(accessToken) {
     console.log('eBay identity response:', JSON.stringify(data));
     const marketplace = data.registrationMarketplaceId || 'EBAY_US';
     const account     = data.individualAccount || data.businessAccount || {};
-    const country     = account.primaryAddress?.country
+    const addr        = account.primaryAddress || {};
+    const country     = addr.country
                       || marketplace.replace(/^EBAY_/, '')
                       || 'US';
-    console.log('Seller marketplace:', marketplace, 'country:', country);
-    return { marketplace, country };
+    // Location is a buyer-facing text string (city or region)
+    const location    = [addr.city, addr.stateOrProvince, country].filter(Boolean).join(', ') || country;
+    console.log('Seller marketplace:', marketplace, 'country:', country, 'location:', location);
+    return { marketplace, country, location };
   } catch (e) {
     console.warn('Could not fetch seller identity:', e.message);
-    return { marketplace: 'EBAY_US', country: 'US' };
+    return { marketplace: 'EBAY_US', country: 'US', location: 'US' };
   }
 }
 
@@ -93,7 +96,7 @@ function buildDescription(cards, extraNotes) {
     const table = rows.map(([k, v]) =>
       `<tr><td style="padding:4px 12px 4px 0;color:#888;font-size:13px;">${k}</td><td style="padding:4px 0;font-size:13px;">${v}</td></tr>`
     ).join('');
-    return `<h2 style="font-size:16px;margin-bottom:12px;">${c.playerName} — ${c.fullCardName || c.series || ''}</h2><table>${table}</table>${note}${footer}`;
+    return `<h2 style="font-size:16px;margin-bottom:12px;">${c.playerName} ï¿½ ${c.fullCardName || c.series || ''}</h2><table>${table}</table>${note}${footer}`;
   }
   const listItems = cards.map(c => {
     const flags = [
@@ -173,7 +176,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { marketplace, country } = await getSellerInfo(accessToken);
+    const { marketplace, country, location } = await getSellerInfo(accessToken);
     const currency     = getCurrency(marketplace);
     const siteId       = getSiteId(marketplace);
     const conditionId  = TRADING_CONDITION_MAP[condition] || '5000';
@@ -200,6 +203,7 @@ export default async function handler(req, res) {
     <StartPrice>${price.toFixed(2)}</StartPrice>
     <CategoryMappingAllowed>true</CategoryMappingAllowed>
     <Country>${escapeXml(country)}</Country>
+    <Location>${escapeXml(location)}</Location>
     <Currency>${escapeXml(currency)}</Currency>
     <ConditionID>${conditionId}</ConditionID>
     <ListingDuration>GTC</ListingDuration>
