@@ -42,6 +42,18 @@ async function getSellerInfo(accessToken) {
   }
 }
 
+// Map eBay marketplace IDs to their currency codes
+const MARKETPLACE_CURRENCY = {
+  EBAY_US: 'USD', EBAY_CA: 'CAD', EBAY_GB: 'GBP', EBAY_AU: 'AUD',
+  EBAY_DE: 'EUR', EBAY_FR: 'EUR', EBAY_IT: 'EUR', EBAY_ES: 'EUR',
+  EBAY_NL: 'EUR', EBAY_BE: 'EUR', EBAY_AT: 'EUR', EBAY_IE: 'EUR',
+  EBAY_CH: 'CHF', EBAY_PL: 'PLN', EBAY_SG: 'SGD', EBAY_MY: 'MYR',
+  EBAY_PH: 'PHP', EBAY_IN: 'INR', EBAY_HK: 'HKD',
+};
+function getCurrency(marketplace) {
+  return MARKETPLACE_CURRENCY[marketplace] || 'USD';
+}
+
 // Map our card condition strings to eBay's condition enum
 // FOR_PARTS_OR_NOT_WORKING is not valid for sports trading cards
 const CONDITION_MAP = {
@@ -271,7 +283,7 @@ export default async function handler(req, res) {
         returnPolicyId,
       },
       pricingSummary: {
-        price: { currency: 'USD', value: price.toFixed(2) },
+        price: { currency: getCurrency(marketplace), value: price.toFixed(2) },
       },
       ...(locationKey ? { merchantLocationKey: locationKey } : {}),
     };
