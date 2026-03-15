@@ -193,7 +193,34 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── Step 2: Create offer ─────────────────────────────────────────────────
+    // ── Step 2: Ensure a merchant location exists ────────────────────────────
+    let locationKey = merchantLocationKey;
+    if (!locationKey) {
+      // Try to fetch existing locations first
+      const locRes  = await fetch(`${API}/sell/inventory/v1/location`, { headers });
+      const locData = await locRes.json().catch(() => ({}));
+      locationKey   = locData.locations?.[0]?.merchantLocationKey || null;
+    }
+    if (!locationKey) {
+      // Create a minimal default location so eBay knows the item's country
+      const key       = 'vault-default';
+      const createRes = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
+        method:  'PUT',
+        headers,
+        body: JSON.stringify({
+          location:               { address: { country: 'US' } },
+          name:                   'The Vault',
+          merchantLocationStatus: 'ENABLED',
+          locationTypes:          ['WAREHOUSE'],
+        }),
+      });
+      if (createRes.ok || createRes.status === 204) locationKey = key;
+    }
+    if (!locationKey) {
+      return res.status(400).json({ error: 'Could not establish a merchant location on eBay. Please reconnect your eBay account.' });
+    }
+
+    // ── Step 3: Create offer ─────────────────────────────────────────────────
     const offerBody = {
       sku,
       marketplaceId:    MARKETPLACE,
@@ -210,7 +237,7 @@ export default async function handler(req, res) {
       pricingSummary: {
         price: { currency: 'USD', value: price.toFixed(2) },
       },
-      ...(merchantLocationKey ? { merchantLocationKey } : {}),
+      merchantLocationKey: locationKey,
     };
 
     const offerRes  = await fetch(`${API}/sell/inventory/v1/offer`, {
@@ -227,7 +254,7 @@ export default async function handler(req, res) {
 
     const offerId = offerData.offerId;
 
-    // ── Step 3: Publish offer ────────────────────────────────────────────────
+    // ── Step 4: Publish offer ────────────────────────────────────────────────
     const publishRes  = await fetch(`${API}/sell/inventory/v1/offer/${offerId}/publish`, {
       method:  'POST',
       headers,
