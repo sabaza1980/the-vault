@@ -195,7 +195,7 @@ export default async function handler(req, res) {
     <eBayAuthToken>${accessToken}</eBayAuthToken>
   </RequesterCredentials>
   <ErrorLanguage>en_US</ErrorLanguage>
-  <WarningLevel>High</WarningLevel>
+  <WarningLevel>Low</WarningLevel>
   <Item>
     <Title>${escapeXml(cleanTitle)}</Title>
     <Description><![CDATA[${description}]]></Description>
