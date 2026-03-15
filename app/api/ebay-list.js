@@ -204,7 +204,7 @@ export default async function handler(req, res) {
     }
     if (!locationKey) {
       // Create a minimal default location so eBay knows the item's country
-      const key       = 'vault-default';
+      const key       = 'vault_default';
       const createRes = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
         method:  'PUT',
         headers,

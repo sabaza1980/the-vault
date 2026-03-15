@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     // Ensure a merchant location exists; create a minimal one if not
     let merchantLocationKey = locations[0]?.merchantLocationKey || null;
     if (!merchantLocationKey) {
-      const key = 'vault-default';
+      const key = 'vault_default';
       const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
         location:               { address: { country: 'US' } },
         name:                   'The Vault',
