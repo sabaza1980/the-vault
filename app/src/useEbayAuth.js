@@ -208,6 +208,9 @@ export function useEbayAuth(user) {
         body:    JSON.stringify({ accessToken }),
       });
       const policiesData = await policiesRes.json();
+      if (policiesData.locationError) {
+        console.error('eBay location creation failed:', JSON.stringify(policiesData.locationError));
+      }
       const updated = { ...ebayAuth, ...policiesData };
       if (authDocRef) await setDoc(authDocRef, updated);
       setEbayAuth(updated);

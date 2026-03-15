@@ -336,6 +336,11 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
               <div style={{ fontSize: 12, color: "var(--ts)", lineHeight: 1.65, marginBottom: 14 }}>
                 eBay needs a ship-from location to determine your listing&apos;s country. Click <strong>Retry</strong> and the app will set this up automatically.
               </div>
+              {ebayAuth?.locationError && (
+                <div style={{ fontSize: 10, color: "#ff9800", lineHeight: 1.5, marginBottom: 14, padding: "8px 12px", background: "rgba(255,152,0,0.08)", borderRadius: 8, fontFamily: "monospace", wordBreak: "break-all" }}>
+                  eBay error ({ebayAuth.locationError.status}): {JSON.stringify(ebayAuth.locationError.body)}
+                </div>
+              )}
               <div style={{ fontSize: 11, color: "var(--tg)", lineHeight: 1.6, marginBottom: 14, padding: "10px 12px", background: "var(--deep)", borderRadius: 8 }}>
                 If this keeps failing, your eBay account may not support this feature. Try disconnecting and reconnecting, or contact{" "}
                 <a href="https://www.ebay.com/help/selling" target="_blank" rel="noopener noreferrer" style={{ color: "var(--tm)", textDecoration: "underline" }}>eBay seller support</a>.

@@ -56,7 +56,10 @@ async function ebayPut(path, accessToken, body) {
     headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  return { status: res.status, ok: res.ok };
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+  return { status: res.status, ok: res.ok, data };
 }
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -87,18 +90,25 @@ export default async function handler(req, res) {
 
     // Ensure a merchant location exists; create a minimal one if not
     let merchantLocationKey = locations[0]?.merchantLocationKey || null;
+    let locationError = null;
+    console.log('Location fetch result:', locationRes.status, JSON.stringify(locationRes.data));
     if (!merchantLocationKey) {
       const key = 'vaultdefault';
-      const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
-        location:               { address: { country } },
-        locationTypes:          ['WAREHOUSE'],
-        merchantLocationStatus: 'ENABLED',
-        name:                   'The Vault',
-      });
-      console.log('location create status:', createRes.status);
-      // Accept success or already-exists; if it fails still proceed — listing will retry
-      if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
-        merchantLocationKey = key;
+      // Try progressively simpler bodies — some account types reject extra fields
+      const bodies = [
+        { location: { address: { country } }, locationTypes: ['WAREHOUSE'], merchantLocationStatus: 'ENABLED', name: 'The Vault' },
+        { location: { address: { country } }, name: 'The Vault' },
+        { name: 'The Vault' },
+      ];
+      for (const bod of bodies) {
+        const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, bod);
+        console.log('location create attempt body:', JSON.stringify(bod), 'status:', createRes.status, 'response:', JSON.stringify(createRes.data));
+        if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
+          merchantLocationKey = key;
+          locationError = null;
+          break;
+        }
+        locationError = { status: createRes.status, body: createRes.data, bodyUsed: bod };
       }
     }
 
@@ -114,6 +124,7 @@ export default async function handler(req, res) {
       returnPolicyId,
       merchantLocationKey,
       missingPolicies: missing.length > 0 ? missing : null,
+      locationError,
     });
   } catch (err) {
     console.error('ebay-policies error:', err);
