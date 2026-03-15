@@ -221,9 +221,8 @@ export default async function handler(req, res) {
 
     // ── Step 2: Resolve merchant location key ────────────────────────────────
     // merchantLocationKey tells eBay where the item is located (determines country).
-    // If not already saved, try to fetch existing locations, then try to create one.
-    // If creation is not permitted for this account type, omit the key entirely —
-    // eBay will fall back to the seller's registered account address.
+    // If not already saved in Firestore, check eBay for any locations the user
+    // may have created via eBay Seller Hub since their last re-check.
     let locationKey = merchantLocationKey || null;
     if (!locationKey) {
       const locRes  = await fetch(`${API}/sell/inventory/v1/location`, { headers });
@@ -232,33 +231,10 @@ export default async function handler(req, res) {
       locationKey = locData.locations?.[0]?.merchantLocationKey || null;
     }
     if (!locationKey) {
-      const key = 'vaultdefault';
-      // Try with marketplace header first, then without
-      const attempts = [
-        { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-EBAY-C-MARKETPLACE-ID': marketplace },
-        { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      ];
-      for (const locHeaders of attempts) {
-        const createRes  = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
-          method:  'PUT',
-          headers: locHeaders,
-          body:    JSON.stringify({ location: { address: { country } }, name: 'The Vault' }),
-        });
-        const createText = await createRes.text();
-        console.log('eBay location create attempt:', createRes.status, createText, 'country:', country, 'marketplace:', marketplace);
-        if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
-          locationKey = key;
-          break;
-        }
-      }
-      if (!locationKey) {
-        // Location creation not supported for this account — return a clear error
-        // including the identity data so we can diagnose
-        return res.status(400).json({
-          error: `Cannot create eBay listing location for country "${country}" / marketplace "${marketplace}". eBay location creation is not available for this account type. Please create a location manually at: https://www.bizpolicy.ebay.com/businesspolicy/createShippingPolicy — then reconnect your eBay account.`,
-          identityData,
-        });
-      }
+      return res.status(400).json({
+        error: 'no_location',
+        message: 'No ship-from location found on your eBay account. Please create one at ebay.com/sh/shipping/shipfrom, then click "Re-check" in the app.',
+      });
     }
 
     // ── Step 3: Create offer ─────────────────────────────────────────────────

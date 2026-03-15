@@ -104,7 +104,7 @@ function CardThumbnail({ card }) {
 
 export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
   const {
-    ebayConnected, hasPolicies, missingPolicies, refreshPolicies,
+    ebayConnected, hasPolicies, hasLocation, missingPolicies, refreshPolicies,
     authLoading, connecting, connectError,
     connect, disconnect, getValidToken, ebayAuth,
   } = useEbayAuth(user);
@@ -327,8 +327,43 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
             </div>
           )}
 
+          {/* Missing ship-from location */}
+          {!authLoading && user && ebayConnected && hasPolicies && !hasLocation && !result && (
+            <div style={{ padding: "16px 0" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t)", marginBottom: 10 }}>
+                Ship-from location needed
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ts)", lineHeight: 1.65, marginBottom: 14 }}>
+                eBay needs a ship-from location to set your listing&apos;s country. Create one in eBay Seller Hub (takes 30 seconds), then click Re-check below.
+              </div>
+              <a
+                href="https://www.ebay.com/sh/shipping/shipfrom"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "inline-block", background: "#e53935", color: "#fff", fontWeight: 700, fontSize: 12, padding: "9px 18px", borderRadius: 8, textDecoration: "none" }}
+              >
+                Create ship-from location on eBay →
+              </a>
+              <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+                <button
+                  onClick={refreshPolicies}
+                  disabled={connecting}
+                  style={{ fontSize: 11, color: "#ff6b35", background: "transparent", border: "1px solid #ff6b3540", borderRadius: 8, padding: "6px 14px", cursor: "pointer" }}
+                >
+                  {connecting ? "Re-checking…" : "Re-check"}
+                </button>
+                <button
+                  onClick={disconnect}
+                  style={{ fontSize: 11, color: "var(--tm)", background: "transparent", border: "1px solid var(--b)", borderRadius: 8, padding: "6px 14px", cursor: "pointer" }}
+                >
+                  Disconnect eBay
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Ready to list */}
-          {!authLoading && user && ebayConnected && hasPolicies && !result && (
+          {!authLoading && user && ebayConnected && hasPolicies && hasLocation && !result && (
             <>
               {/* Card(s) preview */}
               <div style={{ marginBottom: 16 }}>
@@ -465,7 +500,7 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
         </div>
 
         {/* Footer CTA */}
-        {!authLoading && user && ebayConnected && hasPolicies && !result && (
+        {!authLoading && user && ebayConnected && hasPolicies && hasLocation && !result && (
           <div style={{
             padding: "12px 18px 16px",
             borderTop: "1px solid var(--bf)",

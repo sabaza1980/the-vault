@@ -257,11 +257,13 @@ export function useEbayAuth(user) {
 
   const ebayConnected = !!ebayAuth?.accessToken;
   const hasPolicies   = !!(ebayAuth?.fulfillmentPolicyId && ebayAuth?.paymentPolicyId && ebayAuth?.returnPolicyId);
+  const hasLocation   = !!ebayAuth?.merchantLocationKey;
 
   return {
     ebayAuth,
     ebayConnected,
     hasPolicies,
+    hasLocation,
     missingPolicies: ebayAuth?.missingPolicies || null,
     authLoading,
     connecting,
