@@ -24,11 +24,13 @@ async function getSellerInfo(accessToken) {
       headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     });
     const data = await res.json();
-    // registrationMarketplaceId looks like 'EBAY_GB', 'EBAY_US', 'EBAY_AU' etc.
-    const marketplace = data.registrationMarketplaceId || 'EBAY_US';
-    // Derive ISO country code from marketplace id, e.g. EBAY_GB -> GB
-    const country = marketplace.replace('EBAY_', '') || 'US';
-    console.log('Seller identity:', marketplace, country);
+    console.log('eBay identity response:', JSON.stringify(data));
+    // registrationMarketplaceId is nested inside individualAccount or businessAccount
+    const account = data.individualAccount || data.businessAccount || {};
+    const marketplace = account.registrationMarketplaceId || data.registrationMarketplaceId || 'EBAY_US';
+    // Derive ISO country code: EBAY_GB -> GB, EBAY_AU -> AU, EBAY_US -> US
+    const country = marketplace.replace(/^EBAY_/, '') || 'US';
+    console.log('Seller marketplace:', marketplace, 'country:', country);
     return { marketplace, country };
   } catch (e) {
     console.warn('Could not fetch seller identity, defaulting to EBAY_US:', e.message);

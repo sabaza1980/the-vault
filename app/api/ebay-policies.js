@@ -16,7 +16,8 @@ async function getSellerMarketplace(accessToken) {
       headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     });
     const data = await res.json();
-    return data.registrationMarketplaceId || 'EBAY_US';
+    const account = data.individualAccount || data.businessAccount || {};
+    return account.registrationMarketplaceId || data.registrationMarketplaceId || 'EBAY_US';
   } catch (e) {
     return 'EBAY_US';
   }
