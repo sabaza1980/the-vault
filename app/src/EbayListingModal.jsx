@@ -150,7 +150,6 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
           fulfillmentPolicyId:  ebayAuth.fulfillmentPolicyId,
           paymentPolicyId:      ebayAuth.paymentPolicyId,
           returnPolicyId:       ebayAuth.returnPolicyId,
-          merchantLocationKey:  ebayAuth.merchantLocationKey || null,
         }),
       });
 
