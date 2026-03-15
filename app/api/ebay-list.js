@@ -193,37 +193,34 @@ export default async function handler(req, res) {
       });
     }
 
-    // ── Step 2: Ensure a merchant location exists ────────────────────────────
-    let locationKey = merchantLocationKey;
+    // ── Step 2: Resolve merchant location key ────────────────────────────────
+    // merchantLocationKey tells eBay where the item is located (determines country).
+    // If not already saved, try to fetch existing locations, then try to create one.
+    // If creation is not permitted for this account type, omit the key entirely —
+    // eBay will fall back to the seller's registered account address.
+    let locationKey = merchantLocationKey || null;
     if (!locationKey) {
-      // Try to fetch existing locations first
       const locRes  = await fetch(`${API}/sell/inventory/v1/location`, { headers });
       const locData = await locRes.json().catch(() => ({}));
-      console.log('eBay locations fetch status:', locRes.status, JSON.stringify(locData));
+      console.log('eBay locations fetch:', locRes.status, JSON.stringify(locData));
       locationKey = locData.locations?.[0]?.merchantLocationKey || null;
     }
     if (!locationKey) {
-      // Create a minimal default location — only country and name are required.
-      // Omit merchantLocationStatus and locationTypes; some account types reject them.
       const key       = 'vaultdefault';
       const createRes = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
-        method:  'PUT',
+        method: 'PUT',
         headers,
-        body: JSON.stringify({
-          location: { address: { country: 'US' } },
-          name: 'The Vault',
-        }),
+        body:   JSON.stringify({ location: { address: { country: 'US' } }, name: 'The Vault' }),
       });
       const createText = await createRes.text();
-      console.log('eBay location create status:', createRes.status, createText);
-      // 204 = created, 200 = updated, 409 = already exists — all mean we can use the key
+      console.log('eBay location create:', createRes.status, createText);
       if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
         locationKey = key;
       } else {
-        // Location creation failed — try proceeding anyway with a known key in case
-        // the location was already created in a prior run but is just not showing up
-        console.warn('Location creation failed, attempting to proceed with key:', key);
-        locationKey = key;
+        // Can't create a location (ACCESS 2004) — omit from offer so eBay uses
+        // the seller's account-registered address instead.
+        console.warn('Location creation not permitted; omitting merchantLocationKey from offer.');
+        locationKey = null;
       }
     }
 
@@ -244,7 +241,7 @@ export default async function handler(req, res) {
       pricingSummary: {
         price: { currency: 'USD', value: price.toFixed(2) },
       },
-      merchantLocationKey: locationKey,
+      ...(locationKey ? { merchantLocationKey: locationKey } : {}),
     };
 
     const offerRes  = await fetch(`${API}/sell/inventory/v1/offer`, {
