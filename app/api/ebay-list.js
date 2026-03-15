@@ -246,14 +246,16 @@ ${specificsXml ? `  <ItemSpecifics>\n${specificsXml}\n  </ItemSpecifics>` : ''}
     const ack    = responseText.match(/<Ack>(.*?)<\/Ack>/)?.[1];
     const itemId = responseText.match(/<ItemID>(\d+)<\/ItemID>/)?.[1];
 
-    if (!itemId || (ack !== 'Success' && ack !== 'Warning')) {
-      const longMsg  = responseText.match(/<LongMessage>(.*?)<\/LongMessage>/s)?.[1];
-      const shortMsg = responseText.match(/<ShortMessage>(.*?)<\/ShortMessage>/s)?.[1];
-      return res.status(400).json({ error: `Listing failed: ${longMsg || shortMsg || responseText}` });
+    // If eBay returned an ItemID the listing was created — treat as success even
+    // if Ack=Warning (e.g. payment-hold notice for new sellers).
+    if (itemId) {
+      const listingUrl = `https://www.ebay.com/itm/${itemId}`;
+      return res.json({ success: true, listingId: itemId, listingUrl });
     }
 
-    const listingUrl = `https://www.ebay.com/itm/${itemId}`;
-    return res.json({ success: true, listingId: itemId, listingUrl });
+    const longMsg  = responseText.match(/<LongMessage>(.*?)<\/LongMessage>/s)?.[1];
+    const shortMsg = responseText.match(/<ShortMessage>(.*?)<\/ShortMessage>/s)?.[1];
+    return res.status(400).json({ error: `Listing failed: ${longMsg || shortMsg || responseText}` });
 
   } catch (err) {
     console.error('ebay-list error:', err);
