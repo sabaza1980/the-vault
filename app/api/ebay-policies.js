@@ -90,9 +90,12 @@ export default async function handler(req, res) {
     if (!merchantLocationKey) {
       const key = 'vaultdefault';
       const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
-        location: { address: { country } },
-        name:     'The Vault',
+        location:               { address: { country } },
+        locationTypes:          ['WAREHOUSE'],
+        merchantLocationStatus: 'ENABLED',
+        name:                   'The Vault',
       });
+      console.log('location create status:', createRes.status);
       // Accept success or already-exists; if it fails still proceed — listing will retry
       if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
         merchantLocationKey = key;

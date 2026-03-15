@@ -331,26 +331,22 @@ export default function EbayListingModal({ cards, user, onClose, onSuccess }) {
           {!authLoading && user && ebayConnected && hasPolicies && !hasLocation && !result && (
             <div style={{ padding: "16px 0" }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t)", marginBottom: 10 }}>
-                Ship-from location needed
+                Setting up ship-from location
               </div>
               <div style={{ fontSize: 12, color: "var(--ts)", lineHeight: 1.65, marginBottom: 14 }}>
-                eBay needs a ship-from location to set your listing&apos;s country. Create one in eBay Seller Hub (takes 30 seconds), then click Re-check below.
+                eBay needs a ship-from location to determine your listing&apos;s country. Click <strong>Retry</strong> and the app will set this up automatically.
               </div>
-              <a
-                href="https://www.ebay.com/sh/shipping/shipfrom"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "inline-block", background: "#e53935", color: "#fff", fontWeight: 700, fontSize: 12, padding: "9px 18px", borderRadius: 8, textDecoration: "none" }}
-              >
-                Create ship-from location on eBay →
-              </a>
-              <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
+              <div style={{ fontSize: 11, color: "var(--tg)", lineHeight: 1.6, marginBottom: 14, padding: "10px 12px", background: "var(--deep)", borderRadius: 8 }}>
+                If this keeps failing, your eBay account may not support this feature. Try disconnecting and reconnecting, or contact{" "}
+                <a href="https://www.ebay.com/help/selling" target="_blank" rel="noopener noreferrer" style={{ color: "var(--tm)", textDecoration: "underline" }}>eBay seller support</a>.
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
                 <button
                   onClick={refreshPolicies}
                   disabled={connecting}
                   style={{ fontSize: 11, color: "#ff6b35", background: "transparent", border: "1px solid #ff6b3540", borderRadius: 8, padding: "6px 14px", cursor: "pointer" }}
                 >
-                  {connecting ? "Re-checking…" : "Re-check"}
+                  {connecting ? "Setting up…" : "Retry"}
                 </button>
                 <button
                   onClick={disconnect}
