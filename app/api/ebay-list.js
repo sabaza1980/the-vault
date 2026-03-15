@@ -199,7 +199,8 @@ export default async function handler(req, res) {
       // Try to fetch existing locations first
       const locRes  = await fetch(`${API}/sell/inventory/v1/location`, { headers });
       const locData = await locRes.json().catch(() => ({}));
-      locationKey   = locData.locations?.[0]?.merchantLocationKey || null;
+      console.log('eBay locations fetch status:', locRes.status, JSON.stringify(locData));
+      locationKey = locData.locations?.[0]?.merchantLocationKey || null;
     }
     if (!locationKey) {
       // Create a minimal default location so eBay knows the item's country
@@ -214,10 +215,16 @@ export default async function handler(req, res) {
           locationTypes:          ['WAREHOUSE'],
         }),
       });
-      if (createRes.ok || createRes.status === 204) locationKey = key;
-    }
-    if (!locationKey) {
-      return res.status(400).json({ error: 'Could not establish a merchant location on eBay. Please reconnect your eBay account.' });
+      const createText = await createRes.text();
+      console.log('eBay location create status:', createRes.status, createText);
+      // 204 = created, 200 = updated, 409 = already exists — all mean we can use the key
+      if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
+        locationKey = key;
+      } else {
+        return res.status(400).json({
+          error: `Could not create eBay merchant location (${createRes.status}): ${createText}`,
+        });
+      }
     }
 
     // ── Step 3: Create offer ─────────────────────────────────────────────────
