@@ -18,13 +18,14 @@ const CATEGORY_ID  = '183050'; // Sports Trading Cards
 const LISTING_DURATION = 'GTC'; // Good Till Cancelled
 
 // Map our card condition strings to eBay's condition enum
+// FOR_PARTS_OR_NOT_WORKING is not valid for sports trading cards
 const CONDITION_MAP = {
   Mint:       'LIKE_NEW',
   'Near Mint':'USED_EXCELLENT',
   Excellent:  'USED_VERY_GOOD',
   Good:       'USED_GOOD',
   Fair:       'USED_ACCEPTABLE',
-  Poor:       'FOR_PARTS_OR_NOT_WORKING',
+  Poor:       'USED_ACCEPTABLE',
   Unknown:    'USED_GOOD',
 };
 
@@ -79,12 +80,18 @@ function buildDescription(cards, extraNotes) {
   return `<h2 style="font-size:16px;margin-bottom:12px;">Basketball Card Bundle — ${cards.length} cards</h2><ul style="padding-left:18px;">${listItems}</ul>${note}${footer}`;
 }
 
-// Only include HTTPS image URLs — data: URLs can't be used in eBay listings
+// Only include HTTPS image URLs that eBay's servers can fetch without auth.
+// Firebase Storage URLs require a download token and are publicly accessible,
+// but firebasestorage.googleapis.com URLs can be slow for eBay to fetch — skip them
+// and only send other CDN/static URLs.
 function getImageUrls(cards) {
   const urls = [];
   for (const c of cards) {
-    if (c.imageUrl?.startsWith('https://'))     urls.push(c.imageUrl);
-    if (c.backImageUrl?.startsWith('https://')) urls.push(c.backImageUrl);
+    const front = c.imageUrl;
+    const back  = c.backImageUrl;
+    // Accept any https URL that isn't a Firebase Storage or data URL
+    if (front?.startsWith('https://') && !front.includes('firebasestorage.googleapis.com')) urls.push(front);
+    if (back?.startsWith('https://')  && !back.includes('firebasestorage.googleapis.com'))  urls.push(back);
     if (urls.length >= 12) break; // eBay max
   }
   return urls;
@@ -137,22 +144,20 @@ export default async function handler(req, res) {
 
   const headers = authHeaders(accessToken);
 
-  // Build item aspects from card data — eBay requires these for category 183050
+  // Build item aspects — only use well-known eBay aspect names for category 183050.
+  // Avoid sending aspects with unknown/arbitrary values as eBay may reject them.
   function buildAspects(cards) {
     const c = cards[0];
     const aspects = {};
-    if (c.playerName)                              aspects['Player/Athlete']       = [c.playerName];
-    if (c.year)                                    aspects['Season']               = [String(c.year)];
-    if (c.brand)                                   aspects['Card Manufacturer']    = [c.brand];
-    if (c.series)                                  aspects['Set']                  = [c.series];
-    if (c.cardNumber)                              aspects['Card Number']           = [String(c.cardNumber)];
-    if (c.parallel && c.parallel !== 'Base')       aspects['Parallel/Variety']     = [c.parallel];
-    if (c.serialNumber)                            aspects['Print Run']             = [String(c.serialNumber)];
-    if (c.hasAutograph)                            aspects['Autograph']             = ['Yes'];
-    if (c.isRookie)                                aspects['Rookie']                = ['Yes'];
-    if (c.team)                                    aspects['Team']                  = [c.team];
+    if (c.playerName)                        aspects['Player/Athlete']    = [String(c.playerName)];
+    if (c.year)                              aspects['Season']            = [String(c.year)];
+    if (c.brand)                             aspects['Card Manufacturer'] = [String(c.brand)];
+    if (c.series)                            aspects['Set']               = [String(c.series)];
+    if (c.cardNumber)                        aspects['Card Number']       = [String(c.cardNumber)];
+    if (c.parallel && c.parallel !== 'Base') aspects['Parallel/Variety']  = [String(c.parallel)];
+    if (c.hasAutograph)                      aspects['Autograph']         = ['Yes'];
+    if (c.isRookie)                          aspects['Rookie']            = ['Yes'];
     aspects['Sport'] = ['Basketball'];
-    aspects['Type']  = cards.length > 1 ? ['Lot'] : ['Base Set Card'];
     return aspects;
   }
 
@@ -163,8 +168,9 @@ export default async function handler(req, res) {
       condition: ebayCondition,
       ...(conditionDescription ? { conditionDescription } : {}),
       product: {
-        title:    cleanTitle,
-        aspects:  buildAspects(cards),
+        title:       cleanTitle,
+        description: description,
+        aspects:     buildAspects(cards),
         ...(imageUrls.length > 0 ? { imageUrls } : {}),
       },
     };
