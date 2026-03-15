@@ -16,10 +16,12 @@ async function getSellerMarketplace(accessToken) {
       headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     });
     const data = await res.json();
-    const account = data.individualAccount || data.businessAccount || {};
-    return account.registrationMarketplaceId || data.registrationMarketplaceId || 'EBAY_US';
+    const marketplace = data.registrationMarketplaceId || 'EBAY_US';
+    const account     = data.individualAccount || data.businessAccount || {};
+    const country     = account.primaryAddress?.country || marketplace.replace(/^EBAY_/, '') || 'US';
+    return { marketplace, country };
   } catch (e) {
-    return 'EBAY_US';
+    return { marketplace: 'EBAY_US', country: 'US' };
   }
 }
 
@@ -63,8 +65,7 @@ export default async function handler(req, res) {
   if (!accessToken) return res.status(400).json({ error: 'accessToken is required' });
 
   try {
-    const marketplace = await getSellerMarketplace(accessToken);
-    const country     = marketplace.replace('EBAY_', '') || 'US';
+    const { marketplace, country } = await getSellerMarketplace(accessToken);
 
     // Fetch all three policy types in parallel
     const [fulfillmentRes, paymentRes, returnRes, locationRes] = await Promise.all([

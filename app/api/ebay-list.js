@@ -25,16 +25,20 @@ async function getSellerInfo(accessToken) {
     });
     const data = await res.json();
     console.log('eBay identity response:', JSON.stringify(data));
-    // registrationMarketplaceId is nested inside individualAccount or businessAccount
+
+    const marketplace = data.registrationMarketplaceId || 'EBAY_US';
+
+    // Get country directly from the registered address — no string parsing needed
     const account = data.individualAccount || data.businessAccount || {};
-    const marketplace = account.registrationMarketplaceId || data.registrationMarketplaceId || 'EBAY_US';
-    // Derive ISO country code: EBAY_GB -> GB, EBAY_AU -> AU, EBAY_US -> US
-    const country = marketplace.replace(/^EBAY_/, '') || 'US';
+    const country  = account.primaryAddress?.country
+                  || marketplace.replace(/^EBAY_/, '')
+                  || 'US';
+
     console.log('Seller marketplace:', marketplace, 'country:', country);
-    return { marketplace, country };
+    return { marketplace, country, identityData: data };
   } catch (e) {
-    console.warn('Could not fetch seller identity, defaulting to EBAY_US:', e.message);
-    return { marketplace: 'EBAY_US', country: 'US' };
+    console.warn('Could not fetch seller identity:', e.message);
+    return { marketplace: 'EBAY_US', country: 'US', identityData: null };
   }
 }
 
@@ -163,7 +167,7 @@ export default async function handler(req, res) {
   const description   = buildDescription(cards, conditionDescription);
   const cleanTitle    = truncateTitle(title.trim());
 
-  const { marketplace, country } = await getSellerInfo(accessToken);
+  const { marketplace, country, identityData } = await getSellerInfo(accessToken);
   const headers = authHeaders(accessToken, marketplace);
 
   // Build item aspects — only use well-known eBay aspect names for category 183050.
@@ -229,20 +233,31 @@ export default async function handler(req, res) {
     }
     if (!locationKey) {
       const key = 'vaultdefault';
-      // Use minimal headers for location endpoint (no marketplace/language headers)
-      const locHeaders = { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
-      const createRes  = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
-        method:  'PUT',
-        headers: locHeaders,
-        body:    JSON.stringify({ location: { address: { country } }, name: 'The Vault' }),
-      });
-      const createText = await createRes.text();
-      console.log('eBay location create:', createRes.status, createText);
-      if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
-        locationKey = key;
-      } else {
-        console.warn('Location creation failed; omitting merchantLocationKey from offer.');
-        locationKey = null;
+      // Try with marketplace header first, then without
+      const attempts = [
+        { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-EBAY-C-MARKETPLACE-ID': marketplace },
+        { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      ];
+      for (const locHeaders of attempts) {
+        const createRes  = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
+          method:  'PUT',
+          headers: locHeaders,
+          body:    JSON.stringify({ location: { address: { country } }, name: 'The Vault' }),
+        });
+        const createText = await createRes.text();
+        console.log('eBay location create attempt:', createRes.status, createText, 'country:', country, 'marketplace:', marketplace);
+        if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
+          locationKey = key;
+          break;
+        }
+      }
+      if (!locationKey) {
+        // Location creation not supported for this account — return a clear error
+        // including the identity data so we can diagnose
+        return res.status(400).json({
+          error: `Cannot create eBay listing location for country "${country}" / marketplace "${marketplace}". eBay location creation is not available for this account type. Please create a location manually at: https://www.bizpolicy.ebay.com/businesspolicy/createShippingPolicy — then reconnect your eBay account.`,
+          identityData,
+        });
       }
     }
 
