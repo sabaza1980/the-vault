@@ -209,7 +209,15 @@ export default async function handler(req, res) {
         method:  'PUT',
         headers,
         body: JSON.stringify({
-          location:               { address: { country: 'US' } },
+          location: {
+            address: {
+              addressLine1:    '1 Default Street',
+              city:            'New York',
+              stateOrProvince: 'NY',
+              postalCode:      '10001',
+              country:         'US',
+            },
+          },
           name:                   'The Vault',
           merchantLocationStatus: 'ENABLED',
           locationTypes:          ['WAREHOUSE'],
