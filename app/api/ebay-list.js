@@ -243,29 +243,20 @@ export default async function handler(req, res) {
       locationKey = locData.locations?.[0]?.merchantLocationKey || null;
     }
     if (!locationKey) {
-      // Try to create a location directly (with all required fields)
+      // Try to create a location — this fails for some account types, which is fine.
+      // merchantLocationKey is optional; the marketplace already establishes the country.
       const key = 'vaultdefault';
       const createRes = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
         method:  'PUT',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          location:               { address: { country } },
-          locationTypes:          ['WAREHOUSE'],
-          merchantLocationStatus: 'ENABLED',
-          name:                   'The Vault',
-        }),
+        body:    JSON.stringify({ location: { address: { country } }, name: 'The Vault' }),
       });
       console.log('list.js location create:', createRes.status);
       if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
         locationKey = key;
+      } else {
+        console.log('Location creation not available for this account; proceeding without merchantLocationKey');
       }
-    }
-    if (!locationKey) {
-      return res.status(400).json({
-        error: 'no_location',
-        message: 'Could not create a ship-from location on your eBay account. Click Re-check in the app to try again. If this keeps failing, your eBay account type may not support the Inventory API — contact eBay seller support.',
-        identityData,
-      });
     }
 
     // ── Step 3: Create offer ─────────────────────────────────────────────────

@@ -88,27 +88,21 @@ export default async function handler(req, res) {
     const paymentPolicyId     = paymentPolicies[0]?.paymentPolicyId         || null;
     const returnPolicyId      = returnPolicies[0]?.returnPolicyId           || null;
 
-    // Ensure a merchant location exists; create a minimal one if not
+    // Try to create a default location; silently ignore failures — some account types
+    // don't support location creation via API. merchantLocationKey is optional.
     let merchantLocationKey = locations[0]?.merchantLocationKey || null;
     let locationError = null;
     console.log('Location fetch result:', locationRes.status, JSON.stringify(locationRes.data));
     if (!merchantLocationKey) {
       const key = 'vaultdefault';
-      // Try progressively simpler bodies — some account types reject extra fields
-      const bodies = [
-        { location: { address: { country } }, locationTypes: ['WAREHOUSE'], merchantLocationStatus: 'ENABLED', name: 'The Vault' },
-        { location: { address: { country } }, name: 'The Vault' },
-        { name: 'The Vault' },
-      ];
-      for (const bod of bodies) {
-        const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, bod);
-        console.log('location create attempt body:', JSON.stringify(bod), 'status:', createRes.status, 'response:', JSON.stringify(createRes.data));
-        if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
-          merchantLocationKey = key;
-          locationError = null;
-          break;
-        }
-        locationError = { status: createRes.status, body: createRes.data, bodyUsed: bod };
+      const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
+        location: { address: { country } }, name: 'The Vault',
+      });
+      console.log('location create:', createRes.status, JSON.stringify(createRes.data));
+      if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
+        merchantLocationKey = key;
+      } else {
+        locationError = { status: createRes.status, body: createRes.data };
       }
     }
 
