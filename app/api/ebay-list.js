@@ -13,9 +13,28 @@
  */
 
 const API = 'https://api.ebay.com';
-const MARKETPLACE  = 'EBAY_US';
-const CATEGORY_ID  = '183050'; // Sports Trading Cards
-const LISTING_DURATION = 'GTC'; // Good Till Cancelled
+const CATEGORY_ID      = '183050'; // Sports Trading Cards
+const LISTING_DURATION = 'GTC';    // Good Till Cancelled
+
+// Fetch the seller's registered country code and marketplace from eBay identity API.
+// Falls back to US/EBAY_US if the call fails.
+async function getSellerInfo(accessToken) {
+  try {
+    const res  = await fetch(`${API}/commerce/identity/v1/user/`, {
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    // registrationMarketplaceId looks like 'EBAY_GB', 'EBAY_US', 'EBAY_AU' etc.
+    const marketplace = data.registrationMarketplaceId || 'EBAY_US';
+    // Derive ISO country code from marketplace id, e.g. EBAY_GB -> GB
+    const country = marketplace.replace('EBAY_', '') || 'US';
+    console.log('Seller identity:', marketplace, country);
+    return { marketplace, country };
+  } catch (e) {
+    console.warn('Could not fetch seller identity, defaulting to EBAY_US:', e.message);
+    return { marketplace: 'EBAY_US', country: 'US' };
+  }
+}
 
 // Map our card condition strings to eBay's condition enum
 // FOR_PARTS_OR_NOT_WORKING is not valid for sports trading cards
@@ -29,10 +48,10 @@ const CONDITION_MAP = {
   Unknown:    'USED_GOOD',
 };
 
-function authHeaders(accessToken) {
+function authHeaders(accessToken, marketplace) {
   return {
     'Authorization':           `Bearer ${accessToken}`,
-    'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
+    'X-EBAY-C-MARKETPLACE-ID': marketplace,
     'Content-Type':            'application/json',
     'Accept-Language':         'en-US',
     'Content-Language':        'en-US',
@@ -142,7 +161,8 @@ export default async function handler(req, res) {
   const description   = buildDescription(cards, conditionDescription);
   const cleanTitle    = truncateTitle(title.trim());
 
-  const headers = authHeaders(accessToken);
+  const { marketplace, country } = await getSellerInfo(accessToken);
+  const headers = authHeaders(accessToken, marketplace);
 
   // Build item aspects — only use well-known eBay aspect names for category 183050.
   // Avoid sending aspects with unknown/arbitrary values as eBay may reject them.
@@ -206,20 +226,20 @@ export default async function handler(req, res) {
       locationKey = locData.locations?.[0]?.merchantLocationKey || null;
     }
     if (!locationKey) {
-      const key       = 'vaultdefault';
-      const createRes = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
-        method: 'PUT',
-        headers,
-        body:   JSON.stringify({ location: { address: { country: 'US' } }, name: 'The Vault' }),
+      const key = 'vaultdefault';
+      // Use minimal headers for location endpoint (no marketplace/language headers)
+      const locHeaders = { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
+      const createRes  = await fetch(`${API}/sell/inventory/v1/location/${key}`, {
+        method:  'PUT',
+        headers: locHeaders,
+        body:    JSON.stringify({ location: { address: { country } }, name: 'The Vault' }),
       });
       const createText = await createRes.text();
       console.log('eBay location create:', createRes.status, createText);
       if (createRes.ok || createRes.status === 204 || createRes.status === 409) {
         locationKey = key;
       } else {
-        // Can't create a location (ACCESS 2004) — omit from offer so eBay uses
-        // the seller's account-registered address instead.
-        console.warn('Location creation not permitted; omitting merchantLocationKey from offer.');
+        console.warn('Location creation failed; omitting merchantLocationKey from offer.');
         locationKey = null;
       }
     }
@@ -227,7 +247,7 @@ export default async function handler(req, res) {
     // ── Step 3: Create offer ─────────────────────────────────────────────────
     const offerBody = {
       sku,
-      marketplaceId:    MARKETPLACE,
+      marketplaceId:    marketplace,
       format:            'FIXED_PRICE',
       availableQuantity: 1,
       categoryId:        CATEGORY_ID,

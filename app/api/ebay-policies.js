@@ -8,36 +8,49 @@
  */
 
 const API = 'https://api.ebay.com';
-const MARKETPLACE = 'EBAY_US';
 
-const EBAY_HEADERS = (accessToken) => ({
+// Fetch seller's marketplace dynamically from eBay identity API
+async function getSellerMarketplace(accessToken) {
+  try {
+    const res  = await fetch(`${API}/commerce/identity/v1/user/`, {
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    });
+    const data = await res.json();
+    return data.registrationMarketplaceId || 'EBAY_US';
+  } catch (e) {
+    return 'EBAY_US';
+  }
+}
+
+const EBAY_HEADERS = (accessToken, marketplace) => ({
   'Authorization':           `Bearer ${accessToken}`,
-  'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE,
+  'X-EBAY-C-MARKETPLACE-ID': marketplace,
   'Content-Type':            'application/json',
   'Accept-Language':         'en-US',
   'Content-Language':        'en-US',
 });
 
-async function ebayGet(path, accessToken) {
+async function ebayGet(path, accessToken, marketplace) {
   const res = await fetch(`${API}${path}`, {
-    headers: EBAY_HEADERS(accessToken),
+    headers: EBAY_HEADERS(accessToken, marketplace),
   });
   return { status: res.status, data: await res.json() };
 }
 
-async function ebayPost(path, accessToken, body) {
+async function ebayPost(path, accessToken, marketplace, body) {
   const res = await fetch(`${API}${path}`, {
     method: 'POST',
-    headers: EBAY_HEADERS(accessToken),
+    headers: EBAY_HEADERS(accessToken, marketplace),
     body: JSON.stringify(body),
   });
   return { status: res.status, data: await res.json() };
 }
 
 async function ebayPut(path, accessToken, body) {
+  // Location endpoint uses minimal headers — no marketplace or language headers
   const res = await fetch(`${API}${path}`, {
     method: 'PUT',
-    headers: EBAY_HEADERS(accessToken),
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   return { status: res.status, ok: res.ok };
@@ -49,12 +62,15 @@ export default async function handler(req, res) {
   if (!accessToken) return res.status(400).json({ error: 'accessToken is required' });
 
   try {
+    const marketplace = await getSellerMarketplace(accessToken);
+    const country     = marketplace.replace('EBAY_', '') || 'US';
+
     // Fetch all three policy types in parallel
     const [fulfillmentRes, paymentRes, returnRes, locationRes] = await Promise.all([
-      ebayGet(`/sell/account/v1/fulfillment_policy?marketplace_id=${MARKETPLACE}`, accessToken),
-      ebayGet(`/sell/account/v1/payment_policy?marketplace_id=${MARKETPLACE}`,    accessToken),
-      ebayGet(`/sell/account/v1/return_policy?marketplace_id=${MARKETPLACE}`,     accessToken),
-      ebayGet('/sell/inventory/v1/location', accessToken),
+      ebayGet(`/sell/account/v1/fulfillment_policy?marketplace_id=${marketplace}`, accessToken, marketplace),
+      ebayGet(`/sell/account/v1/payment_policy?marketplace_id=${marketplace}`,    accessToken, marketplace),
+      ebayGet(`/sell/account/v1/return_policy?marketplace_id=${marketplace}`,     accessToken, marketplace),
+      ebayGet('/sell/inventory/v1/location', accessToken, marketplace),
     ]);
 
     const fulfillmentPolicies = fulfillmentRes.data.fulfillmentPolicies || [];
@@ -72,7 +88,7 @@ export default async function handler(req, res) {
     if (!merchantLocationKey) {
       const key = 'vaultdefault';
       const createRes = await ebayPut(`/sell/inventory/v1/location/${key}`, accessToken, {
-        location: { address: { country: 'US' } },
+        location: { address: { country } },
         name:     'The Vault',
       });
       // Accept success or already-exists; if it fails still proceed — listing will retry
