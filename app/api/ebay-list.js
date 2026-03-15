@@ -254,12 +254,32 @@ export default async function handler(req, res) {
     });
     const offerData = await offerRes.json();
 
-    if (!offerRes.ok) {
-      const msg = offerData.errors?.[0]?.longMessage || offerData.errors?.[0]?.message || JSON.stringify(offerData);
-      return res.status(offerRes.status).json({ error: `Offer creation failed: ${msg}` });
-    }
+    let offerId = offerData.offerId;
 
-    const offerId = offerData.offerId;
+    if (!offerRes.ok) {
+      // If offer already exists for this SKU, fetch it and reuse it
+      const alreadyExists = offerData.errors?.some(e =>
+        e.message?.toLowerCase().includes('already exists') ||
+        e.longMessage?.toLowerCase().includes('already exists')
+      );
+      if (alreadyExists) {
+        const existingRes  = await fetch(`${API}/sell/inventory/v1/offer?sku=${encodeURIComponent(sku)}`, { headers });
+        const existingData = await existingRes.json();
+        offerId = existingData.offers?.[0]?.offerId || null;
+        if (!offerId) {
+          return res.status(400).json({ error: 'Offer already exists but could not retrieve it. Please try again.' });
+        }
+        // Update existing offer with new price/policies
+        await fetch(`${API}/sell/inventory/v1/offer/${offerId}`, {
+          method:  'PUT',
+          headers,
+          body:    JSON.stringify(offerBody),
+        });
+      } else {
+        const msg = offerData.errors?.[0]?.longMessage || offerData.errors?.[0]?.message || JSON.stringify(offerData);
+        return res.status(offerRes.status).json({ error: `Offer creation failed: ${msg}` });
+      }
+    }
 
     // ── Step 4: Publish offer ────────────────────────────────────────────────
     const publishRes  = await fetch(`${API}/sell/inventory/v1/offer/${offerId}/publish`, {
