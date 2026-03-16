@@ -9,7 +9,7 @@
  * If body is empty, a topic is chosen automatically from the rotation pool.
  */
 
-import { createSign } from "node:crypto";
+import { createSign } from "crypto";
 
 // ── Firestore REST helpers ───────────────────────────────────────────────────
 function b64url(s) {

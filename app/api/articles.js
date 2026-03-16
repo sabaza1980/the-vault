@@ -10,7 +10,7 @@
  *   ?slug=X        — return a single article by slug
  */
 
-import { createSign } from "node:crypto";
+import { createSign } from "crypto";
 
 // ── Firestore REST helpers ───────────────────────────────────────────────────
 function b64url(s) {
