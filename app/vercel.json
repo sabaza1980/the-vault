@@ -4,6 +4,12 @@
     { "source": "/ebay-callback.html", "destination": "/ebay-callback.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "functions": {
+    "api/generate-article.js": { "maxDuration": 60 },
+    "api/chat.js": { "maxDuration": 30 },
+    "api/analyze.js": { "maxDuration": 30 },
+    "api/articles.js": { "maxDuration": 10 }
+  },
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
