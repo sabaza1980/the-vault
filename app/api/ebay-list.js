@@ -34,22 +34,23 @@ const MARKETPLACE_CURRENCY = {
 };
 function getCurrency(marketplace) { return MARKETPLACE_CURRENCY[marketplace] || 'USD'; }
 
-// Map condition strings to Trading API ConditionIDs
+// Map condition strings to Trading API ConditionIDs valid for category 183050
+// (3000/2000/2500 are NOT valid for sports trading cards on eBay)
 const TRADING_CONDITION_MAP = {
-  'Mint':      '1000',
-  'Near Mint': '3000',
-  'Excellent': '4000',
-  'Good':      '5000',
-  'Fair':      '6000',
-  'Poor':      '6000',
-  'Unknown':   '5000',
+  'Mint':      '1000', // New/Mint
+  'Near Mint': '4000', // Very Good
+  'Excellent': '4000', // Very Good
+  'Good':      '5000', // Good
+  'Fair':      '6000', // Acceptable
+  'Poor':      '6000', // Acceptable
+  'Unknown':   '5000', // Good
 };
 
 // Fetch the seller''s registered country + marketplace from eBay identity API
 async function getSellerInfo(accessToken) {
   try {
     const res  = await fetch(`${API}/commerce/identity/v1/user/`, {
-      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
     });
     const data = await res.json();
     console.log('eBay identity response:', JSON.stringify(data));
@@ -114,7 +115,8 @@ function getImageUrls(cards) {
   const urls = [];
   for (const c of cards) {
     for (const url of [c.imageUrl, c.backImageUrl]) {
-      if (url?.startsWith('https://') && !url.includes('firebasestorage.googleapis.com')) {
+      // Accept any public HTTPS URL including Firebase Storage (publicly readable)
+      if (url?.startsWith('https://') && !url.startsWith('data:')) {
         urls.push(url);
         if (urls.length >= 12) return urls;
       }
@@ -132,6 +134,7 @@ function buildItemSpecificsXml(cards) {
   const c = cards[0];
   const pairs = [
     ['Sport', 'Basketball'],
+    ['Franchise', c.team || 'NBA'], // required by eBay for category 183050
     c.playerName                        ? ['Player/Athlete',    c.playerName]         : null,
     c.year                              ? ['Season',            String(c.year)]       : null,
     c.brand                             ? ['Card Manufacturer', c.brand]              : null,
