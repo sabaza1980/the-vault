@@ -206,35 +206,6 @@ export default async function handler(req, res) {
     const description  = buildDescription(cards, conditionDescription);
     const imageUrls    = getImageUrls(cards);
 
-    // Diagnostic: get the real valid Card Condition values from eBay
-    try {
-      const specRes = await fetch(TRADING_API_URL, {
-        method: 'POST',
-        headers: {
-          'X-EBAY-API-COMPATIBILITY-LEVEL': TRADING_COMPAT,
-          'X-EBAY-API-CALL-NAME':           'GetCategorySpecifics',
-          'X-EBAY-API-SITEID':              siteId,
-          'X-EBAY-API-APP-NAME':            appId,
-          'X-EBAY-API-DEV-NAME':            devId,
-          'X-EBAY-API-CERT-NAME':           certId,
-          'Content-Type':                   'text/xml',
-        },
-        body: `<?xml version="1.0" encoding="utf-8"?><GetCategorySpecificsRequest xmlns="urn:ebay:apis:eBLBaseComponents"><RequesterCredentials><eBayAuthToken>${accessToken}</eBayAuthToken></RequesterCredentials><CategorySpecifics><CategoryID>${CATEGORY_ID}</CategoryID></CategorySpecifics><MaxValuesPerName>50</MaxValuesPerName></GetCategorySpecificsRequest>`,
-      });
-      const specText = await specRes.text();
-      // Extract just the Card Condition block
-      const ccMatch = specText.match(/<Name>Card Condition<\/Name>([\s\S]*?)<\/NameValueList>/);
-      if (ccMatch) {
-        const vals = [...specText.matchAll(/<Value>([\s\S]*?)<\/Value>/g)].map(m => m[1]);
-        console.log('eBay Card Condition valid values:', JSON.stringify(vals));
-      } else {
-        // Log first 2000 chars to see what came back
-        console.log('GetCategorySpecifics raw (no Card Condition found):', specText.slice(0, 2000));
-      }
-    } catch (e) {
-      console.warn('GetCategorySpecifics failed:', e.message);
-    }
-
     const specificsXml = buildItemSpecificsXml(cards, condition);
 
     const picturesXml = imageUrls.length > 0
