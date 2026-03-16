@@ -205,9 +205,31 @@ export default async function handler(req, res) {
     const cleanTitle   = truncateTitle(title.trim());
     const description  = buildDescription(cards, conditionDescription);
     const imageUrls    = getImageUrls(cards);
+
+    // Diagnostic: fetch valid eBay Card Condition values for category 183050 on this site
+    try {
+      const specRes = await fetch(TRADING_API_URL, {
+        method: 'POST',
+        headers: {
+          'X-EBAY-API-COMPATIBILITY-LEVEL': TRADING_COMPAT,
+          'X-EBAY-API-CALL-NAME':           'GetCategorySpecifics',
+          'X-EBAY-API-SITEID':              siteId,
+          'X-EBAY-API-APP-NAME':            appId,
+          'X-EBAY-API-DEV-NAME':            devId,
+          'X-EBAY-API-CERT-NAME':           certId,
+          'Content-Type':                   'text/xml',
+        },
+        body: `<?xml version="1.0" encoding="utf-8"?><GetCategorySpecificsRequest xmlns="urn:ebay:apis:eBLBaseComponents"><RequesterCredentials><eBayAuthToken>${accessToken}</eBayAuthToken></RequesterCredentials><CategoryID>${CATEGORY_ID}</CategoryID><Name>Card Condition</Name></GetCategorySpecificsRequest>`,
+      });
+      const specText = await specRes.text();
+      const validVals = [...specText.matchAll(/<Value>(.*?)<\/Value>/g)].map(m => m[1]);
+      console.log('eBay valid Card Condition values for category', CATEGORY_ID, ':', JSON.stringify(validVals));
+    } catch (e) {
+      console.warn('GetCategorySpecifics diagnostic failed:', e.message);
+    }
+
     const specificsXml = buildItemSpecificsXml(cards, condition);
     console.log('Item specifics condition input:', condition, '| Card Condition value:', CARD_CONDITION_SPECIFIC_MAP[condition] || 'Good (fallback)');
-    console.log('ItemSpecifics XML:', specificsXml);
 
     const picturesXml = imageUrls.length > 0
       ? `  <PictureDetails>\n    <GalleryType>Gallery</GalleryType>\n${imageUrls.map(u => `    <PictureURL>${escapeXml(u)}</PictureURL>`).join('\n')}\n  </PictureDetails>`
