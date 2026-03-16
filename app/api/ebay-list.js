@@ -35,11 +35,11 @@ const MARKETPLACE_CURRENCY = {
 function getCurrency(marketplace) { return MARKETPLACE_CURRENCY[marketplace] || 'USD'; }
 
 // Map condition strings to Trading API ConditionIDs valid for category 183050
-// (3000/2000/2500 are NOT valid for sports trading cards on eBay)
+// Only 4000/5000/6000 are confirmed valid for category 183050 on eBay US
 const TRADING_CONDITION_MAP = {
-  'Mint':      '1000', // New/Mint
-  'Near Mint': '4000', // Very Good
-  'Excellent': '4000', // Very Good
+  'Mint':      '4000', // Near Mint or Better (1000 is invalid for 183050)
+  'Near Mint': '4000', // Near Mint or Better
+  'Excellent': '4000', // Near Mint or Better
   'Good':      '5000', // Good
   'Fair':      '6000', // Acceptable
   'Poor':      '6000', // Acceptable
@@ -149,7 +149,7 @@ function truncateTitle(title) {
 
 function buildItemSpecificsXml(cards, condition) {
   const c = cards[0];
-  const cardCondition = CARD_CONDITION_SPECIFIC_MAP[condition] || 'Ungraded';
+  const cardCondition = CARD_CONDITION_SPECIFIC_MAP[condition] || 'Good';
   const pairs = [
     ['Sport', 'Basketball'],
     ['Franchise', c.team || 'NBA'], // required by eBay for category 183050
@@ -206,30 +206,7 @@ export default async function handler(req, res) {
     const description  = buildDescription(cards, conditionDescription);
     const imageUrls    = getImageUrls(cards);
 
-    // Diagnostic: fetch valid eBay Card Condition values for category 183050 on this site
-    try {
-      const specRes = await fetch(TRADING_API_URL, {
-        method: 'POST',
-        headers: {
-          'X-EBAY-API-COMPATIBILITY-LEVEL': TRADING_COMPAT,
-          'X-EBAY-API-CALL-NAME':           'GetCategorySpecifics',
-          'X-EBAY-API-SITEID':              siteId,
-          'X-EBAY-API-APP-NAME':            appId,
-          'X-EBAY-API-DEV-NAME':            devId,
-          'X-EBAY-API-CERT-NAME':           certId,
-          'Content-Type':                   'text/xml',
-        },
-        body: `<?xml version="1.0" encoding="utf-8"?><GetCategorySpecificsRequest xmlns="urn:ebay:apis:eBLBaseComponents"><RequesterCredentials><eBayAuthToken>${accessToken}</eBayAuthToken></RequesterCredentials><CategoryID>${CATEGORY_ID}</CategoryID><Name>Card Condition</Name></GetCategorySpecificsRequest>`,
-      });
-      const specText = await specRes.text();
-      const validVals = [...specText.matchAll(/<Value>(.*?)<\/Value>/g)].map(m => m[1]);
-      console.log('eBay valid Card Condition values for category', CATEGORY_ID, ':', JSON.stringify(validVals));
-    } catch (e) {
-      console.warn('GetCategorySpecifics diagnostic failed:', e.message);
-    }
-
     const specificsXml = buildItemSpecificsXml(cards, condition);
-    console.log('Item specifics condition input:', condition, '| Card Condition value:', CARD_CONDITION_SPECIFIC_MAP[condition] || 'Good (fallback)');
 
     const picturesXml = imageUrls.length > 0
       ? `  <PictureDetails>\n    <GalleryType>Gallery</GalleryType>\n${imageUrls.map(u => `    <PictureURL>${escapeXml(u)}</PictureURL>`).join('\n')}\n  </PictureDetails>`
