@@ -46,12 +46,28 @@ const TRADING_CONDITION_MAP = {
   'Unknown':   '5000', // Good
 };
 
+// Map condition strings to eBay "Card Condition" item specific (aspect ID 40001)
+// Required for Sports Trading Cards category 183050
+const CARD_CONDITION_SPECIFIC_MAP = {
+  'Mint':      'Near Mint or Better',
+  'Near Mint': 'Near Mint or Better',
+  'Excellent': 'Very Good',
+  'Good':      'Good',
+  'Fair':      'Poor to Fair',
+  'Poor':      'Poor to Fair',
+  'Unknown':   'Ungraded',
+};
+
 // Fetch the seller''s registered country + marketplace from eBay identity API
 async function getSellerInfo(accessToken) {
   try {
     const res  = await fetch(`${API}/commerce/identity/v1/user/`, {
       headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
     });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Identity API ${res.status}: ${text.slice(0, 200)}`);
+    }
     const data = await res.json();
     console.log('eBay identity response:', JSON.stringify(data));
     const marketplace = data.registrationMarketplaceId || 'EBAY_US';
@@ -130,11 +146,13 @@ function truncateTitle(title) {
   return title.slice(0, 79).replace(/\s+\S*$/, '').slice(0, 80);
 }
 
-function buildItemSpecificsXml(cards) {
+function buildItemSpecificsXml(cards, condition) {
   const c = cards[0];
+  const cardCondition = CARD_CONDITION_SPECIFIC_MAP[condition] || 'Ungraded';
   const pairs = [
     ['Sport', 'Basketball'],
     ['Franchise', c.team || 'NBA'], // required by eBay for category 183050
+    ['Card Condition', cardCondition],  // required aspect ID 40001
     c.playerName                        ? ['Player/Athlete',    c.playerName]         : null,
     c.year                              ? ['Season',            String(c.year)]       : null,
     c.brand                             ? ['Card Manufacturer', c.brand]              : null,
@@ -186,7 +204,7 @@ export default async function handler(req, res) {
     const cleanTitle   = truncateTitle(title.trim());
     const description  = buildDescription(cards, conditionDescription);
     const imageUrls    = getImageUrls(cards);
-    const specificsXml = buildItemSpecificsXml(cards);
+    const specificsXml = buildItemSpecificsXml(cards, condition);
 
     const picturesXml = imageUrls.length > 0
       ? `  <PictureDetails>\n    <GalleryType>Gallery</GalleryType>\n${imageUrls.map(u => `    <PictureURL>${escapeXml(u)}</PictureURL>`).join('\n')}\n  </PictureDetails>`
