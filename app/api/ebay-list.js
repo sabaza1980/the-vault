@@ -48,14 +48,15 @@ const TRADING_CONDITION_MAP = {
 
 // Map condition strings to eBay "Card Condition" item specific (aspect ID 40001)
 // Required for Sports Trading Cards category 183050
+// Valid eBay values: Near Mint or Better, Excellent, Very Good, Good, Fair to Poor, Poor
 const CARD_CONDITION_SPECIFIC_MAP = {
   'Mint':      'Near Mint or Better',
   'Near Mint': 'Near Mint or Better',
-  'Excellent': 'Very Good',
+  'Excellent': 'Excellent',
   'Good':      'Good',
-  'Fair':      'Poor to Fair',
-  'Poor':      'Poor to Fair',
-  'Unknown':   'Ungraded',
+  'Fair':      'Fair to Poor',
+  'Poor':      'Fair to Poor',
+  'Unknown':   'Good',
 };
 
 // Fetch the seller''s registered country + marketplace from eBay identity API
@@ -205,6 +206,8 @@ export default async function handler(req, res) {
     const description  = buildDescription(cards, conditionDescription);
     const imageUrls    = getImageUrls(cards);
     const specificsXml = buildItemSpecificsXml(cards, condition);
+    console.log('Item specifics condition input:', condition, '| Card Condition value:', CARD_CONDITION_SPECIFIC_MAP[condition] || 'Good (fallback)');
+    console.log('ItemSpecifics XML:', specificsXml);
 
     const picturesXml = imageUrls.length > 0
       ? `  <PictureDetails>\n    <GalleryType>Gallery</GalleryType>\n${imageUrls.map(u => `    <PictureURL>${escapeXml(u)}</PictureURL>`).join('\n')}\n  </PictureDetails>`
