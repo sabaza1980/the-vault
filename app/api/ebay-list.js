@@ -47,16 +47,16 @@ const TRADING_CONDITION_MAP = {
 };
 
 // Map condition strings to eBay "Card Condition" item specific (aspect ID 40001)
-// Required for Sports Trading Cards category 183050
-// Valid eBay values: Near Mint or Better, Excellent, Very Good, Good, Fair to Poor, Poor
+// Valid values per Taxonomy API for category 183050:
+// "Near Mint or Better", "Excellent", "Very Good", "Poor"
 const CARD_CONDITION_SPECIFIC_MAP = {
   'Mint':      'Near Mint or Better',
   'Near Mint': 'Near Mint or Better',
   'Excellent': 'Excellent',
-  'Good':      'Good',
-  'Fair':      'Fair to Poor',
-  'Poor':      'Fair to Poor',
-  'Unknown':   'Good',
+  'Good':      'Very Good',
+  'Fair':      'Poor',
+  'Poor':      'Poor',
+  'Unknown':   'Very Good',
 };
 
 // Fetch the seller''s registered country + marketplace from eBay identity API
@@ -229,6 +229,9 @@ export default async function handler(req, res) {
     <Location>${escapeXml(location)}</Location>
     <Currency>${escapeXml(currency)}</Currency>
     <ConditionID>${conditionId}</ConditionID>
+    <ItemSpecifics>
+${specificsXml}
+    </ItemSpecifics>
     <ListingDuration>GTC</ListingDuration>
     <ListingType>FixedPriceItem</ListingType>
     <Quantity>1</Quantity>
@@ -244,11 +247,11 @@ export default async function handler(req, res) {
       </SellerPaymentProfile>
     </SellerProfiles>
 ${picturesXml}
-${specificsXml ? `  <ItemSpecifics>\n${specificsXml}\n  </ItemSpecifics>` : ''}
   </Item>
 </AddItemRequest>`;
 
     console.log('Trading API AddItem siteId:', siteId, 'country:', country, 'currency:', currency);
+    console.log('AddItem XML body:', xmlBody);
 
     const tradingRes = await fetch(TRADING_API_URL, {
       method:  'POST',
