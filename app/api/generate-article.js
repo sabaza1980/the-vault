@@ -3,19 +3,54 @@
  *
  * Generates an SEO-optimised article about card collecting using Claude
  * and stores it in Firestore. Called by a Vercel cron job daily.
- * Uses Firestore REST API + Node.js built-in crypto (no firebase-admin needed).
+ *
+ * Uses globalThis.crypto.subtle for JWT (Node 18+, no imports needed).
+ * Uses Firestore REST API for writes (authenticated via service account JWT).
  *
  * Body (optional): { topic, category, articleType }
- * If body is empty, a topic is chosen automatically from the rotation pool.
  */
 
-import { createSign } from "crypto";
-
-// ── Firestore REST helpers ───────────────────────────────────────────────────
-function b64url(s) {
-  return Buffer.from(s).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+// ── Google Auth JWT (Web Crypto API — no imports required) ──────────────────
+function b64url(buf) {
+  return Buffer.from(buf).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+async function googleToken(sa) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const payload = b64url(JSON.stringify({
+    iss: sa.client_email,
+    scope: "https://www.googleapis.com/auth/datastore",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now, exp: now + 3600,
+  }));
+
+  // Strip PEM headers and decode to DER bytes
+  const pemBody = sa.private_key.replace(/-----[^-]+-----|[\r\n]/g, "");
+  const cryptoKey = await globalThis.crypto.subtle.importKey(
+    "pkcs8",
+    Buffer.from(pemBody, "base64"),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sigBuffer = await globalThis.crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    new TextEncoder().encode(`${header}.${payload}`)
+  );
+  const sig = b64url(Buffer.from(sigBuffer));
+
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${header}.${payload}.${sig}`,
+  });
+  if (!r.ok) throw new Error(`Google token failed: ${r.status}`);
+  return (await r.json()).access_token;
+}
+
+// ── Firestore REST write ─────────────────────────────────────────────────────
 function toFsVal(v) {
   if (v === null || v === undefined) return { nullValue: null };
   if (typeof v === "boolean") return { booleanValue: v };
@@ -26,28 +61,14 @@ function toFsVal(v) {
   return { stringValue: String(v) };
 }
 
-async function googleToken(sa) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const payload = b64url(JSON.stringify({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/datastore", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }));
-  const sign = createSign("RSA-SHA256");
-  sign.update(`${header}.${payload}`);
-  const sig = sign.sign(sa.private_key).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${header}.${payload}.${sig}` });
-  if (!r.ok) throw new Error(`Google token failed: ${r.status}`);
-  return (await r.json()).access_token;
-}
-
 async function fsAdd(token, projectId, collectionId, data) {
   const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFsVal(v)]));
-  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionId}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ fields }),
-  });
+  const r = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionId}`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields }) }
+  );
   if (!r.ok) throw new Error(`Firestore add failed: ${r.status} ${await r.text()}`);
-  const doc = await r.json();
-  return doc.name?.split("/").pop();
+  return (await r.json()).name?.split("/").pop();
 }
 
 // ── Topic rotation pool ──────────────────────────────────────────────────────

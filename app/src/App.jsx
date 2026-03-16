@@ -564,6 +564,21 @@ function Badge({ label, color }) {
   );
 }
 
+// ── Category cover images (files in /public) ─────────────────────────────────
+const CATEGORY_IMAGES = {
+  "Pokemon":          "/pokemon1.png",
+  "Basketball":       "/basketball.png",
+  "Soccer":           "/fifa.png",
+  "American Football":"/football.png",
+  "Baseball":         "/MLB.png",
+  "MTG":              "/mtg.png",
+  "Yu-Gi-Oh":         "/1p.png",
+  "Other TCG":        "/1p.png",
+};
+const CATEGORY_EMOJI = {
+  "Hockey": "🏒", "Non-Sports": "🎭", "Other": "🃏", "Favourites": "★",
+};
+
 export default function App() {
   const { user, signOut } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
@@ -1029,6 +1044,54 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             {queue.filter(q => q.status === "error" && q.errorMsg).map(q => (
               <div key={q.id} style={{ marginTop: 4, fontSize: 11, opacity: 0.8, wordBreak: "break-all" }}>{q.errorMsg}</div>
             ))}
+          </div>
+        )}
+
+        {/* Category Tiles */}
+        {cards.length > 0 && categories.filter(c => c !== "All" && c !== "Favourites").length > 1 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+              {categories.filter(c => c !== "All" && c !== "Favourites").map(cat => {
+                const img = CATEGORY_IMAGES[cat];
+                const emoji = CATEGORY_EMOJI[cat] || "🃏";
+                const count = cards.filter(c =>
+                  cat === "Other"
+                    ? (!c.cardCategory || c.cardCategory === "Other" || c.cardCategory === "Unknown")
+                    : c.cardCategory === cat
+                ).length;
+                const isActive = filter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setFilter(isActive ? "All" : cat)}
+                    style={{
+                      position: "relative", height: 86, borderRadius: 12, overflow: "hidden",
+                      border: `2px solid ${isActive ? "#ff6b35" : "rgba(255,255,255,0.06)"}`,
+                      cursor: "pointer", padding: 0, background: "var(--deep)",
+                      boxShadow: isActive ? "0 0 16px #ff6b3540" : "none",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {img ? (
+                      <img src={img} alt={cat} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: isActive ? 1 : 0.75, transition: "opacity 0.15s" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>{emoji}</div>
+                    )}
+                    <div style={{
+                      position: "absolute", inset: 0,
+                      background: isActive
+                        ? "linear-gradient(to top, rgba(255,107,53,0.85) 0%, rgba(0,0,0,0.15) 100%)"
+                        : "linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.08) 70%)",
+                      display: "flex", flexDirection: "column", justifyContent: "flex-end",
+                      padding: "0 7px 7px", transition: "background 0.15s",
+                    }}>
+                      <div style={{ fontSize: 9, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: 0.7, lineHeight: 1.3 }}>{cat}</div>
+                      <div style={{ fontSize: 8, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{count} card{count !== 1 ? "s" : ""}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

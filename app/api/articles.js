@@ -2,21 +2,18 @@
  * GET /api/articles
  *
  * Returns published articles from Firestore for the public blog page.
- * Uses Firestore REST API + Node.js built-in crypto (no firebase-admin needed).
+ * Uses Firestore REST API with the public Firebase API key (no auth needed
+ * because firestore.rules has: allow read: if true for articles).
  *
  * Query params:
  *   ?limit=N       — max results (default 20)
  *   ?category=X    — filter by category
  *   ?slug=X        — return a single article by slug
+ *
+ * Zero imports — safe to bundle in any Vercel runtime.
  */
 
-import { createSign } from "crypto";
-
-// ── Firestore REST helpers ───────────────────────────────────────────────────
-function b64url(s) {
-  return Buffer.from(s).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
+// Helper: decode a Firestore field value to a plain JS value
 function fromFsVal(fv) {
   if (!fv) return null;
   if ("stringValue" in fv) return fv.stringValue;
@@ -35,47 +32,6 @@ function fromDoc(doc) {
   return { id: doc.name?.split("/").pop(), ...Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [k, fromFsVal(v)])) };
 }
 
-function toFsVal(v) {
-  if (v === null || v === undefined) return { nullValue: null };
-  if (typeof v === "boolean") return { booleanValue: v };
-  if (typeof v === "number") return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
-  if (typeof v === "string") return { stringValue: v };
-  if (Array.isArray(v)) return { arrayValue: { values: v.map(toFsVal) } };
-  return { stringValue: String(v) };
-}
-
-function fieldFilter(field, op, value) {
-  return { fieldFilter: { field: { fieldPath: field }, op, value: toFsVal(value) } };
-}
-
-async function googleToken(sa) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const payload = b64url(JSON.stringify({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/datastore", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }));
-  const sign = createSign("RSA-SHA256");
-  sign.update(`${header}.${payload}`);
-  const sig = sign.sign(sa.private_key).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${header}.${payload}.${sig}` });
-  if (!r.ok) throw new Error(`Google token exchange failed: ${r.status}`);
-  return (await r.json()).access_token;
-}
-
-async function fsQuery(token, projectId, collectionId, filters, orderBy, limit) {
-  const sq = { from: [{ collectionId }] };
-  if (filters.length === 1) sq.where = filters[0];
-  else if (filters.length > 1) sq.where = { compositeFilter: { op: "AND", filters } };
-  if (orderBy) sq.orderBy = [{ field: { fieldPath: orderBy.field }, direction: orderBy.direction }];
-  if (limit) sq.limit = limit;
-  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ structuredQuery: sq }),
-  });
-  if (!r.ok) throw new Error(`Firestore query failed: ${r.status}`);
-  const data = await r.json();
-  return data.filter((row) => row.document).map((row) => fromDoc(row.document));
-}
-
 // ── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -86,18 +42,35 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=60");
 
   try {
-    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "{}");
-    if (!sa.project_id) return res.status(500).json({ error: "Firebase not configured" });
+    const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+    const apiKey = process.env.VITE_FIREBASE_API_KEY;
+    if (!projectId) return res.status(500).json({ error: "Firebase not configured" });
 
-    const token = await googleToken(sa);
     const { limit = "20", category, slug } = req.query;
-
-    const filters = [fieldFilter("status", "EQUAL", "published")];
-    if (category) filters.push(fieldFilter("category", "EQUAL", category));
-    if (slug) filters.push(fieldFilter("slug", "EQUAL", slug));
-
     const limitN = Math.min(parseInt(limit, 10) || 20, 50);
-    const docs = await fsQuery(token, sa.project_id, "articles", filters, { field: "publishedAt", direction: "DESCENDING" }, limitN);
+
+    // Build structured query — public read is allowed via Firestore rules
+    const filters = [{ fieldFilter: { field: { fieldPath: "status" }, op: "EQUAL", value: { stringValue: "published" } } }];
+    if (category) filters.push({ fieldFilter: { field: { fieldPath: "category" }, op: "EQUAL", value: { stringValue: category } } });
+    if (slug) filters.push({ fieldFilter: { field: { fieldPath: "slug" }, op: "EQUAL", value: { stringValue: slug } } });
+
+    const sq = {
+      from: [{ collectionId: "articles" }],
+      where: filters.length === 1 ? filters[0] : { compositeFilter: { op: "AND", filters } },
+      orderBy: [{ field: { fieldPath: "publishedAt" }, direction: "DESCENDING" }],
+      limit: limitN,
+    };
+
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery: sq }),
+    });
+    if (!r.ok) throw new Error(`Firestore error: ${r.status}`);
+
+    const rows = await r.json();
+    const docs = rows.filter((row) => row.document).map((row) => fromDoc(row.document));
 
     if (slug) {
       if (!docs.length) return res.status(404).json({ error: "Article not found" });
