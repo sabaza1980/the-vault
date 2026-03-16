@@ -1,25 +1,53 @@
 /**
- * POST /api/generate-article
+ * POST /api/generate-article  (GET also accepted for Vercel cron)
  *
  * Generates an SEO-optimised article about card collecting using Claude
  * and stores it in Firestore. Called by a Vercel cron job daily.
+ * Uses Firestore REST API + Node.js built-in crypto (no firebase-admin needed).
  *
  * Body (optional): { topic, category, articleType }
  * If body is empty, a topic is chosen automatically from the rotation pool.
  */
 
-import { initializeApp, getApps, cert } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import { createSign } from "node:crypto";
 
-// Lazy-initialise Firebase Admin SDK
-function getDb() {
-  if (!getApps().length) {
-    const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "{}"
-    );
-    initializeApp({ credential: cert(serviceAccount) });
-  }
-  return getFirestore();
+// ── Firestore REST helpers ───────────────────────────────────────────────────
+function b64url(s) {
+  return Buffer.from(s).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function toFsVal(v) {
+  if (v === null || v === undefined) return { nullValue: null };
+  if (typeof v === "boolean") return { booleanValue: v };
+  if (typeof v === "number") return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if (typeof v === "string") return { stringValue: v };
+  if (Array.isArray(v)) return { arrayValue: { values: v.map(toFsVal) } };
+  if (typeof v === "object") return { mapValue: { fields: Object.fromEntries(Object.entries(v).map(([k, val]) => [k, toFsVal(val)])) } };
+  return { stringValue: String(v) };
+}
+
+async function googleToken(sa) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
+  const payload = b64url(JSON.stringify({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/datastore", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }));
+  const sign = createSign("RSA-SHA256");
+  sign.update(`${header}.${payload}`);
+  const sig = sign.sign(sa.private_key).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${header}.${payload}.${sig}` });
+  if (!r.ok) throw new Error(`Google token failed: ${r.status}`);
+  return (await r.json()).access_token;
+}
+
+async function fsAdd(token, projectId, collectionId, data) {
+  const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFsVal(v)]));
+  const r = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields }),
+  });
+  if (!r.ok) throw new Error(`Firestore add failed: ${r.status} ${await r.text()}`);
+  const doc = await r.json();
+  return doc.name?.split("/").pop();
 }
 
 // ── Topic rotation pool ──────────────────────────────────────────────────────
@@ -162,16 +190,19 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Failed to parse article JSON from Claude", raw: rawText.slice(0, 500) });
     }
 
-    // Persist to Firestore
-    const db = getDb();
-    const docRef = await db.collection("articles").add({
+    // Persist to Firestore via REST API
+    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "{}");
+    if (!sa.project_id) return res.status(500).json({ error: "Firebase not configured" });
+
+    const token = await googleToken(sa);
+    const docId = await fsAdd(token, sa.project_id, "articles", {
       ...article,
-      publishedAt: Timestamp.now(),
+      publishedAt: new Date().toISOString(),
       status: "published",
       source: "auto-generated",
     });
 
-    return res.status(200).json({ id: docRef.id, title: article.title, slug: article.slug });
+    return res.status(200).json({ id: docId, title: article.title, slug: article.slug });
   } catch (err) {
     console.error("generate-article error:", err);
     return res.status(500).json({ error: err.message });
