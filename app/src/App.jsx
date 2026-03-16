@@ -229,7 +229,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
       try { newInfo = JSON.parse(rawText.replace(/```json|```/g, "").trim()); } catch { /* keep existing data */ }
 
       // Only apply card-authentication fields — never overwrite player identity/context
-      const CARD_FIELDS = ["serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes"];
+      const CARD_FIELDS = ["cardCategory", "serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes"];
       const filtered = Object.fromEntries(
         Object.entries(newInfo).filter(([k, v]) => CARD_FIELDS.includes(k) && v !== null && v !== undefined)
       );
@@ -327,6 +327,18 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {/* Team */}
             {card.team && card.team !== "Unknown" && (
               <div style={{ color: "var(--tm)", fontSize: 12, marginTop: 3 }}>{card.team}</div>
+            )}
+
+            {/* Category pill */}
+            {card.cardCategory && card.cardCategory !== "Other" && card.cardCategory !== "Unknown" && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 5 }}>
+                <span style={{
+                  fontSize: 9, padding: "2px 8px", borderRadius: 20,
+                  background: "rgba(240,192,64,0.1)", color: "#c8a020",
+                  border: "1px solid rgba(240,192,64,0.2)",
+                  fontWeight: 700, textTransform: "uppercase", letterSpacing: 1
+                }}>{card.cardCategory}</span>
+              </div>
             )}
 
             {/* Badges */}
@@ -597,35 +609,35 @@ export default function App() {
               { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
               {
                 type: "text",
-                text: `You are an expert sports card authenticator and grader with deep knowledge of every major card brand, set, parallel, and autograph program. Analyze this card image with extreme care.
+                text: `You are an expert trading card authenticator and cataloguer with deep knowledge of every major card brand, set, and format — including Pokémon, Magic: The Gathering, Yu-Gi-Oh!, sports cards (basketball, American football, soccer, baseball, hockey), and other trading card games. Analyse this card image with extreme care.
 
 STEP 1 — VISUAL SCAN (do this mentally before filling the JSON):
-- PLAYER & CARD ID: Read the player name, team, year, brand, and set name directly from the card front and back.
+- CARD CATEGORY: First, determine the card type — is it Pokémon, MTG, Yu-Gi-Oh!, a sports card (which sport?), or something else?
+- PLAYER / CHARACTER & CARD ID: Read the player name, character name, team, year, brand, and set name directly from the card front and back.
 - AUTOGRAPH CHECK: Carefully scan the ENTIRE card surface — front AND back. Look for: ink signatures (any color, often blue/black/silver), sticker autographs (glossy rectangle with ink), hard-signed on-card autographs. An autograph may be subtle on a dark background. hasAutograph = true if ANY signature is present.
 - SERIAL NUMBER CHECK: Scan all four corners, borders, and the back of the card. Serial numbers are stamped, foil-printed, or handwritten as "X/Y" (e.g. "45/99", "12/25", "1/1"). If found, record it exactly including the total (e.g. "45/99").
-- PARALLEL / FINISH: Identify the specific parallel by the border color, foil type, and finish. Examples: Silver Prizm (silver foil border), Gold Prizm (gold foil), Red/Blue/Green wave refractor, Holo, Hyper, etc. Only use "Base" if there is no special finish.
-- ROOKIE INDICATOR: Look for text: "ROOKIE", "RC", "Rated Rookie", "RPA", "Rookie Patch Auto" physically printed on the card.
+- PARALLEL / FINISH: Identify the specific parallel by the border color, foil type, and finish. For sports cards: Silver Prizm, Gold Prizm, Red Wave Refractor, etc. For Pokémon: Holo, Reverse Holo, Full Art, Alt Art, Special Illustration Rare, etc. For MTG: Foil, Extended Art, Showcase, Borderless, etc. Only use "Base" if there is truly no special finish.
+- ROOKIE / FIRST EDITION INDICATOR: Look for text: "ROOKIE", "RC", "Rated Rookie", "RPA" on sports cards. For Pokémon: "1st Edition" stamp. For MTG: note if it is from a first-print-run set.
 
-STEP 2 — RARITY (assign based strictly on physical evidence):
-- "Common" = Base card, no special finish
-- "Uncommon" = Colored parallel / non-base finish visible
-- "Rare" = Refractor / Prizm / Chrome / foil finish clearly visible
-- "Very Rare" = Serial numbered /100–/299 printed on card
-- "Ultra Rare" = Serial numbered /10–/99 printed on card
-- "Legendary" = 1/1, logoman, or on-card auto + serial /10 or lower
+STEP 2 — RARITY (assign based on the card's specific category conventions):
+Sports cards: "Common" = Base; "Uncommon" = Colored parallel; "Rare" = Refractor/Chrome/Prizm; "Very Rare" = Serial /100–/299; "Ultra Rare" = Serial /10–/99; "Legendary" = 1/1, logoman, or on-card auto + serial /10 or lower
+Pokémon: "Common" = Common/Uncommon; "Uncommon" = Reverse Holo; "Rare" = Holo Rare; "Very Rare" = Ultra Rare/Full Art/V; "Ultra Rare" = Secret Rare/Alt Art/Special Illustration Rare; "Legendary" = Trophy card/1st Ed Base Charizard/Gold Pikachu promo
+MTG: "Common" = Common; "Uncommon" = Uncommon; "Rare" = Rare; "Very Rare" = Non-foil Mythic/Extended Art; "Ultra Rare" = Foil or Borderless/Showcase Mythic; "Legendary" = Reserved List card, serialised, or Power Nine
+Yu-Gi-Oh!: "Common" = Common; "Uncommon" = Rare; "Rare" = Super/Ultra Rare; "Very Rare" = Secret Rare; "Ultra Rare" = Starlight/Ghost Rare; "Legendary" = Prize card / Championship promo
 
 STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text outside the JSON.
 
 {
-  "playerName": "Exact name as printed on card",
-  "fullCardName": "Year + Brand + Series as it appears on the card, e.g. '2023-24 Panini Prizm' or '2021 Topps Chrome'",
+  "cardCategory": "Pokemon | MTG | Yu-Gi-Oh | Basketball | American Football | Soccer | Baseball | Hockey | Other TCG | Non-Sports | Other",
+  "playerName": "Exact player name as printed on card, or character name for TCG cards (e.g. 'Charizard', 'Black Lotus')",
+  "fullCardName": "Year + Brand + Series as it appears on the card, e.g. '2023-24 Panini Prizm' or '2021 Topps Chrome' or 'Scarlet & Violet: Paradox Rift'",
   "pack": "Product/pack type if identifiable, or null",
-  "team": "Team name as printed, or 'Unknown'",
-  "year": "Year or season e.g. '2023-24'",
-  "brand": "Panini | Topps | Upper Deck | Fleer | Bowman | Donruss | Score | other",
-  "series": "Exact set name e.g. 'Prizm' | 'Select' | 'Hoops' | 'Chrome' | 'Optic'",
-  "parallel": "Exact parallel name e.g. 'Silver Prizm' | 'Gold Prizm' | 'Red Wave' | 'Holo' | 'Base'",
-  "cardNumber": "Card number as printed e.g. '#278', or null",
+  "team": "Team name as printed, or game/format for TCG cards (e.g. 'Standard'), or 'Unknown'",
+  "year": "Year or season or set release year e.g. '2023-24' or '2024'",
+  "brand": "Panini | Topps | Upper Deck | Fleer | Bowman | Donruss | Score | Nintendo | Wizards of the Coast | Konami | other",
+  "series": "Exact set name e.g. 'Prizm' | 'Select' | 'Hoops' | 'Chrome' | 'Optic' | 'Paradox Rift' | 'Modern Horizons 3' | 'LOB'",
+  "parallel": "Exact parallel/finish name e.g. 'Silver Prizm' | 'Gold Prizm' | 'Red Wave' | 'Holo' | 'Reverse Holo' | 'Special Illustration Rare' | 'Foil' | 'Borderless' | 'Base'",
+  "cardNumber": "Card number as printed e.g. '#278' or '25/100', or null",
   "serialNumber": "Serial stamp exactly as printed e.g. '45/99' | '1/1', or null",
   "isRookie": false,
   "hasAutograph": false,
@@ -633,7 +645,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
   "condition": "Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown",
   "conditionDetail": "1-2 sentences: describe corners (sharp/worn/dinged), surface (clean/scratched), centering (well-centered/off). Only describe what is visible.",
-  "playerContext": "2-3 sentences: player career status, why this card is or isn't significant, any notable value drivers.",
+  "playerContext": "2-3 sentences: card significance, why this card is or isn't notable for collectors in this category, any notable value drivers.",
   "confidenceLevel": "High | Medium | Low",
   "notes": "Any other observations: print defects, surface damage, foil scratches, staining, etc. or null"
 }`
@@ -739,7 +751,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  const teams = ["All", "Favourites", ...new Set(cards.map(c => c.team).filter(t => t && t !== "Unknown"))];
+  const categories = ["All", "Favourites", ...new Set(cards.map(c => c.cardCategory).filter(cat => cat && cat !== "Other" && cat !== "Unknown"))].concat(
+    cards.some(c => !c.cardCategory || c.cardCategory === "Other") ? ["Other"] : []
+  );
 
   const top10 = [...cards]
     .filter(c => c.estimatedValue > 0)
@@ -750,7 +764,8 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     .filter(c => {
       if (filter === "All") return true;
       if (filter === "Favourites") return c.isFavourite === true;
-      return c.team === filter;
+      if (filter === "Other") return !c.cardCategory || c.cardCategory === "Other" || c.cardCategory === "Unknown";
+      return c.cardCategory === filter;
     })
     .filter(c => {
       if (!search.trim()) return true;
@@ -759,6 +774,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         (c.playerName || "").toLowerCase().includes(q) ||
         (c.fullCardName || "").toLowerCase().includes(q) ||
         (c.team || "").toLowerCase().includes(q) ||
+        (c.cardCategory || "").toLowerCase().includes(q) ||
         (c.series || "").toLowerCase().includes(q) ||
         (c.year || "").toLowerCase().includes(q) ||
         (c.parallel || "").toLowerCase().includes(q) ||
@@ -1023,7 +1039,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--td)", pointerEvents: "none" }}>🔍</span>
               <input
                 type="text"
-                placeholder="Search player, set, team, parallel, serial…"
+                placeholder="Search player, set, category, parallel, serial…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{
@@ -1040,7 +1056,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               )}
             </div>
             <div style={{ display: "flex", gap: 5, flex: 1, flexWrap: "wrap" }}>
-              {teams.map(t => {
+              {categories.map(t => {
                 const isFav = t === "Favourites";
                 const activeColor = isFav ? "#f0c040" : "#ff6b35";
                 return (
@@ -1128,7 +1144,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--b)" }}>
-                    {["★", "Player", "Set", "Team", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
+                    {["★", "Player", "Set", "Category", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
                       <th key={h} style={{ padding: "8px 10px", color: "var(--td)", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
                     ))}
                   </tr>
@@ -1148,7 +1164,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                           </div>
                         </td>
                         <td style={{ padding: "9px 10px", color: "var(--ts)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.fullCardName || "—"}</td>
-                        <td style={{ padding: "9px 10px", color: "var(--ts)", whiteSpace: "nowrap" }}>{card.team || "—"}</td>
+                        <td style={{ padding: "9px 10px", color: "var(--ts)", whiteSpace: "nowrap" }}>{card.cardCategory || card.team || "—"}</td>
                         <td style={{ padding: "9px 10px", color: "var(--td)", whiteSpace: "nowrap" }}>{card.year || "—"}</td>
                         <td style={{ padding: "9px 10px", color: "var(--td)", whiteSpace: "nowrap" }}>{card.parallel || "Base"}</td>
                         <td style={{ padding: "9px 10px", color: "#ff9800", fontWeight: 600, whiteSpace: "nowrap" }}>{card.serialNumber || "—"}</td>

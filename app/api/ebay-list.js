@@ -47,12 +47,13 @@ const TRADING_CONDITION_MAP = {
 };
 
 // Map condition strings to eBay "Card Condition" item specific (aspect ID 40001)
-// Valid values per Taxonomy API for category 183050:
-// "Near Mint or Better", "Excellent", "Very Good", "Poor"
+// Must align with ConditionID: 4000="Very Good", 5000="Very Good", 6000="Poor"
+// "Near Mint or Better" appears in Taxonomy API but only applies to ConditionID 3000
+// which is INVALID for category 183050 — so we never use it.
 const CARD_CONDITION_SPECIFIC_MAP = {
-  'Mint':      'Near Mint or Better',
-  'Near Mint': 'Near Mint or Better',
-  'Excellent': 'Excellent',
+  'Mint':      'Very Good',
+  'Near Mint': 'Very Good',
+  'Excellent': 'Very Good',
   'Good':      'Very Good',
   'Fair':      'Poor',
   'Poor':      'Poor',

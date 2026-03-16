@@ -38,6 +38,17 @@ export function buildCollectionContext(cards) {
     .map((r) => `${r}: ${rarityCounts[r]}`)
     .join(", ");
 
+  // ── Category distribution ──────────────────────────────────────────────────
+  const categoryCounts = {};
+  cards.forEach((c) => {
+    const cat = c.cardCategory || "Unknown";
+    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+  });
+  const categoryBreakdown = Object.entries(categoryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([cat, count]) => `${cat}: ${count}`)
+    .join(", ");
+
   // ── Player distribution ────────────────────────────────────────────────────
   const playerCounts = {};
   cards.forEach((c) => {
@@ -106,8 +117,9 @@ export function buildCollectionContext(cards) {
         c.parallel && c.parallel !== "Base" ? ` [${c.parallel}]` : "";
       const condPart = c.condition && c.condition !== "Unknown" ? ` | ${c.condition}` : "";
       const teamPart = c.team && c.team !== "Unknown" ? ` | ${c.team}` : "";
+      const catPart = c.cardCategory ? ` | ${c.cardCategory}` : "";
 
-      return `- ${c.playerName || "Unknown"} | ${setLabel}${parallelPart}${teamPart}${condPart}${flags ? " | " + flags : ""}`;
+      return `- ${c.playerName || "Unknown"} | ${setLabel}${parallelPart}${teamPart}${catPart}${condPart}${flags ? " | " + flags : ""}`;
     })
     .join("\n");
 
@@ -125,6 +137,8 @@ export function buildCollectionContext(cards) {
     `Favourited cards: ${favouriteCount}`,
     "",
     `Rarity breakdown: ${rarityBreakdown}`,
+    "",
+    `Collection categories: ${categoryBreakdown || "unknown (cards may predate category detection)"}`,
     "",
     `Top players by card count: ${topPlayers || "none"}`,
     "",
