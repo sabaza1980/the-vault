@@ -163,9 +163,10 @@ async function drawSingleCard(card) {
 
   const badges = [];
   if (card.condition) badges.push({ label: card.condition, color: '#888', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' });
-  if (card.isRookie) badges.push({ label: 'RC', color: '#ff6b35', bg: 'rgba(255,107,53,0.15)', border: 'rgba(255,107,53,0.35)' });
-  if (card.hasAutograph) badges.push({ label: 'AUTO', color: '#f0c040', bg: 'rgba(240,192,64,0.15)', border: 'rgba(240,192,64,0.35)' });
-  if (card.serialNumber) badges.push({ label: card.serialNumber, color: '#ce93d8', bg: 'rgba(206,147,216,0.15)', border: 'rgba(206,147,216,0.35)' });
+  // isRookie/hasAutograph can be stored as string 'true'/'false' from the AI JSON
+  if (card.isRookie && card.isRookie !== 'false') badges.push({ label: 'RC', color: '#ff6b35', bg: 'rgba(255,107,53,0.15)', border: 'rgba(255,107,53,0.35)' });
+  if (card.hasAutograph && card.hasAutograph !== 'false') badges.push({ label: 'AUTO', color: '#f0c040', bg: 'rgba(240,192,64,0.15)', border: 'rgba(240,192,64,0.35)' });
+  if (card.serialNumber) badges.push({ label: String(card.serialNumber), color: '#ce93d8', bg: 'rgba(206,147,216,0.15)', border: 'rgba(206,147,216,0.35)' });
   if (card.rarity && card.rarity !== 'Common') badges.push({ label: card.rarity.toUpperCase(), color: rColor, bg: rColor + '18', border: rColor + '40' });
 
   ctx.font = '700 22px "Barlow Condensed", sans-serif';
@@ -186,10 +187,11 @@ async function drawSingleCard(card) {
   if (badges.length > 0) ry += 56;
 
   if (card.estimatedValue > 0) {
+    const ev = Number(card.estimatedValue);
     ry += 10;
     ctx.font = '400 84px "Bebas Neue", sans-serif';
     ctx.fillStyle = '#4caf50';
-    ctx.fillText(`$${card.estimatedValue.toFixed(2)}`, RX, ry + 72);
+    ctx.fillText(`$${ev.toFixed(2)}`, RX, ry + 72);
     ry += 84;
     ctx.font = '600 22px "Barlow Condensed", sans-serif';
     ctx.fillStyle = '#2d5c2d';
@@ -229,7 +231,7 @@ async function drawCollection(cards, filterLabel, user) {
   const namePrefix = user?.displayName ? `${user.displayName.toUpperCase()}'S` : 'MY';
   const titleLine = filterLabel ? `${filterLabel.toUpperCase()} SET` : 'VAULT';
   const rarePlus = cards.filter(c => ['Rare', 'Very Rare', 'Ultra Rare', 'Legendary'].includes(c.rarity)).length;
-  const totalValue = cards.reduce((s, c) => s + (c.estimatedValue || 0), 0);
+  const totalValue = cards.reduce((s, c) => s + (Number(c.estimatedValue) || 0), 0);
 
   ctx.fillStyle = '#07070f';
   ctx.fillRect(0, 0, W, H);
@@ -353,6 +355,11 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     setGenerateError(false);
     setImageBlob(null);
     setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+
+    // Yield to the browser so the spinner is painted before async work starts.
+    // Without this, React 18 auto-batching can collapse the start+end state
+    // updates into one render when errors occur fast, making Retry look broken.
+    await new Promise(r => setTimeout(r, 50));
 
     try {
       const canvas = mode === 'card'
