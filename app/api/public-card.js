@@ -12,10 +12,18 @@ function b64url(buf) {
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+function getServiceAccount() {
+  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
+  return {
+    projectId: sa.project_id || process.env.FIREBASE_PROJECT_ID || '',
+    clientEmail: sa.client_email || process.env.FIREBASE_CLIENT_EMAIL || '',
+    privateKey: (sa.private_key || process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  };
+}
+
 async function googleToken() {
   const now = Math.floor(Date.now() / 1000);
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  const { clientEmail, privateKey } = getServiceAccount();
   if (!clientEmail || !privateKey) throw new Error('Missing Firebase service account env vars');
 
   const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
@@ -86,7 +94,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid uid' });
   }
 
-  const PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+  const { projectId: PROJECT_ID } = getServiceAccount();
   if (!PROJECT_ID) return res.status(500).json({ error: 'Server misconfigured' });
 
   let token;

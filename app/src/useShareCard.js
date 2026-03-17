@@ -5,25 +5,51 @@ const RARITY_COLORS = {
   'Very Rare': '#9c27b0', 'Ultra Rare': '#ff9800', Legendary: '#f44336',
 };
 
-// Fix 2: Load any image directly — no proxy needed.
-// Firebase Storage URLs already contain a download token (?alt=media&token=...)
-// which grants unauthenticated HTTP access. Setting crossOrigin = 'anonymous'
-// lets the browser draw the response onto a canvas without tainting it,
-// provided the server returns CORS headers (Firebase Storage does for public objects).
-// data: URLs are used as-is (crossOrigin is a no-op for them).
+// Fix 2: Load image for canvas drawing without cross-origin taint.
+//
+// data: URLs are same-origin by definition — load directly, no crossOrigin needed.
+// (Setting crossOrigin on a data: URL breaks loading in Safari/WebView.)
+//
+// HTTP URLs from Firebase Storage are fetched via /api/image-proxy which runs
+// server-side (no CORS restriction), returns the bytes, and we create a local
+// blob URL — blob URLs are always same-origin so canvas.toBlob never throws.
 async function loadImg(src) {
   if (!src) return null;
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = (err) => {
-      // Fix 4: log every image load failure so it's visible in DevTools
-      console.error('[useShareCard] loadImg failed for src:', src, err);
-      resolve(null); // null = draw placeholder rectangle, don't crash canvas
-    };
-    img.src = src;
-  });
+
+  // ── data: URLs ───────────────────────────────────────────────────────────
+  if (src.startsWith('data:')) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = (err) => {
+        console.error('[useShareCard] loadImg data: error', err);
+        resolve(null);
+      };
+      img.src = src;
+    });
+  }
+
+  // ── HTTP URLs — fetch via server-side proxy to avoid canvas taint ────────
+  try {
+    const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+    if (!res.ok) throw new Error(`proxy ${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(objectUrl); resolve(img); };
+      img.onerror = (err) => {
+        URL.revokeObjectURL(objectUrl);
+        console.error('[useShareCard] loadImg img error after proxy', err);
+        resolve(null);
+      };
+      img.src = objectUrl;
+    });
+  } catch (err) {
+    // Fix 4: log every failure so DevTools shows what went wrong
+    console.error('[useShareCard] loadImg failed for src:', src, err);
+    return null;
+  }
 }
 
 function rrect(ctx, x, y, w, h, r) {
