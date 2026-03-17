@@ -288,7 +288,7 @@ REQUIREMENTS
    - Use the article title as an H1.
    - Include at least 4 natural secondary H2 headings.
    - Naturally weave in keyword phrases like: "card collection app", "scan cards with AI", "track card value", "The Vault app", "PSA grading advice", "eBay card pricing", and 3–5 category-specific terms.
-   - Include a brief closing CTA paragraph referring readers to The Vault app at https://www.thevaultapp.com without sounding like an ad — frame it as a natural recommendation.
+   - Include a brief closing CTA paragraph referring readers to The Vault app at https://www.myvaults.io without sounding like an ad — frame it as a natural recommendation.
 5. **Structure**: Intro → 3–5 body sections with H2s → conclusion with soft CTA.
 6. **Accuracy**: Only state things that are factually correct about the hobby. If referencing recent pricing, frame them as "as of early 2025" or "recent eBay sold data".
 7. **HTML tags**: Use only h1, h2, p, ul, li, strong, em, a tags — no outer wrapper div.
@@ -423,3 +423,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
+
