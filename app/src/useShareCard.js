@@ -91,10 +91,14 @@ async function drawSingleCard(card) {
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('canvas.getContext("2d") returned null');
 
   const rColor = RARITY_COLORS[card.rarity] || '#555';
-  const fullCardName = card.fullCardName ||
-    [card.year, card.brand, card.series].filter(Boolean).join(' ') || 'Unknown Set';
+  const fullCardName = String(
+    card.fullCardName ||
+    [card.year, card.brand, card.series].filter(Boolean).join(' ') ||
+    'Unknown Set'
+  );
 
   ctx.fillStyle = '#07070f';
   ctx.fillRect(0, 0, W, H);
@@ -141,7 +145,7 @@ async function drawSingleCard(card) {
   const setH = wrapText(ctx, fullCardName.toUpperCase(), RX, ry, MAX_W, 34);
   ry += setH + 18;
 
-  const playerText = (card.playerName || 'UNKNOWN').toUpperCase();
+  const playerText = String(card.playerName || 'UNKNOWN').toUpperCase();
   let pSize = 108;
   ctx.font = `400 ${pSize}px "Bebas Neue", sans-serif`;
   while (ctx.measureText(playerText).width > MAX_W + 10 && pSize > 56) {
@@ -162,12 +166,12 @@ async function drawSingleCard(card) {
   ry += 18;
 
   const badges = [];
-  if (card.condition) badges.push({ label: card.condition, color: '#888', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' });
+  if (card.condition) badges.push({ label: String(card.condition), color: '#888', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' });
   // isRookie/hasAutograph can be stored as string 'true'/'false' from the AI JSON
   if (card.isRookie && card.isRookie !== 'false') badges.push({ label: 'RC', color: '#ff6b35', bg: 'rgba(255,107,53,0.15)', border: 'rgba(255,107,53,0.35)' });
   if (card.hasAutograph && card.hasAutograph !== 'false') badges.push({ label: 'AUTO', color: '#f0c040', bg: 'rgba(240,192,64,0.15)', border: 'rgba(240,192,64,0.35)' });
   if (card.serialNumber) badges.push({ label: String(card.serialNumber), color: '#ce93d8', bg: 'rgba(206,147,216,0.15)', border: 'rgba(206,147,216,0.35)' });
-  if (card.rarity && card.rarity !== 'Common') badges.push({ label: card.rarity.toUpperCase(), color: rColor, bg: rColor + '18', border: rColor + '40' });
+  if (card.rarity && card.rarity !== 'Common') badges.push({ label: String(card.rarity).toUpperCase(), color: rColor, bg: rColor + '18', border: rColor + '40' });
 
   ctx.font = '700 22px "Barlow Condensed", sans-serif';
   let bx = RX;
@@ -397,8 +401,22 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
         }, 'image/jpeg', 0.92);
       });
     } catch (err) {
-      // Fix 4: full error visible in DevTools
-      console.error('[useShareCard] generate() threw:', err);
+      console.error('[useShareCard] generate() threw:', err.message, err.stack);
+      console.error('[useShareCard] card data:', JSON.stringify({
+        id: card?.id,
+        playerName: card?.playerName,
+        fullCardName: card?.fullCardName,
+        year: card?.year,
+        brand: card?.brand,
+        series: card?.series,
+        rarity: card?.rarity,
+        condition: card?.condition,
+        estimatedValue: card?.estimatedValue,
+        isRookie: card?.isRookie,
+        hasAutograph: card?.hasAutograph,
+        serialNumber: card?.serialNumber,
+        imageUrl: card?.imageUrl ? card.imageUrl.slice(0, 80) : null,
+      }, null, 2));
       setCapturing(false);
       setGenerateError(true);
       return null;
