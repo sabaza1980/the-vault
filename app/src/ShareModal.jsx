@@ -293,7 +293,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
                 {shareResult === 'not-ready'
                   ? 'Image not ready yet, please wait…'
                   : shareResult === 'saved-social'
-                    ? 'Image saved — attach it manually when posting.'
+                    ? 'Image saved — attach it to your post!'
                     : shareResult === 'saved'
                       ? isDesktop
                         ? 'Image saved to Downloads! Attach it when posting.'

@@ -411,9 +411,11 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
           : `${BASE}?shareVault=${uid}`
         : BASE;
     const shareTitle = mode === 'card' ? `${cardName} — The Vault` : 'My Trading Card Vault';
+    // Include the link inline so every platform gets both the description and the URL
+    const cardYear = card?.year ? ` (${card.year})` : '';
     const shareText = mode === 'card'
-      ? `Check out my ${cardName} on The Vault!`
-      : 'Check out my trading card collection on The Vault!';
+      ? `Check out my ${cardName}${cardYear} card on The Vault!\n${shareUrl}`
+      : `Check out my trading card collection on The Vault!\n${shareUrl}`;
 
     // Fix 5: never silently fail when image isn't ready
     if (!imageBlob) return 'not-ready';
@@ -461,26 +463,22 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     }
 
     // ── Social buttons ────────────────────────────────────────────────────
-    // Mobile → OS share sheet (user picks app).
-    // Desktop → download image + open platform.
-    //           Returns 'saved-social' so the modal shows the explicit message:
-    //           "Image saved — attach it manually when posting."
+    // For named destinations we ALWAYS go straight to the app/site, never
+    // through the OS picker. On mobile, triggerDownload() saves to camera
+    // roll / Downloads so the user can attach it inside the app.
+    // The "More" button is the intentional catch-all that shows the OS picker.
     const socialUrls = {
-      // WhatsApp: wa.me pre-fills the message with text + link
-      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`,
-      // Facebook: sharer.php pre-fills the URL so the link preview appears
+      // wa.me is a universal link — opens WhatsApp directly on iOS & Android
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText)}`,
+      // sharer.php opens the Facebook app / mobile web page with the link
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-      // Reddit: title + url so it opens as a link post with both fields populated
+      // submit opens Reddit (or the Reddit app via universal link) with title + url
       reddit: `https://www.reddit.com/submit?title=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`,
     };
     if (destination in socialUrls) {
-      const result = await tryMobileShare();
-      if (result === 'unsupported') {
-        triggerDownload();
-        window.open(socialUrls[destination], '_blank', 'noopener,noreferrer');
-        return 'saved-social';
-      }
-      return result;
+      triggerDownload();
+      window.open(socialUrls[destination], '_blank', 'noopener,noreferrer');
+      return 'saved-social';
     }
 
     if (destination === 'copy') {
