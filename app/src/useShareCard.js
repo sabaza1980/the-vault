@@ -85,7 +85,8 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
 }
 
 async function drawSingleCard(card) {
-  await document.fonts.ready;
+  // Wait for fonts but cap at 3s so slow CDN never blocks canvas generation
+  await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]);
   const W = 1080, H = 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -215,7 +216,7 @@ async function drawSingleCard(card) {
 }
 
 async function drawCollection(cards, filterLabel, user) {
-  await document.fonts.ready;
+  await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]);
   const W = 1080, H = 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -359,21 +360,34 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
         : await drawCollection(cards || [], filterLabel || null, user || null);
 
       return await new Promise((resolve) => {
+        // JPEG is ~10× faster to encode than PNG for a 1080×1080 canvas
         canvas.toBlob((blob) => {
+          // toBlob can return null on some Safari versions — fall back to toDataURL
           if (!blob) {
-            console.error('[useShareCard] canvas.toBlob() returned null');
+            try {
+              const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+              const bytes = atob(dataUrl.split(',')[1]);
+              const arr = new Uint8Array(bytes.length);
+              for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+              blob = new Blob([arr], { type: 'image/jpeg' });
+            } catch (e) {
+              console.error('[useShareCard] toDataURL fallback failed', e);
+            }
+          }
+          if (!blob) {
+            console.error('[useShareCard] canvas.toBlob() returned null and toDataURL fallback failed');
             setCapturing(false);
             setGenerateError(true);
             resolve(null);
             return;
           }
           const url = URL.createObjectURL(blob);
-          setGenerateError(false); // clear any stale error state
+          setGenerateError(false);
           setImageBlob(blob);
           setPreviewUrl(url);
           setCapturing(false);
           resolve({ blob, url });
-        }, 'image/png');
+        }, 'image/jpeg', 0.92);
       });
     } catch (err) {
       // Fix 4: full error visible in DevTools
@@ -409,7 +423,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
       const a = document.createElement('a');
       const objUrl = URL.createObjectURL(imageBlob);
       a.href = objUrl;
-      a.download = `vault-${mode}-${Date.now()}.png`;
+      a.download = `vault-${mode}-${Date.now()}.jpg`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(objUrl);
     }
@@ -422,7 +436,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     // Fix 6: Only attempt native file share on mobile (maxTouchPoints > 0).
     // On desktop, download the image + open the platform.
     const mobile = isMobile();
-    const file = new File([imageBlob], 'vault-share.png', { type: 'image/png' });
+    const file = new File([imageBlob], 'vault-share.jpg', { type: 'image/jpeg' });
 
     const tryMobileShare = async () => {
       if (!mobile) return 'unsupported';
@@ -452,9 +466,12 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     //           Returns 'saved-social' so the modal shows the explicit message:
     //           "Image saved — attach it manually when posting."
     const socialUrls = {
-      whatsapp: 'https://web.whatsapp.com/',
-      facebook: 'https://www.facebook.com/',
-      reddit: `https://www.reddit.com/submit?title=${encodeURIComponent(shareTitle)}`,
+      // WhatsApp: wa.me pre-fills the message with text + link
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`,
+      // Facebook: sharer.php pre-fills the URL so the link preview appears
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      // Reddit: title + url so it opens as a link post with both fields populated
+      reddit: `https://www.reddit.com/submit?title=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`,
     };
     if (destination in socialUrls) {
       const result = await tryMobileShare();
