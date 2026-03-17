@@ -140,21 +140,67 @@ async function googleSearch(query) {
   } catch { return null; }
 }
 
-async function pexelsSearch(query) {
+async function pexelsSearch(query, page = 1) {
   if (!PEXELS_KEY) return null;
   try {
     const r = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=3&page=${page}&orientation=landscape`,
       { headers: { Authorization: PEXELS_KEY } }
     );
     if (!r.ok) return null;
     const data = await r.json();
-    return data.photos?.[0]?.src?.large2x || null;
+    if (!data.photos?.length) return null;
+    // Pick a random photo from the results to add variety
+    const pick = data.photos[Math.floor(Math.random() * data.photos.length)];
+    return pick.src.large2x || null;
   } catch { return null; }
 }
 
-async function searchImage(query) {
-  return (await googleSearch(query)) || (await pexelsSearch(query));
+// Build a content-aware search query based on title + category
+function buildImageQuery(title, category) {
+  const t = title.toLowerCase();
+
+  // Grading-related articles
+  if (/\b(psa|bgs|sgc|cgc|grading|graded|grade|slab)\b/.test(t)) {
+    return "PSA graded trading card slab";
+  }
+  // Storage / protection articles
+  if (/\b(storage|storing|store|sleeve|binder|protect|organiz|topload)\b/.test(t)) {
+    return "trading card storage binder collection";
+  }
+  // Investment / value / market articles
+  if (/\b(invest|investing|value|price|worth|market|sell|selling|buy|buying|profit)\b/.test(t)) {
+    return `${category} trading card investment value`;
+  }
+  // Error / rare / misprint articles
+  if (/\b(error|misprint|rare|secret|ultra|variant|chase)\b/.test(t)) {
+    return `${category} rare trading card collector`;
+  }
+  // Authentication / fake / counterfeit articles
+  if (/\b(fake|counterfeit|authentic|spot|identify)\b/.test(t)) {
+    return "trading card authentication collector";
+  }
+  // Beginner / how-to / guide articles
+  if (/\b(beginner|start|guide|how to|tips|basics|intro)\b/.test(t)) {
+    return `${category} trading card collecting`;
+  }
+  // Default: category-specific card photo
+  const categoryMap = {
+    "Pokemon":        "Pokemon card collection holographic",
+    "Basketball":     "NBA basketball trading card collection",
+    "Baseball":       "baseball trading card collection vintage",
+    "Football":       "NFL football trading card collection",
+    "Soccer":         "soccer trading card collection",
+    "Hockey":         "hockey trading card collection",
+    "Magic":          "Magic the Gathering card collection",
+    "Yu-Gi-Oh":       "Yu-Gi-Oh trading card collection",
+    "Sports Cards":   "sports trading card graded slab",
+  };
+  return categoryMap[category] || `${category} trading card collection`;
+}
+
+async function searchImage(query, page = 1) {
+  return (await googleSearch(query)) || (await pexelsSearch(query, page));
 }
 
 function sleep(ms) {
@@ -178,11 +224,15 @@ async function main() {
     process.stdout.write(`[${i + 1}/${articles.length}] "${a.title}" … `);
 
     try {
-      // Try article-specific search first, then category fallback
-      const query1 = `${a.title} trading card`;
-      let imgUrl = await searchImage(query1);
+      // Use content-aware query + page offset to avoid duplicate images across articles
+      const page = (i % 5) + 1;
+      const query1 = buildImageQuery(a.title, a.category);
+      let imgUrl = await searchImage(query1, page);
       if (!imgUrl) {
-        imgUrl = await searchImage(`${a.category} trading cards collecting`);
+        imgUrl = await searchImage(buildImageQuery(a.title, a.category), 1);
+      }
+      if (!imgUrl) {
+        imgUrl = await searchImage(`${a.category} trading card`, page);
       }
       if (!imgUrl) {
         console.log("SKIP (no image found)");

@@ -112,21 +112,55 @@ async function fetchGoogleImages(query, count = 5) {
 
 // ── Pexels API image search (fallback) ──────────────────────────────────────
 // Used when Google CSE is not configured.
-async function fetchPexelsImages(query, count = 5) {
+async function fetchPexelsImages(query, count = 5, page = 1) {
   const key = process.env.PEXELS_API_KEY;
   if (!key) return null;
   try {
     const r = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${Math.min(count, 20)}&orientation=landscape`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${Math.min(count * 2, 20)}&page=${page}&orientation=landscape`,
       { headers: { Authorization: key } }
     );
     if (!r.ok) return null;
     const data = await r.json();
     if (!data.photos?.length) return null;
-    return data.photos.map(p => p.src.large2x);
+    // Shuffle to add variety
+    const shuffled = data.photos.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count).map(p => p.src.large2x);
   } catch {
     return null;
   }
+}
+
+// Build a content-aware Pexels query based on article topic
+function buildImageQuery(title, category) {
+  const t = title.toLowerCase();
+  if (/\b(psa|bgs|sgc|cgc|grading|graded|grade|slab)\b/.test(t)) {
+    return "PSA graded trading card slab";
+  }
+  if (/\b(storage|storing|store|sleeve|binder|protect|organiz|topload)\b/.test(t)) {
+    return "trading card storage binder collection";
+  }
+  if (/\b(invest|investing|value|price|worth|market|sell|selling|buy|buying|profit)\b/.test(t)) {
+    return `${category} trading card investment value`;
+  }
+  if (/\b(error|misprint|rare|secret|ultra|variant|chase)\b/.test(t)) {
+    return `${category} rare trading card collector`;
+  }
+  if (/\b(fake|counterfeit|authentic|spot|identify)\b/.test(t)) {
+    return "trading card authentication collector";
+  }
+  const categoryMap = {
+    "Pokemon":        "Pokemon card collection holographic",
+    "Basketball":     "NBA basketball trading card collection",
+    "Baseball":       "baseball trading card collection vintage",
+    "Football":       "NFL football trading card collection",
+    "Soccer":         "soccer trading card collection",
+    "Hockey":         "hockey trading card collection",
+    "Magic":          "Magic the Gathering card collection",
+    "Yu-Gi-Oh":       "Yu-Gi-Oh trading card collection",
+    "Sports Cards":   "sports trading card graded slab",
+  };
+  return categoryMap[category] || `${category} trading card collection`;
 }
 
 // Try Google first, fall back to Pexels
@@ -346,8 +380,8 @@ export default async function handler(req, res) {
     // Pick images for this article (hero = first, inline = rest)
     const listSize = (req.body && req.body.listSize) ? req.body.listSize : null;
 
-    // Build a specific search query from the article topic for relevant images
-    const imageQuery = `${topic.title} trading card`;
+    // Build a content-aware search query for relevant images
+    const imageQuery = buildImageQuery(topic.title, topic.category);
     const imageCount = listSize ? listSize + 1 : 5;
     let images = await fetchImages(imageQuery, imageCount);
 
