@@ -61,6 +61,23 @@ function toFsVal(v) {
   return { stringValue: String(v) };
 }
 
+async function fsSlugExists(token, projectId, slug) {
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: "articles" }],
+      where: { fieldFilter: { field: { fieldPath: "slug" }, op: "EQUAL", value: { stringValue: slug } } },
+      limit: 1,
+    },
+  };
+  const r = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body) }
+  );
+  if (!r.ok) return false;
+  const results = await r.json();
+  return results.some(row => row.document);
+}
+
 async function fsAdd(token, projectId, collectionId, data) {
   const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFsVal(v)]));
   const r = await fetch(
@@ -314,6 +331,16 @@ export default async function handler(req, res) {
     } else {
       const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
       topic = TOPIC_POOL[dayOfYear % TOPIC_POOL.length];
+    }
+
+    // Guard: skip if an article with this slug already exists
+    const previewSlug = topic.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const saCheck = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "{}");
+    if (saCheck.project_id) {
+      const checkToken = await googleToken(saCheck);
+      if (await fsSlugExists(checkToken, saCheck.project_id, previewSlug)) {
+        return res.status(200).json({ skipped: true, reason: "Article with this slug already exists", slug: previewSlug });
+      }
     }
 
     // Pick images for this article (hero = first, inline = rest)
