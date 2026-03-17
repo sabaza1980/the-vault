@@ -123,17 +123,17 @@ async function main() {
   const articles = await fsListAll(token);
   console.log(`Found ${articles.length} total articles.\n`);
 
-  // Group by slug (primary dedup key)
-  const bySlug = new Map();
+  // Group by normalized title (primary dedup key — catches same title with different slugs)
+  const byTitle = new Map();
   for (const a of articles) {
-    const key = a.slug || a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    if (!bySlug.has(key)) bySlug.set(key, []);
-    bySlug.get(key).push(a);
+    const key = a.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!byTitle.has(key)) byTitle.set(key, []);
+    byTitle.get(key).push(a);
   }
 
   const toDelete = [];
 
-  for (const [slug, group] of bySlug) {
+  for (const [slug, group] of byTitle) {
     if (group.length <= 1) continue;
 
     // Keep the one with the latest publishedAt; tie-break by doc id (lexicographically last)

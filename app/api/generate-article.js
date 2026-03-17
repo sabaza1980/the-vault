@@ -62,7 +62,8 @@ function toFsVal(v) {
 }
 
 async function fsSlugExists(token, projectId, slug) {
-  const body = {
+  // Check both slug field AND title-derived slug to catch duplicates with different stored slugs
+  const slugQuery = {
     structuredQuery: {
       from: [{ collectionId: "articles" }],
       where: { fieldFilter: { field: { fieldPath: "slug" }, op: "EQUAL", value: { stringValue: slug } } },
@@ -71,7 +72,7 @@ async function fsSlugExists(token, projectId, slug) {
   };
   const r = await fetch(
     `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
-    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body) }
+    { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(slugQuery) }
   );
   if (!r.ok) return false;
   const results = await r.json();
@@ -443,6 +444,9 @@ export default async function handler(req, res) {
     if (!sa.project_id) return res.status(500).json({ error: "Firebase not configured" });
 
     const token = await googleToken(sa);
+    // Force the slug to be derived from the topic title (not Claude's generated title)
+    // This ensures the duplicate guard works reliably across cron runs
+    article.slug = previewSlug;
     const docId = await fsAdd(token, sa.project_id, "articles", {
       ...article,
       heroImageUrl,
