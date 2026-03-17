@@ -1,335 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useShareCard } from './useShareCard';
 
-const RARITY_COLORS = {
-  Common: '#555',
-  Uncommon: '#4caf50',
-  Rare: '#2196f3',
-  'Very Rare': '#9c27b0',
-  'Ultra Rare': '#ff9800',
-  Legendary: '#f44336',
-};
-
-// Convert any URL to a data URL so html2canvas can render it without CORS taint
-async function toDataUrl(src) {
-  if (!src || src.startsWith('data:')) return src || '';
-  try {
-    const res = await fetch(src);
-    const blob = await res.blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return src;
-  }
-}
-
-// ── Off-screen single card share image (540×540 → html2canvas ×2 = 1080×1080) ──
-function SingleCardShareImage({ card, cardDataUrl }) {
-  const rColor = RARITY_COLORS[card?.rarity] || '#555';
-  const fullCardName =
-    card?.fullCardName ||
-    [card?.year, card?.brand, card?.series].filter(Boolean).join(' ') ||
-    'Unknown Set';
-
-  return (
-    <div
-      style={{
-        width: 540, height: 540, position: 'relative', overflow: 'hidden',
-        background: '#07070f', flexShrink: 0,
-      }}
-    >
-      {/* Orange radial glow behind card */}
-      <div style={{
-        position: 'absolute', left: 60, top: '50%',
-        transform: 'translateY(-50%)',
-        width: 320, height: 420, borderRadius: '50%',
-        background: `radial-gradient(ellipse at center, ${rColor}20 0%, rgba(255,107,53,0.08) 40%, transparent 70%)`,
-        pointerEvents: 'none',
-      }} />
-      {/* Diagonal stripe accent — right side */}
-      <div style={{
-        position: 'absolute', right: -60, top: -80,
-        width: 180, height: 760,
-        background: 'rgba(255,107,53,0.04)',
-        transform: 'rotate(18deg)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Card photo — left side */}
-      <div style={{
-        position: 'absolute', left: 36, top: '50%',
-        transform: 'translateY(-50%)',
-        width: 190, height: 265,
-        borderRadius: 12, overflow: 'hidden',
-        border: `2px solid ${rColor}50`,
-        boxShadow: `0 0 40px ${rColor}28`,
-      }}>
-        {cardDataUrl && (
-          <img
-            src={cardDataUrl}
-            alt={card?.playerName || ''}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
-      </div>
-
-      {/* Right side info */}
-      <div style={{
-        position: 'absolute', left: 258, top: 55, right: 24, bottom: 64,
-        display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5,
-      }}>
-        {/* Set name */}
-        <div style={{
-          fontSize: 10, color: '#ff6b35',
-          textTransform: 'uppercase', letterSpacing: 1.5, fontWeight: 700,
-          fontFamily: "'Barlow Condensed', sans-serif", lineHeight: 1.3,
-        }}>{fullCardName}</div>
-
-        {/* Player name */}
-        <div style={{
-          fontSize: 40, fontWeight: 400, color: '#f0f0f0',
-          fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2,
-          lineHeight: 1, marginTop: 4,
-        }}>{card?.playerName || 'Unknown'}</div>
-
-        {/* Team */}
-        {card?.team && card.team !== 'Unknown' && (
-          <div style={{
-            fontSize: 12, color: '#666', marginTop: 2,
-            fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
-          }}>{card.team}</div>
-        )}
-
-        {/* Badges row */}
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 6 }}>
-          {card?.condition && (
-            <span style={{
-              fontSize: 9, padding: '2px 7px', borderRadius: 6,
-              background: 'rgba(255,255,255,0.06)', color: '#999',
-              border: '1px solid rgba(255,255,255,0.1)',
-              fontWeight: 600, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
-            }}>{card.condition}</span>
-          )}
-          {card?.isRookie && (
-            <span style={{
-              fontSize: 9, padding: '2px 7px', borderRadius: 6,
-              background: 'rgba(255,107,53,0.15)', color: '#ff6b35',
-              border: '1px solid rgba(255,107,53,0.3)',
-              fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
-            }}>RC</span>
-          )}
-          {card?.hasAutograph && (
-            <span style={{
-              fontSize: 9, padding: '2px 7px', borderRadius: 6,
-              background: 'rgba(240,192,64,0.15)', color: '#f0c040',
-              border: '1px solid rgba(240,192,64,0.3)',
-              fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
-            }}>AUTO</span>
-          )}
-          {card?.serialNumber && (
-            <span style={{
-              fontSize: 9, padding: '2px 7px', borderRadius: 6,
-              background: 'rgba(206,147,216,0.15)', color: '#ce93d8',
-              border: '1px solid rgba(206,147,216,0.3)',
-              fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
-            }}>{card.serialNumber}</span>
-          )}
-        </div>
-
-        {/* eBay price if available */}
-        {card?.estimatedValue > 0 && (
-          <div style={{
-            fontSize: 28, fontWeight: 400, color: '#4caf50',
-            fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1.5, marginTop: 8,
-          }}>${card.estimatedValue.toFixed(2)}</div>
-        )}
-      </div>
-
-      {/* Bottom bar */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: 54,
-        background: 'rgba(0,0,0,0.75)',
-        borderTop: '1px solid rgba(255,107,53,0.15)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 28px',
-      }}>
-        <div style={{
-          fontSize: 20, fontWeight: 400, color: '#ff6b35',
-          fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3,
-        }}>🏀 THE VAULT</div>
-        <div style={{
-          fontSize: 11, color: '#444',
-          fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
-        }}>myvaults.io</div>
-      </div>
-    </div>
-  );
-}
-
-// ── Off-screen collection/set share image ────────────────────────────────────
-function CollectionShareImage({ cards, filterLabel, user, cardDataUrls }) {
-  const RARITY_ORDER = {
-    Legendary: 0, 'Ultra Rare': 1, 'Very Rare': 2,
-    Rare: 3, Uncommon: 4, Common: 5,
-  };
-  const sorted = [...cards].sort(
-    (a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6)
-  );
-  const gridCards = sorted.slice(0, 9);
-  const overflow = cards.length - 9;
-
-  const namePrefix = user?.displayName
-    ? `${user.displayName.toUpperCase()}'S`
-    : 'MY';
-  const titleLine = filterLabel
-    ? `${filterLabel.toUpperCase()} COLLECTION`
-    : 'VAULT';
-
-  const rarePlus = cards.filter(c =>
-    ['Rare', 'Very Rare', 'Ultra Rare', 'Legendary'].includes(c.rarity)
-  ).length;
-  const totalValue = cards.reduce((s, c) => s + (c.estimatedValue || 0), 0);
-
-  return (
-    <div style={{
-      width: 540, height: 540, position: 'relative', overflow: 'hidden',
-      background: '#07070f', flexShrink: 0,
-    }}>
-      {/* Diagonal orange stripe */}
-      <div style={{
-        position: 'absolute', right: -80, top: -80,
-        width: 260, height: 820,
-        background: 'rgba(255,107,53,0.05)',
-        transform: 'rotate(22deg)',
-        pointerEvents: 'none',
-      }} />
-
-      {/* Title area — top left */}
-      <div style={{ position: 'absolute', top: 30, left: 30, right: 270 }}>
-        <div style={{
-          fontSize: 11, color: 'rgba(255,107,53,0.65)', fontWeight: 700,
-          textTransform: 'uppercase', letterSpacing: 2,
-          fontFamily: "'Barlow Condensed', sans-serif", marginBottom: 2,
-        }}>{namePrefix}</div>
-        <div style={{
-          fontSize: 46, fontWeight: 400, lineHeight: 0.9, color: '#ff6b35',
-          fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3,
-        }}>{titleLine}</div>
-
-        {/* Stats row */}
-        <div style={{ display: 'flex', gap: 18, marginTop: 12 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{
-              fontSize: 22, fontWeight: 400, color: '#ff6b35',
-              fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1,
-            }}>{cards.length}</span>
-            <span style={{
-              fontSize: 9, color: '#444', textTransform: 'uppercase', letterSpacing: 1,
-              fontFamily: "'Barlow Condensed', sans-serif",
-            }}>Cards</span>
-          </div>
-          {rarePlus > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{
-                fontSize: 22, fontWeight: 400, color: '#9c27b0',
-                fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1,
-              }}>{rarePlus}</span>
-              <span style={{
-                fontSize: 9, color: '#444', textTransform: 'uppercase', letterSpacing: 1,
-                fontFamily: "'Barlow Condensed', sans-serif",
-              }}>Rare+</span>
-            </div>
-          )}
-          {totalValue > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{
-                fontSize: 22, fontWeight: 400, color: '#4caf50',
-                fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1,
-              }}>${totalValue.toFixed(0)}</span>
-              <span style={{
-                fontSize: 9, color: '#444', textTransform: 'uppercase', letterSpacing: 1,
-                fontFamily: "'Barlow Condensed', sans-serif",
-              }}>Est. Value</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 3×3 card grid — right side */}
-      <div style={{
-        position: 'absolute', right: 24, top: 30, bottom: 64,
-        display: 'flex', alignItems: 'center',
-      }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 72px)',
-          gap: 6, width: 228,
-        }}>
-          {gridCards.map((c) => {
-            const rc = RARITY_COLORS[c.rarity] || '#333';
-            const dataUrl = cardDataUrls[c.id] || '';
-            return (
-              <div key={c.id} style={{
-                width: 72, height: 100, borderRadius: 7, overflow: 'hidden',
-                border: `1.5px solid ${rc}55`,
-                boxShadow: `0 0 10px ${rc}18`,
-              }}>
-                {dataUrl && (
-                  <img
-                    src={dataUrl}
-                    alt={c.playerName || ''}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                )}
-              </div>
-            );
-          })}
-          {overflow > 0 && (
-            <div style={{
-              width: 72, height: 100, borderRadius: 7,
-              background: 'rgba(255,107,53,0.08)',
-              border: '1.5px solid rgba(255,107,53,0.25)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{
-                fontSize: 18, fontWeight: 400, color: '#ff6b35',
-                fontFamily: "'Bebas Neue', sans-serif",
-              }}>+{overflow}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: 54,
-        background: 'rgba(0,0,0,0.75)',
-        borderTop: '1px solid rgba(255,107,53,0.15)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 28px',
-      }}>
-        <div style={{
-          fontSize: 20, fontWeight: 400, color: '#ff6b35',
-          fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3,
-        }}>🏀 THE VAULT</div>
-        <div style={{
-          fontSize: 11, color: '#444',
-          fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
-        }}>myvaults.io</div>
-      </div>
-    </div>
-  );
-}
-
 // ── Icon components ──────────────────────────────────────────────────────────
 function DownloadIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3v13M7 11l5 5 5-5" />
-      <path d="M5 20h14" />
+      <path d="M12 3v13M7 11l5 5 5-5" /><path d="M5 20h14" />
     </svg>
   );
 }
@@ -367,7 +43,6 @@ function MoreIcon() {
   );
 }
 
-// ── Share button component ───────────────────────────────────────────────────
 function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -381,7 +56,7 @@ function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
           border: isGradientBorder ? '1.5px solid transparent' : `1px solid ${border}`,
           cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 0, transition: 'transform 0.12s, opacity 0.12s',
+          padding: 0, transition: 'transform 0.12s',
         }}
         onMouseDown={e => e.currentTarget.style.transform = 'scale(0.88)'}
         onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
@@ -396,102 +71,54 @@ function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
   );
 }
 
-// ── Main modal component ─────────────────────────────────────────────────────
+// ── Main modal ───────────────────────────────────────────────────────────────
 export default function ShareModal({ mode, card, cards, filterLabel, user, onClose }) {
-  const { containerRef, capture, share, previewUrl, capturing } = useShareCard({ card, cards, mode });
+  const { generate, share, previewUrl, capturing } = useShareCard({
+    card, cards, mode, filterLabel, user,
+  });
   const [copiedUrl, setCopiedUrl] = useState(false);
-  const [mainCardDataUrl, setMainCardDataUrl] = useState(null);
-  const [cardDataUrls, setCardDataUrls] = useState({});
-  const [imagesReady, setImagesReady] = useState(false);
 
-  const shareUrl =
-    user?.uid ? `myvaults.io/vault/${user.uid}` : 'myvaults.io';
+  // Build the share URL to display in the URL bar
+  const BASE = 'https://app.myvaults.io';
+  const uid = user?.uid || '';
+  const cardId = card ? String(card.id) : '';
+  const displayUrl = mode === 'card' && cardId && uid
+    ? `app.myvaults.io?shareCard=${cardId}&uid=${uid}`
+    : uid
+      ? filterLabel
+        ? `app.myvaults.io?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+        : `app.myvaults.io?shareVault=${uid}`
+      : 'app.myvaults.io';
+  const fullShareUrl = mode === 'card' && cardId && uid
+    ? `${BASE}?shareCard=${cardId}&uid=${uid}`
+    : uid
+      ? filterLabel
+        ? `${BASE}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+        : `${BASE}?shareVault=${uid}`
+      : BASE;
 
-  // Load card images as data URLs for html2canvas (avoids canvas CORS taint)
+  // Generate image on mount
   useEffect(() => {
-    let cancelled = false;
-    async function loadImages() {
-      if (mode === 'card' && card?.imageUrl) {
-        const du = await toDataUrl(card.imageUrl);
-        if (!cancelled) {
-          setMainCardDataUrl(du);
-          setImagesReady(true);
-        }
-      } else if (cards?.length) {
-        const top9 = cards.slice(0, 9);
-        const entries = await Promise.all(
-          top9.map(async (c) => [c.id, await toDataUrl(c.imageUrl)])
-        );
-        if (!cancelled) {
-          setCardDataUrls(Object.fromEntries(entries));
-          setImagesReady(true);
-        }
-      } else {
-        if (!cancelled) setImagesReady(true);
-      }
-    }
-    loadImages();
-    return () => { cancelled = true; };
-  }, [mode, card, cards]);
-
-  // Trigger capture once images + DOM are ready
-  useEffect(() => {
-    if (!imagesReady) return;
-    const timer = setTimeout(() => {
-      capture();
-    }, 180);
-    return () => clearTimeout(timer);
-  }, [imagesReady, capture]);
+    generate();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopy = useCallback(async () => {
-    await share('copy');
+    try { await navigator.clipboard.writeText(fullShareUrl); }
+    catch { const ta = document.createElement('textarea'); ta.value = fullShareUrl; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
-  }, [share]);
+  }, [fullShareUrl]);
 
-  const modalTitle =
-    mode === 'card'
-      ? 'SHARE CARD'
-      : mode === 'set'
-      ? `SHARE ${(filterLabel || 'SET').toUpperCase()}`
-      : 'SHARE VAULT';
+  const modalTitle = mode === 'card' ? 'SHARE CARD'
+    : mode === 'set' ? `SHARE ${(filterLabel || 'SET').toUpperCase()}`
+    : 'SHARE VAULT';
 
   return (
     <>
       <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(100%); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-        @keyframes shareSpinner {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
+        @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+        @keyframes shareSpinner { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
       `}</style>
-
-      {/* Off-screen render target — captured by html2canvas */}
-      <div
-        ref={containerRef}
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-      >
-        {mode === 'card' ? (
-          <SingleCardShareImage card={card} cardDataUrl={mainCardDataUrl} />
-        ) : (
-          <CollectionShareImage
-            cards={cards || []}
-            filterLabel={filterLabel}
-            user={user}
-            cardDataUrls={cardDataUrls}
-          />
-        )}
-      </div>
 
       {/* Overlay */}
       <div
@@ -508,22 +135,15 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
         <div
           onClick={e => e.stopPropagation()}
           style={{
-            background: '#0d0d1a',
-            border: '1px solid #1a1a2e',
+            background: '#0d0d1a', border: '1px solid #1a1a2e',
             borderRadius: '20px 20px 0 0',
             padding: '20px 20px 36px',
-            width: '100%',
-            maxWidth: 480,
+            width: '100%', maxWidth: 480,
             animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
           }}
         >
-          {/* Drag handle */}
-          <div style={{
-            width: 36, height: 4, borderRadius: 2,
-            background: '#ffffff18', margin: '0 auto 18px',
-          }} />
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: '#ffffff18', margin: '0 auto 18px' }} />
 
-          {/* Title */}
           <div style={{
             fontSize: 14, fontWeight: 400, color: '#f0f0f0',
             marginBottom: 16, textAlign: 'center',
@@ -547,7 +167,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
                 <span style={{
                   fontSize: 9, color: '#555',
                   fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.5,
-                }}>GENERATING…</span>
+                }}>GENERATING IMAGE…</span>
               </div>
             ) : (
               <img
@@ -571,7 +191,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
               flex: 1, fontSize: 12, color: '#555',
               fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>{shareUrl}</span>
+            }}>{displayUrl}</span>
             <button
               onClick={handleCopy}
               style={{
@@ -586,72 +206,32 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
             >{copiedUrl ? 'COPIED!' : 'COPY'}</button>
           </div>
 
-          {/* Share destination buttons */}
-          <div style={{
-            display: 'flex', gap: 8, justifyContent: 'center',
-            marginBottom: 16, flexWrap: 'wrap',
-          }}>
-            <ShareButton
-              label="Save"
-              onClick={() => share('download')}
-              bg="#1a1a28"
-              border="rgba(255,107,53,0.15)"
-              icon={<DownloadIcon />}
-            />
-            <ShareButton
-              label="WhatsApp"
-              onClick={() => share('whatsapp')}
-              bg="#1a2a1a"
-              border="rgba(37,211,102,0.2)"
-              icon={<WhatsAppIcon />}
-            />
-            <ShareButton
-              label="Facebook"
-              onClick={() => share('facebook')}
-              bg="#1a1a2a"
-              border="rgba(24,119,242,0.2)"
-              icon={<FacebookIcon />}
-            />
-            <ShareButton
-              label="Reddit"
-              onClick={() => share('reddit')}
-              bg="#1a1a1a"
-              border="rgba(255,69,0,0.2)"
-              icon={<RedditIcon />}
-            />
-            <ShareButton
-              label="More"
-              onClick={() => share('native')}
-              bg="#0d0d1a"
-              border="transparent"
-              isGradientBorder
-              icon={<MoreIcon />}
-            />
+          {/* Share buttons */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+            <ShareButton label="Save" onClick={() => share('download')} bg="#1a1a28" border="rgba(255,107,53,0.15)" icon={<DownloadIcon />} />
+            <ShareButton label="WhatsApp" onClick={() => share('whatsapp')} bg="#1a2a1a" border="rgba(37,211,102,0.2)" icon={<WhatsAppIcon />} />
+            <ShareButton label="Facebook" onClick={() => share('facebook')} bg="#1a1a2a" border="rgba(24,119,242,0.2)" icon={<FacebookIcon />} />
+            <ShareButton label="Reddit" onClick={() => share('reddit')} bg="#1a1a1a" border="rgba(255,69,0,0.2)" icon={<RedditIcon />} />
+            <ShareButton label="More" onClick={() => share('native')} bg="#0d0d1a" border="transparent" isGradientBorder icon={<MoreIcon />} />
           </div>
 
           {/* Instagram note */}
           <div style={{
-            background: 'rgba(255,107,53,0.06)',
-            border: '1px solid rgba(255,107,53,0.14)',
+            background: 'rgba(255,107,53,0.06)', border: '1px solid rgba(255,107,53,0.14)',
             borderRadius: 10, padding: '10px 14px', marginBottom: 18,
             display: 'flex', alignItems: 'flex-start', gap: 10,
           }}>
             <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📸</span>
-            <span style={{
-              fontSize: 11, color: 'rgba(255,107,53,0.75)',
-              fontFamily: "'Barlow', sans-serif", lineHeight: 1.5,
-            }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,107,53,0.75)', fontFamily: "'Barlow', sans-serif", lineHeight: 1.5 }}>
               To share on Instagram, tap <strong style={{ color: '#ff6b35' }}>Save</strong> then post from your camera roll.
             </span>
           </div>
 
-          {/* Cancel */}
           <button
             onClick={onClose}
             style={{
-              width: '100%', background: '#0d0d1a',
-              border: '1px solid #1a1a2e', borderRadius: 12,
-              padding: '13px', cursor: 'pointer',
+              width: '100%', background: '#0d0d1a', border: '1px solid #1a1a2e',
+              borderRadius: 12, padding: '13px', cursor: 'pointer',
               color: '#444', fontSize: 12, fontWeight: 600,
               fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.5,
               transition: 'color 0.15s',

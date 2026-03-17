@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
@@ -597,6 +597,140 @@ function Badge({ label, color }) {
   );
 }
 
+// ── Public share view (shown when URL params are present — no auth needed) ────
+const RARITY_COLORS_PUB = {
+  Common: '#555', Uncommon: '#4caf50', Rare: '#2196f3',
+  'Very Rare': '#9c27b0', 'Ultra Rare': '#ff9800', Legendary: '#f44336',
+};
+
+function PublicShareView({ mode, card, cards, filterLabel, onClose }) {
+  const RARITY_ORDER = { Legendary: 0, 'Ultra Rare': 1, 'Very Rare': 2, Rare: 3, Uncommon: 4, Common: 5 };
+  const sorted = cards ? [...cards].sort((a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6)) : [];
+  const rarePlus = sorted.filter(c => ['Rare', 'Very Rare', 'Ultra Rare', 'Legendary'].includes(c.rarity)).length;
+  const totalValue = sorted.reduce((s, c) => s + (c.estimatedValue || 0), 0);
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 2000,
+      background: '#07070f', color: '#f0f0f0',
+      display: 'flex', flexDirection: 'column', overflowY: 'auto',
+      fontFamily: "'Inter', sans-serif",
+    }}>
+      {/* Header bar */}
+      <div style={{
+        padding: '18px 20px', borderBottom: '1px solid #1a1a2e',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(20px)',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 22 }}>🏀</span>
+          <span style={{
+            fontSize: 22, fontWeight: 400, color: '#ff6b35',
+            fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3,
+          }}>THE VAULT</span>
+        </div>
+        <button onClick={onClose} style={{
+          background: 'var(--gbg, rgba(255,255,255,0.05))',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 20, padding: '5px 14px',
+          color: '#888', fontSize: 11, cursor: 'pointer', fontWeight: 600,
+        }}>✕ Close</button>
+      </div>
+
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 48px', width: '100%' }}>
+
+        {/* Single card view */}
+        {mode === 'card' && card && (() => {
+          const rc = RARITY_COLORS_PUB[card.rarity] || '#555';
+          const fullName = card.fullCardName || [card.year, card.brand, card.series].filter(Boolean).join(' ') || 'Unknown Set';
+          return (
+            <div>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
+                <div style={{
+                  width: 180, height: 250, borderRadius: 14, overflow: 'hidden', flexShrink: 0,
+                  border: `2px solid ${rc}50`,
+                  boxShadow: `0 0 40px ${rc}20`,
+                }}>
+                  <img src={card.imageUrl} alt={card.playerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ fontSize: 11, color: '#ff6b35', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{fullName}</div>
+                  <div style={{ fontSize: 38, fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, lineHeight: 1 }}>{card.playerName}</div>
+                  {card.team && card.team !== 'Unknown' && <div style={{ fontSize: 13, color: '#666' }}>{card.team}</div>}
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 4 }}>
+                    {card.isRookie && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(255,107,53,0.15)', color: '#ff6b35', border: '1px solid rgba(255,107,53,0.3)', fontWeight: 700 }}>RC</span>}
+                    {card.hasAutograph && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(240,192,64,0.15)', color: '#f0c040', border: '1px solid rgba(240,192,64,0.3)', fontWeight: 700 }}>AUTO</span>}
+                    {card.serialNumber && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(206,147,216,0.15)', color: '#ce93d8', border: '1px solid rgba(206,147,216,0.3)', fontWeight: 700 }}>{card.serialNumber}</span>}
+                    {card.rarity && card.rarity !== 'Common' && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: rc + '18', color: rc, border: `1px solid ${rc}35`, fontWeight: 700 }}>{card.rarity}</span>}
+                  </div>
+                  {card.estimatedValue > 0 && (
+                    <div style={{ fontSize: 28, fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginTop: 4 }}>
+                      ${card.estimatedValue.toFixed(2)} <span style={{ fontSize: 11, color: '#3a6a3a', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>EST. VALUE</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {card.playerContext && (
+                <div style={{ marginBottom: 20, background: '#0e0e1c', border: '1px solid #1a1a2e', borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 6 }}>About This Card</div>
+                  <p style={{ margin: 0, fontSize: 13, color: '#888', lineHeight: 1.7 }}>{card.playerContext}</p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Collection / set view */}
+        {mode !== 'card' && sorted.length > 0 && (
+          <div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: 'rgba(255,107,53,0.55)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>SHARED</div>
+              <div style={{ fontSize: 42, fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, lineHeight: 1 }}>
+                {filterLabel ? `${filterLabel.toUpperCase()} COLLECTION` : 'VAULT'}
+              </div>
+              <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
+                <div><span style={{ fontSize: 24, fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif" }}>{sorted.length}</span> <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>cards</span></div>
+                {rarePlus > 0 && <div><span style={{ fontSize: 24, fontWeight: 400, color: '#9c27b0', fontFamily: "'Bebas Neue', sans-serif" }}>{rarePlus}</span> <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>rare+</span></div>}
+                {totalValue > 0 && <div><span style={{ fontSize: 24, fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif" }}>${totalValue.toFixed(0)}</span> <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>est. value</span></div>}
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10 }}>
+              {sorted.map(c => {
+                const rc = RARITY_COLORS_PUB[c.rarity] || '#333';
+                return (
+                  <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <div style={{ aspectRatio: '3/4', borderRadius: 10, overflow: 'hidden', border: `1.5px solid ${rc}45`, boxShadow: `0 0 12px ${rc}12` }}>
+                      <img src={c.imageUrl} alt={c.playerName || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: '#888', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.playerName}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div style={{ marginTop: 36, textAlign: 'center', padding: '24px 0', borderTop: '1px solid #1a1a2e' }}>
+          <div style={{ fontSize: 28, fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, marginBottom: 6 }}>TRACK YOUR OWN COLLECTION</div>
+          <p style={{ margin: '0 0 16px', fontSize: 13, color: '#555' }}>AI card identification · live eBay pricing · instant share</p>
+          <a
+            href="https://app.myvaults.io"
+            style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%)',
+              color: '#07070f', borderRadius: 12, padding: '12px 28px',
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2,
+              textDecoration: 'none', fontWeight: 400,
+            }}
+          >START YOUR VAULT →</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Category cover images (files in /public) ─────────────────────────────────
 const CATEGORY_IMAGES = {
   "Pokemon":          "/pokemon1.png",
@@ -625,6 +759,7 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
   const [showChat, setShowChat] = useState(false);
   const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
+  const [publicView, setPublicView] = useState(null); // null | { mode, card?, cards?, filterLabel? }
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
@@ -636,6 +771,41 @@ export default function App() {
   const fileRef = useRef();
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
+
+  // Detect share URL params — show public view without requiring auth
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareCard = params.get('shareCard');
+    const shareVault = params.get('shareVault');
+    const shareSet = params.get('shareSet');
+    const uid = params.get('uid');
+    if (!uid) return;
+
+    if (shareCard) {
+      fetch(`/api/public-card?uid=${encodeURIComponent(uid)}&cardId=${encodeURIComponent(shareCard)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(card => { if (card && !card.error) setPublicView({ mode: 'card', card }); })
+        .catch(() => {});
+    } else if (shareSet) {
+      fetch(`/api/public-card?uid=${encodeURIComponent(uid)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          const all = data?.cards || [];
+          const label = decodeURIComponent(shareSet);
+          const filtered = all.filter(c => c.cardCategory === label || c.team === label);
+          if (filtered.length > 0) setPublicView({ mode: 'set', cards: filtered, filterLabel: label });
+        })
+        .catch(() => {});
+    } else if (shareVault) {
+      fetch(`/api/public-card?uid=${encodeURIComponent(uid)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          const all = data?.cards || [];
+          if (all.length > 0) setPublicView({ mode: 'collection', cards: all });
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   // Sync cards to/from Firestore when the user is signed in.
   useFirestoreSync(user ?? null, cards, setCards);
@@ -1346,6 +1516,15 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           user={user}
           onClose={() => setSellModalCards(null)}
           onSuccess={handleSellSuccess}
+        />
+      )}
+      {publicView && (
+        <PublicShareView
+          mode={publicView.mode}
+          card={publicView.card}
+          cards={publicView.cards}
+          filterLabel={publicView.filterLabel}
+          onClose={() => setPublicView(null)}
         />
       )}
       {shareModal && (
