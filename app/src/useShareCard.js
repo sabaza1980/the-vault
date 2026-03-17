@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 
 const RARITY_COLORS = {
   Common: '#555', Uncommon: '#4caf50', Rare: '#2196f3',
@@ -345,22 +345,13 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
   const [imageBlob, setImageBlob] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [capturing, setCapturing] = useState(false);
-  // Fix 3: explicit error state instead of infinite spinner
   const [generateError, setGenerateError] = useState(false);
-  const timeoutRef = useRef(null);
 
   const generate = useCallback(async () => {
     setCapturing(true);
     setGenerateError(false);
     setImageBlob(null);
     setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
-
-    // Fix 3: 10-second hard timeout
-    timeoutRef.current = setTimeout(() => {
-      console.error('[useShareCard] generate() timed out after 10s');
-      setCapturing(false);
-      setGenerateError(true);
-    }, 10000);
 
     try {
       const canvas = mode === 'card'
@@ -369,7 +360,6 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
 
       return await new Promise((resolve) => {
         canvas.toBlob((blob) => {
-          clearTimeout(timeoutRef.current);
           if (!blob) {
             console.error('[useShareCard] canvas.toBlob() returned null');
             setCapturing(false);
@@ -378,6 +368,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
             return;
           }
           const url = URL.createObjectURL(blob);
+          setGenerateError(false); // clear any stale error state
           setImageBlob(blob);
           setPreviewUrl(url);
           setCapturing(false);
@@ -387,7 +378,6 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     } catch (err) {
       // Fix 4: full error visible in DevTools
       console.error('[useShareCard] generate() threw:', err);
-      clearTimeout(timeoutRef.current);
       setCapturing(false);
       setGenerateError(true);
       return null;
