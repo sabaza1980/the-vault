@@ -7,10 +7,9 @@ export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'url required' });
 
-  let decoded;
-  try { decoded = decodeURIComponent(url); } catch {
-    return res.status(400).json({ error: 'invalid url' });
-  }
+  // Vercel already URL-decodes req.query values — no further decoding needed.
+  // Double-decoding would corrupt Firebase Storage paths (e.g. %2F → /).
+  const decoded = url;
 
   // Security: only proxy Firebase Storage for this project
   if (!decoded.startsWith('https://firebasestorage.googleapis.com/')) {

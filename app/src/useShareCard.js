@@ -369,7 +369,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
       ? `Check out my ${cardName} on The Vault!`
       : 'Check out my trading card collection on The Vault!';
 
-    // ── Download helper ────────────────────────────────────────────────────
+    // ── Download helper ───────────────────────────────────────────────────
     function triggerDownload() {
       const a = document.createElement('a');
       const objUrl = URL.createObjectURL(imageBlob);
@@ -380,60 +380,60 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     }
 
     if (destination === 'download') {
-      if (!imageBlob) return false;
+      if (!imageBlob) return 'no-image';
       triggerDownload();
-      return true;
+      return 'saved';
     }
 
-    if (!imageBlob) return false;
+    if (!imageBlob) return 'no-image';
 
-    // ── Native share helper (image file) ──────────────────────────────────
-    // Spec: do NOT mix files + url — omit url when sharing files.
+    // ── Native Web Share API (image file) ─────────────────────────────────
+    // Works on iOS Safari, Android Chrome, and modern mobile browsers.
+    // canShare + files is the only reliable way to share an image binary.
     const file = new File([imageBlob], 'vault-share.png', { type: 'image/png' });
-    const canShareFiles = !!(navigator.share && navigator.canShare?.({ files: [file] }));
-    const doFileShare = async () => {
+    let canShareFiles = false;
+    try { canShareFiles = !!(navigator.share && navigator.canShare?.({ files: [file] })); } catch {}
+
+    // Attempt OS native share sheet (image file). Returns 'shared' | 'cancelled' | 'unsupported'.
+    const tryFileShare = async () => {
+      if (!canShareFiles) return 'unsupported';
       try {
         await navigator.share({ files: [file], title: shareTitle, text: shareText });
-        return true;
+        return 'shared';
       } catch (err) {
-        return err.name === 'AbortError'; // user cancelled = still handled
+        return err.name === 'AbortError' ? 'cancelled' : 'unsupported';
       }
     };
 
     if (destination === 'native') {
-      if (canShareFiles) {
-        await doFileShare();
-      } else if (navigator.share) {
-        try { await navigator.share({ title: shareTitle, text: shareText, url: shareUrl }); }
-        catch (err) { if (err.name !== 'AbortError') triggerDownload(); }
-      } else {
+      const result = await tryFileShare();
+      if (result === 'unsupported') {
+        // Desktop fallback: download the image
         triggerDownload();
+        return 'saved';
       }
-      return true;
+      return result; // 'shared' or 'cancelled'
     }
 
-    // ── Social platforms ──────────────────────────────────────────────────
-    // On mobile the OS share sheet includes every installed app (WhatsApp,
-    // Facebook, Reddit, etc.) so native file share is always the best option.
-    // On desktop fall back to downloading the image + opening the platform.
-    if (destination === 'whatsapp') {
-      if (canShareFiles) { await doFileShare(); return true; }
-      triggerDownload();
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
-      return true;
+    // ── Social platform buttons ───────────────────────────────────────────
+    // On mobile: tryFileShare() opens the OS share sheet → user picks the app.
+    // On desktop: Web Share API doesn't support files, so save the image and
+    //             open the platform so the user can attach it manually.
+    const socialPlatforms = {
+      whatsapp: 'https://web.whatsapp.com/',
+      facebook: `https://www.facebook.com/`,
+      reddit: `https://www.reddit.com/submit?title=${encodeURIComponent(shareTitle)}`,
+    };
+    if (destination in socialPlatforms) {
+      const result = await tryFileShare();
+      if (result === 'unsupported') {
+        triggerDownload();
+        window.open(socialPlatforms[destination], '_blank', 'noopener,noreferrer');
+        return 'saved';
+      }
+      return result;
     }
-    if (destination === 'facebook') {
-      if (canShareFiles) { await doFileShare(); return true; }
-      triggerDownload();
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer');
-      return true;
-    }
-    if (destination === 'reddit') {
-      if (canShareFiles) { await doFileShare(); return true; }
-      triggerDownload();
-      window.open(`https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`, '_blank', 'noopener,noreferrer');
-      return true;
-    }
+
     if (destination === 'copy') {
       try {
         await navigator.clipboard.writeText(shareUrl);
@@ -442,7 +442,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
         ta.value = shareUrl;
         document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
       }
-      return true;
+      return 'copied';
     }
     return false;
   }, [imageBlob, card, cards, mode, filterLabel, user]);

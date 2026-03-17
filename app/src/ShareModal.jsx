@@ -77,6 +77,10 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
     card, cards, mode, filterLabel, user,
   });
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [shareResult, setShareResult] = useState(null); // 'saved' | 'shared' | 'copied' | null
+
+  const isDesktop = typeof navigator !== 'undefined'
+    && !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   // Build the share URL to display in the URL bar
   const BASE = 'https://app.myvaults.io';
@@ -102,6 +106,14 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
     generate();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleShare = useCallback(async (destination) => {
+    const result = await share(destination);
+    if (result === 'saved' || result === 'shared' || result === 'copied') {
+      setShareResult(result);
+      setTimeout(() => setShareResult(null), 3000);
+    }
+  }, [share]);
+
   const handleCopy = useCallback(async () => {
     try { await navigator.clipboard.writeText(fullShareUrl); }
     catch { const ta = document.createElement('textarea'); ta.value = fullShareUrl; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
@@ -118,6 +130,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
       <style>{`
         @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
         @keyframes shareSpinner { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
 
       {/* Overlay */}
@@ -208,14 +221,39 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
 
           {/* Share buttons */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-            <ShareButton label="Save" onClick={() => share('download')} bg="#1a1a28" border="rgba(255,107,53,0.15)" icon={<DownloadIcon />} />
-            <ShareButton label="WhatsApp" onClick={() => share('whatsapp')} bg="#1a2a1a" border="rgba(37,211,102,0.2)" icon={<WhatsAppIcon />} />
-            <ShareButton label="Facebook" onClick={() => share('facebook')} bg="#1a1a2a" border="rgba(24,119,242,0.2)" icon={<FacebookIcon />} />
-            <ShareButton label="Reddit" onClick={() => share('reddit')} bg="#1a1a1a" border="rgba(255,69,0,0.2)" icon={<RedditIcon />} />
-            <ShareButton label="More" onClick={() => share('native')} bg="#0d0d1a" border="transparent" isGradientBorder icon={<MoreIcon />} />
+            <ShareButton label="Save" onClick={() => handleShare('download')} bg="#1a1a28" border="rgba(255,107,53,0.15)" icon={<DownloadIcon />} />
+            <ShareButton label="WhatsApp" onClick={() => handleShare('whatsapp')} bg="#1a2a1a" border="rgba(37,211,102,0.2)" icon={<WhatsAppIcon />} />
+            <ShareButton label="Facebook" onClick={() => handleShare('facebook')} bg="#1a1a2a" border="rgba(24,119,242,0.2)" icon={<FacebookIcon />} />
+            <ShareButton label="Reddit" onClick={() => handleShare('reddit')} bg="#1a1a1a" border="rgba(255,69,0,0.2)" icon={<RedditIcon />} />
+            <ShareButton label="More" onClick={() => handleShare('native')} bg="#0d0d1a" border="transparent" isGradientBorder icon={<MoreIcon />} />
           </div>
 
-          {/* Instagram note */}
+          {/* Share feedback toast */}
+          {shareResult && (
+            <div style={{
+              background: shareResult === 'saved' ? 'rgba(255,107,53,0.12)' : 'rgba(76,175,80,0.12)',
+              border: `1px solid ${shareResult === 'saved' ? 'rgba(255,107,53,0.3)' : 'rgba(76,175,80,0.3)'}`,
+              borderRadius: 10, padding: '10px 14px', marginBottom: 12,
+              display: 'flex', alignItems: 'center', gap: 10,
+              animation: 'fadeInUp 0.2s ease',
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>
+                {shareResult === 'saved' ? '✅' : shareResult === 'copied' ? '📋' : '🚀'}
+              </span>
+              <span style={{ fontSize: 11, fontFamily: "'Barlow', sans-serif", lineHeight: 1.5,
+                color: shareResult === 'saved' ? 'rgba(255,107,53,0.9)' : 'rgba(76,175,80,0.9)' }}>
+                {shareResult === 'saved'
+                  ? isDesktop
+                    ? 'Image saved to Downloads! Attach it when posting.'
+                    : 'Image saved to your camera roll!'
+                  : shareResult === 'copied'
+                    ? 'Link copied to clipboard!'
+                    : 'Shared!'}
+              </span>
+            </div>
+          )}
+
+          {/* Note */}
           <div style={{
             background: 'rgba(255,107,53,0.06)', border: '1px solid rgba(255,107,53,0.14)',
             borderRadius: 10, padding: '10px 14px', marginBottom: 18,
@@ -223,7 +261,10 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           }}>
             <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📸</span>
             <span style={{ fontSize: 11, color: 'rgba(255,107,53,0.75)', fontFamily: "'Barlow', sans-serif", lineHeight: 1.5 }}>
-              To share on Instagram, tap <strong style={{ color: '#ff6b35' }}>Save</strong> then post from your camera roll.
+              {isDesktop
+                ? <>Tap <strong style={{ color: '#ff6b35' }}>Save</strong> to download the image, then attach it when posting on Instagram, WhatsApp, or Reddit.</>
+                : <>To share on Instagram, tap <strong style={{ color: '#ff6b35' }}>Save</strong> then post from your camera roll.</>
+              }
             </span>
           </div>
 
