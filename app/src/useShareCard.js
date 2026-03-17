@@ -5,11 +5,15 @@ const RARITY_COLORS = {
   'Very Rare': '#9c27b0', 'Ultra Rare': '#ff9800', Legendary: '#f44336',
 };
 
-// Fetch any URL and return a data URL so Canvas can draw it without taint
+// Fetch any URL and return a data URL so Canvas can draw it without taint.
+// Firebase Storage URLs are routed through /api/image-proxy to bypass CORS.
 async function urlToDataUrl(src) {
   if (!src || src.startsWith('data:')) return src || null;
   try {
-    const res = await fetch(src);
+    const fetchUrl = src.includes('firebasestorage.googleapis.com')
+      ? `/api/image-proxy?url=${encodeURIComponent(src)}`
+      : src;
+    const res = await fetch(fetchUrl);
     if (!res.ok) return null;
     const blob = await res.blob();
     return await new Promise((resolve, reject) => {
@@ -365,37 +369,68 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
       ? `Check out my ${cardName} on The Vault!`
       : 'Check out my trading card collection on The Vault!';
 
-    if (destination === 'download') {
-      if (!imageBlob) return false;
+    // ── Download helper ────────────────────────────────────────────────────
+    function triggerDownload() {
       const a = document.createElement('a');
       const objUrl = URL.createObjectURL(imageBlob);
       a.href = objUrl;
       a.download = `vault-${mode}-${Date.now()}.png`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(objUrl);
-      return true;
     }
-    if (destination === 'native') {
+
+    if (destination === 'download') {
       if (!imageBlob) return false;
-      const file = new File([imageBlob], 'vault-share.png', { type: 'image/png' });
-      try {
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: shareTitle, text: shareText, url: shareUrl });
-        } else if (navigator.share) {
-          await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        }
-      } catch (err) { if (err.name !== 'AbortError') console.error('Web Share error', err); }
+      triggerDownload();
       return true;
     }
+
+    if (!imageBlob) return false;
+
+    // ── Native share helper (image file) ──────────────────────────────────
+    // Spec: do NOT mix files + url — omit url when sharing files.
+    const file = new File([imageBlob], 'vault-share.png', { type: 'image/png' });
+    const canShareFiles = !!(navigator.share && navigator.canShare?.({ files: [file] }));
+    const doFileShare = async () => {
+      try {
+        await navigator.share({ files: [file], title: shareTitle, text: shareText });
+        return true;
+      } catch (err) {
+        return err.name === 'AbortError'; // user cancelled = still handled
+      }
+    };
+
+    if (destination === 'native') {
+      if (canShareFiles) {
+        await doFileShare();
+      } else if (navigator.share) {
+        try { await navigator.share({ title: shareTitle, text: shareText, url: shareUrl }); }
+        catch (err) { if (err.name !== 'AbortError') triggerDownload(); }
+      } else {
+        triggerDownload();
+      }
+      return true;
+    }
+
+    // ── Social platforms ──────────────────────────────────────────────────
+    // On mobile the OS share sheet includes every installed app (WhatsApp,
+    // Facebook, Reddit, etc.) so native file share is always the best option.
+    // On desktop fall back to downloading the image + opening the platform.
     if (destination === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`, '_blank', 'noopener,noreferrer');
+      if (canShareFiles) { await doFileShare(); return true; }
+      triggerDownload();
+      window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
       return true;
     }
     if (destination === 'facebook') {
+      if (canShareFiles) { await doFileShare(); return true; }
+      triggerDownload();
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer');
       return true;
     }
     if (destination === 'reddit') {
+      if (canShareFiles) { await doFileShare(); return true; }
+      triggerDownload();
       window.open(`https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`, '_blank', 'noopener,noreferrer');
       return true;
     }
