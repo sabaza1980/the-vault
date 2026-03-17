@@ -57,7 +57,6 @@ export default async function handler(req, res) {
     const sq = {
       from: [{ collectionId: "articles" }],
       where: filters.length === 1 ? filters[0] : { compositeFilter: { op: "AND", filters } },
-      orderBy: [{ field: { fieldPath: "publishedAt" }, direction: "DESCENDING" }],
       limit: limitN,
     };
 
@@ -77,7 +76,9 @@ export default async function handler(req, res) {
       return res.status(200).json(docs[0]);
     }
 
-    const articles = docs.map(({ htmlContent, ...rest }) => rest);
+    const articles = docs
+      .sort((a, b) => (b.publishedAt || "").localeCompare(a.publishedAt || ""))
+      .map(({ htmlContent, ...rest }) => rest);
     return res.status(200).json({ articles });
   } catch (err) {
     console.error("articles API error:", err);
