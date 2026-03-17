@@ -71,10 +71,30 @@ async function fsAdd(token, projectId, collectionId, data) {
   return (await r.json()).name?.split("/").pop();
 }
 
-// ── Pexels API image search ─────────────────────────────────────────────────
-// Requires PEXELS_API_KEY env var (free at pexels.com/api).
-// Falls back to static CATEGORY_IMAGES pools if the key is absent or the
-// search returns no results.
+// ── Google Custom Search image fetch ────────────────────────────────────────
+// Requires GOOGLE_CSE_KEY (Google API key with Custom Search API enabled)
+// and GOOGLE_CSE_ID (Programmable Search Engine ID, set to search entire web).
+// Returns actual card images from TCGPlayer, collector sites, etc.
+async function fetchGoogleImages(query, count = 5) {
+  const key = process.env.GOOGLE_CSE_KEY;
+  const cx  = process.env.GOOGLE_CSE_ID;
+  if (!key || !cx) return null;
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${key}&cx=${cx}` +
+      `&searchType=image&imgSize=xlarge&imgType=photo&num=${Math.min(count, 10)}&safe=active` +
+      `&q=${encodeURIComponent(query)}`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (!data.items?.length) return null;
+    return data.items.map(item => item.link);
+  } catch {
+    return null;
+  }
+}
+
+// ── Pexels API image search (fallback) ──────────────────────────────────────
+// Used when Google CSE is not configured.
 async function fetchPexelsImages(query, count = 5) {
   const key = process.env.PEXELS_API_KEY;
   if (!key) return null;
@@ -86,11 +106,16 @@ async function fetchPexelsImages(query, count = 5) {
     if (!r.ok) return null;
     const data = await r.json();
     if (!data.photos?.length) return null;
-    // Use large2x (1260×750) — same dimensions as our static pools
     return data.photos.map(p => p.src.large2x);
   } catch {
     return null;
   }
+}
+
+// Try Google first, fall back to Pexels
+async function fetchImages(query, count = 5) {
+  return (await fetchGoogleImages(query, count)) ||
+         (await fetchPexelsImages(query, count));
 }
 
 // ── Royalty-free image pools per category (Pexels CDN — free to use) ────────
@@ -295,16 +320,16 @@ export default async function handler(req, res) {
     const listSize = (req.body && req.body.listSize) ? req.body.listSize : null;
 
     // Build a specific search query from the article topic for relevant images
-    const imageQuery = `${topic.title} ${topic.category} cards`;
+    const imageQuery = `${topic.title} trading card`;
     const imageCount = listSize ? listSize + 1 : 5;
-    let images = await fetchPexelsImages(imageQuery, imageCount);
+    let images = await fetchImages(imageQuery, imageCount);
 
-    // If Pexels search returned too few images for a list article, supplement
+    // If we didn't get enough images for a list article, top up with a broader query
     if (images && listSize && images.length < listSize + 1) {
-      const extra = await fetchPexelsImages(`${topic.category} trading card collecting`, listSize + 1 - images.length);
+      const extra = await fetchImages(`${topic.category} card collecting`, listSize + 1 - images.length);
       if (extra) images = images.concat(extra);
     }
-    // Fall back to static category pool if Pexels unavailable
+    // Last resort: static category pool
     if (!images || images.length === 0) {
       images = listSize ? pickNImages(topic.category, listSize + 1) : pickImages(topic.category);
     }

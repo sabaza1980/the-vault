@@ -2,21 +2,25 @@
 /**
  * scripts/update-article-images.js
  *
- * Retroactively updates heroImageUrl for all existing articles using the
- * Pexels API — searching by each article's title for relevant images.
+ * Retroactively updates heroImageUrl for all existing articles.
+ * Uses Google Custom Search API (primary) with Pexels as fallback.
  *
  * Usage:
  *   node scripts/update-article-images.js
  *
- * Required environment variables:
- *   PEXELS_API_KEY              — free at pexels.com/api
- *   FIREBASE_SERVICE_ACCOUNT_JSON — from .env.local
+ * Image API env vars (at least one required):
+ *   GOOGLE_CSE_KEY   — Google API key with Custom Search API enabled
+ *   GOOGLE_CSE_ID    — Programmable Search Engine ID (cx)
+ *   PEXELS_API_KEY   — fallback; free at pexels.com/api
  *
- * The script reads all articles from Firestore, searches Pexels for each
- * one using its title, and patches the heroImageUrl field.
+ * Firebase env vars (required):
+ *   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
+ *   — OR — FIREBASE_SERVICE_ACCOUNT_JSON
  */
 
 const PEXELS_KEY = process.env.PEXELS_API_KEY || "";
+const GOOGLE_KEY = process.env.GOOGLE_CSE_KEY  || "";
+const GOOGLE_CX  = process.env.GOOGLE_CSE_ID   || "";
 
 // Accept either a full FIREBASE_SERVICE_ACCOUNT_JSON or individual parts
 let SA = {};
@@ -32,8 +36,8 @@ if (process.env.FIREBASE_PROJECT_ID)     SA.project_id    = process.env.FIREBASE
 if (process.env.FIREBASE_CLIENT_EMAIL)   SA.client_email  = process.env.FIREBASE_CLIENT_EMAIL;
 if (process.env.FIREBASE_PRIVATE_KEY)    SA.private_key   = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
 
-if (!PEXELS_KEY) {
-  console.error("Error: PEXELS_API_KEY is required. Get a free key at pexels.com/api");
+if (!GOOGLE_KEY && !PEXELS_KEY) {
+  console.error("Error: set GOOGLE_CSE_KEY+GOOGLE_CSE_ID (recommended) or PEXELS_API_KEY.");
   process.exit(1);
 }
 if (!SA.project_id || !SA.client_email || !SA.private_key) {
@@ -123,15 +127,34 @@ async function fsPatch(token, docName, heroImageUrl) {
   }
 }
 
-// ── Pexels search ────────────────────────────────────────────────────────────
+// ── Image search ─────────────────────────────────────────────────────────────
+async function googleSearch(query) {
+  if (!GOOGLE_KEY || !GOOGLE_CX) return null;
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_KEY}&cx=${GOOGLE_CX}` +
+      `&searchType=image&imgSize=xlarge&imgType=photo&num=1&safe=active&q=${encodeURIComponent(query)}`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data.items?.[0]?.link || null;
+  } catch { return null; }
+}
+
 async function pexelsSearch(query) {
-  const r = await fetch(
-    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-    { headers: { Authorization: PEXELS_KEY } }
-  );
-  if (!r.ok) return null;
-  const data = await r.json();
-  return data.photos?.[0]?.src?.large2x || null;
+  if (!PEXELS_KEY) return null;
+  try {
+    const r = await fetch(
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+      { headers: { Authorization: PEXELS_KEY } }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data.photos?.[0]?.src?.large2x || null;
+  } catch { return null; }
+}
+
+async function searchImage(query) {
+  return (await googleSearch(query)) || (await pexelsSearch(query));
 }
 
 function sleep(ms) {
@@ -156,10 +179,10 @@ async function main() {
 
     try {
       // Try article-specific search first, then category fallback
-      const query1 = `${a.title} ${a.category}`;
-      let imgUrl = await pexelsSearch(query1);
+      const query1 = `${a.title} trading card`;
+      let imgUrl = await searchImage(query1);
       if (!imgUrl) {
-        imgUrl = await pexelsSearch(`${a.category} trading cards collecting`);
+        imgUrl = await searchImage(`${a.category} trading cards collecting`);
       }
       if (!imgUrl) {
         console.log("SKIP (no image found)");
