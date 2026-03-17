@@ -71,7 +71,30 @@ async function fsAdd(token, projectId, collectionId, data) {
   return (await r.json()).name?.split("/").pop();
 }
 
+// ── Pexels API image search ─────────────────────────────────────────────────
+// Requires PEXELS_API_KEY env var (free at pexels.com/api).
+// Falls back to static CATEGORY_IMAGES pools if the key is absent or the
+// search returns no results.
+async function fetchPexelsImages(query, count = 5) {
+  const key = process.env.PEXELS_API_KEY;
+  if (!key) return null;
+  try {
+    const r = await fetch(
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${Math.min(count, 20)}&orientation=landscape`,
+      { headers: { Authorization: key } }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    if (!data.photos?.length) return null;
+    // Use large2x (1260×750) — same dimensions as our static pools
+    return data.photos.map(p => p.src.large2x);
+  } catch {
+    return null;
+  }
+}
+
 // ── Royalty-free image pools per category (Pexels CDN — free to use) ────────
+// Fallback used when PEXELS_API_KEY is not set.
 // All images are verified Pexels photos. Format: w=1260&h=750 for hero (16:9)
 const CATEGORY_IMAGES = {
   "Pokemon": [
@@ -270,11 +293,28 @@ export default async function handler(req, res) {
 
     // Pick images for this article (hero = first, inline = rest)
     const listSize = (req.body && req.body.listSize) ? req.body.listSize : null;
-    const images = pickImages(topic.category);
+
+    // Build a specific search query from the article topic for relevant images
+    const imageQuery = `${topic.title} ${topic.category} cards`;
+    const imageCount = listSize ? listSize + 1 : 5;
+    let images = await fetchPexelsImages(imageQuery, imageCount);
+
+    // If Pexels search returned too few images for a list article, supplement
+    if (images && listSize && images.length < listSize + 1) {
+      const extra = await fetchPexelsImages(`${topic.category} trading card collecting`, listSize + 1 - images.length);
+      if (extra) images = images.concat(extra);
+    }
+    // Fall back to static category pool if Pexels unavailable
+    if (!images || images.length === 0) {
+      images = listSize ? pickNImages(topic.category, listSize + 1) : pickImages(topic.category);
+    }
+
     const heroImageUrl = images[0];
     let inlineImages;
     if (listSize) {
-      inlineImages = pickNImages(topic.category, listSize);
+      // Cycle through available images to fill all list slots
+      const pool = images.slice(1);
+      inlineImages = Array.from({ length: listSize }, (_, i) => pool[i % pool.length]);
     } else {
       inlineImages = images.slice(1, 4); // up to 3 inline images
     }
