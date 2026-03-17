@@ -4,6 +4,7 @@ import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
+import ShareModal from "./ShareModal";
 import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -127,7 +128,7 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell }) {
+function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [ebayData, setEbayData] = useState(null);
@@ -542,33 +543,44 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               </div>
             )}
 
-            {confirmingDelete ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 11, color: "#ff6b6b" }}>Remove this card?</span>
-                <button
-                  onClick={() => onDelete(card.id)}
-                  style={{
-                    background: "#ff444420", border: "1px solid #ff444460", color: "#ff4444",
-                    borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700
-                  }}
-                >Yes, remove</button>
-                <button
-                  onClick={() => setConfirmingDelete(false)}
-                  style={{
-                    background: "transparent", border: "1px solid #ffffff20", color: "var(--ts)",
-                    borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600
-                  }}
-                >Cancel</button>
-              </div>
-            ) : (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <button
-                onClick={() => setConfirmingDelete(true)}
+                onClick={() => onShare?.(card)}
                 style={{
-                  background: "transparent", border: "1px solid #ff444428", color: "#ff444488",
-                  borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                  background: "rgba(255,107,53,0.1)", border: "1px solid rgba(255,107,53,0.25)",
+                  color: "#ff6b35", borderRadius: 8, padding: "5px 14px",
+                  cursor: "pointer", fontSize: 11, fontWeight: 600,
+                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5
                 }}
-              >Remove</button>
-            )}
+              >Share ↑</button>
+              {confirmingDelete ? (
+                <>
+                  <span style={{ fontSize: 11, color: "#ff6b6b" }}>Remove this card?</span>
+                  <button
+                    onClick={() => onDelete(card.id)}
+                    style={{
+                      background: "#ff444420", border: "1px solid #ff444460", color: "#ff4444",
+                      borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700
+                    }}
+                  >Yes, remove</button>
+                  <button
+                    onClick={() => setConfirmingDelete(false)}
+                    style={{
+                      background: "transparent", border: "1px solid #ffffff20", color: "var(--ts)",
+                      borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                    }}
+                  >Cancel</button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setConfirmingDelete(true)}
+                  style={{
+                    background: "transparent", border: "1px solid #ff444428", color: "#ff444488",
+                    borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                  }}
+                >Remove</button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -612,6 +624,7 @@ export default function App() {
   const [view, setView] = useState("cards"); // "cards" | "table"
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
   const [showChat, setShowChat] = useState(false);
+  const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
@@ -833,7 +846,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   return (
     <div data-theme={theme} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--t)", fontFamily: "'Inter', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -887,6 +900,19 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <>
                 <StatBadge label="Cards" value={cards.length} color="#ff6b35" />
                 {rareCounts > 0 && <StatBadge label="Rare+" value={rareCounts} color="#9c27b0" />}
+                <button
+                  onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
+                  title="Share your vault"
+                  style={{
+                    background: "var(--gbg)", border: "1px solid var(--gb)",
+                    borderRadius: 20, padding: "5px 10px",
+                    color: "var(--gc)", fontSize: 14, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 4
+                  }}
+                >
+                  <span style={{ fontSize: 12 }}>🏆</span>
+                  <span style={{ fontSize: 12 }}>↑</span>
+                </button>
               </>
             )}
             <button
@@ -1185,6 +1211,18 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 }}
               >{bundleMode ? "✕ Cancel Bundle" : "Bundle Sell"}</button>
             )}
+            {filter !== "All" && filter !== "Favourites" && (
+              <button
+                onClick={() => setShareModal({ mode: 'set', cards: filteredCards, filterLabel: filter })}
+                style={{
+                  padding: "4px 12px", borderRadius: 8,
+                  border: "1px solid rgba(255,107,53,0.3)",
+                  background: "rgba(255,107,53,0.08)",
+                  color: "#ff6b35",
+                  cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
+                }}
+              >Share Set ↑</button>
+            )}
           </div>
         )}
 
@@ -1193,7 +1231,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
@@ -1308,6 +1346,16 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           user={user}
           onClose={() => setSellModalCards(null)}
           onSuccess={handleSellSuccess}
+        />
+      )}
+      {shareModal && (
+        <ShareModal
+          mode={shareModal.mode}
+          card={shareModal.card}
+          cards={shareModal.cards}
+          filterLabel={shareModal.filterLabel}
+          user={user}
+          onClose={() => setShareModal(null)}
         />
       )}
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
