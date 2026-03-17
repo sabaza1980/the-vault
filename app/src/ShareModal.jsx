@@ -314,8 +314,8 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
             <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>📸</span>
             <span style={{ fontSize: 11, color: 'rgba(255,107,53,0.75)', fontFamily: "'Barlow', sans-serif", lineHeight: 1.5 }}>
               {isDesktop
-                ? <>Tap <strong style={{ color: '#ff6b35' }}>Save</strong> to download the image, then attach it when posting on Instagram, WhatsApp, or Reddit.</>
-                : <>To share on Instagram, tap <strong style={{ color: '#ff6b35' }}>Save</strong> then post from your camera roll.</>
+                ? <>Tap a social button to download the image and open the platform, then attach it to your post.</>
+                : <>Tap a button — your share sheet opens with the <strong style={{ color: '#ff6b35' }}>image + link</strong> ready to send. Pick your app from the sheet.</>
               }
             </span>
           </div>

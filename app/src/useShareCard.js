@@ -442,11 +442,13 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
 
     const tryMobileShare = async () => {
       if (!mobile) return 'unsupported';
+      // shareText already contains the link, so text alone carries everything
+      const shareData = { files: [file], title: shareTitle, text: shareText };
       let canShare = false;
-      try { canShare = !!(navigator.share && navigator.canShare?.({ files: [file] })); } catch {}
+      try { canShare = !!(navigator.share && navigator.canShare?.(shareData)); } catch {}
       if (!canShare) return 'unsupported';
       try {
-        await navigator.share({ files: [file], title: shareTitle, text: shareText });
+        await navigator.share(shareData);
         return 'shared';
       } catch (err) {
         return err.name === 'AbortError' ? 'cancelled' : 'unsupported';
@@ -463,22 +465,25 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     }
 
     // ── Social buttons ────────────────────────────────────────────────────
-    // For named destinations we ALWAYS go straight to the app/site, never
-    // through the OS picker. On mobile, triggerDownload() saves to camera
-    // roll / Downloads so the user can attach it inside the app.
-    // The "More" button is the intentional catch-all that shows the OS picker.
+    // Mobile: Web Share API passes the image FILE to the OS sheet. The user
+    // picks the target app and the image + text (with link) are pre-attached.
+    // This is the only way to get an image into WhatsApp/Facebook/Reddit on
+    // mobile — no URL scheme can inject a locally generated file.
+    // Desktop: download image + open the platform URL.
     const socialUrls = {
-      // wa.me is a universal link — opens WhatsApp directly on iOS & Android
       whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-      // sharer.php opens the Facebook app / mobile web page with the link
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-      // submit opens Reddit (or the Reddit app via universal link) with title + url
       reddit: `https://www.reddit.com/submit?title=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`,
     };
     if (destination in socialUrls) {
-      triggerDownload();
-      window.open(socialUrls[destination], '_blank', 'noopener,noreferrer');
-      return 'saved-social';
+      const result = await tryMobileShare();
+      if (result === 'unsupported') {
+        // Desktop or file-share not supported: download + open platform
+        triggerDownload();
+        window.open(socialUrls[destination], '_blank', 'noopener,noreferrer');
+        return 'saved-social';
+      }
+      return result; // 'shared' or 'cancelled'
     }
 
     if (destination === 'copy') {
