@@ -135,6 +135,7 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
   const [ebayFetched, setEbayFetched] = useState(false);
   const [localNotes, setLocalNotes] = useState(card.userNotes || "");
   const [backAnalyzing, setBackAnalyzing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const backFileRef = useRef();
 
   const handleExpand = useCallback(async () => {
@@ -541,13 +542,33 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               </div>
             )}
 
-            <button
-              onClick={() => onDelete(card.id)}
-              style={{
-                background: "transparent", border: "1px solid #ff444428", color: "#ff444488",
-                borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600
-              }}
-            >Remove</button>
+            {confirmingDelete ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 11, color: "#ff6b6b" }}>Remove this card?</span>
+                <button
+                  onClick={() => onDelete(card.id)}
+                  style={{
+                    background: "#ff444420", border: "1px solid #ff444460", color: "#ff4444",
+                    borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700
+                  }}
+                >Yes, remove</button>
+                <button
+                  onClick={() => setConfirmingDelete(false)}
+                  style={{
+                    background: "transparent", border: "1px solid #ffffff20", color: "var(--ts)",
+                    borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                  }}
+                >Cancel</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                style={{
+                  background: "transparent", border: "1px solid #ff444428", color: "#ff444488",
+                  borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                }}
+              >Remove</button>
+            )}
           </div>
         )}
       </div>
@@ -1240,7 +1261,11 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                           {card.ebayData?.avg ? `$${card.ebayData.avg}` : "—"}
                         </td>
                         <td style={{ padding: "9px 10px" }}>
-                          <button onClick={() => setCards(prev => prev.filter(c => c.id !== card.id))} style={{
+                          <button onClick={() => {
+                            if (window.confirm(`Remove "${card.name || card.playerName || "this card"}" from your collection?`)) {
+                              setCards(prev => prev.filter(c => c.id !== card.id));
+                            }
+                          }} style={{
                             background: "none", border: "none", color: "var(--tf)", cursor: "pointer", fontSize: 14, padding: 2
                           }} title="Delete">✕</button>
                         </td>
