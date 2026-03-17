@@ -1,44 +1,29 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 const RARITY_COLORS = {
   Common: '#555', Uncommon: '#4caf50', Rare: '#2196f3',
   'Very Rare': '#9c27b0', 'Ultra Rare': '#ff9800', Legendary: '#f44336',
 };
 
-// Fetch any URL and return a data URL so Canvas can draw it without taint.
-// Firebase Storage URLs are routed through /api/image-proxy to bypass CORS.
-async function urlToDataUrl(src) {
-  if (!src || src.startsWith('data:')) return src || null;
-  try {
-    const fetchUrl = src.includes('firebasestorage.googleapis.com')
-      ? `/api/image-proxy?url=${encodeURIComponent(src)}`
-      : src;
-    const res = await fetch(fetchUrl);
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
-
+// Fix 2: Load any image directly — no proxy needed.
+// Firebase Storage URLs already contain a download token (?alt=media&token=...)
+// which grants unauthenticated HTTP access. Setting crossOrigin = 'anonymous'
+// lets the browser draw the response onto a canvas without tainting it,
+// provided the server returns CORS headers (Firebase Storage does for public objects).
+// data: URLs are used as-is (crossOrigin is a no-op for them).
 async function loadImg(src) {
   if (!src) return null;
-  try {
-    const dataUrl = src.startsWith('data:') ? src : await urlToDataUrl(src);
-    if (!dataUrl) return null;
-    return await new Promise((res, rej) => {
-      const img = new Image();
-      img.onload = () => res(img);
-      img.onerror = rej;
-      img.src = dataUrl;
-    });
-  } catch { return null; }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = (err) => {
+      // Fix 4: log every image load failure so it's visible in DevTools
+      console.error('[useShareCard] loadImg failed for src:', src, err);
+      resolve(null); // null = draw placeholder rectangle, don't crash canvas
+    };
+    img.src = src;
+  });
 }
 
 function rrect(ctx, x, y, w, h, r) {
@@ -324,30 +309,61 @@ async function drawCollection(cards, filterLabel, user) {
   return canvas;
 }
 
+// Fix 6: Detect mobile via maxTouchPoints (works on iOS, Android, iPadOS).
+// navigator.share + files is only attempted on mobile.
+function isMobile() {
+  return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+}
+
 export function useShareCard({ card, cards, mode, filterLabel, user }) {
   const [imageBlob, setImageBlob] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [capturing, setCapturing] = useState(false);
+  // Fix 3: explicit error state instead of infinite spinner
+  const [generateError, setGenerateError] = useState(false);
+  const timeoutRef = useRef(null);
 
   const generate = useCallback(async () => {
     setCapturing(true);
+    setGenerateError(false);
+    setImageBlob(null);
+    setPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+
+    // Fix 3: 10-second hard timeout
+    timeoutRef.current = setTimeout(() => {
+      console.error('[useShareCard] generate() timed out after 10s');
+      setCapturing(false);
+      setGenerateError(true);
+    }, 10000);
+
     try {
       const canvas = mode === 'card'
         ? await drawSingleCard(card)
         : await drawCollection(cards || [], filterLabel || null, user || null);
+
       return await new Promise((resolve) => {
         canvas.toBlob((blob) => {
-          if (!blob) { setCapturing(false); resolve(null); return; }
+          clearTimeout(timeoutRef.current);
+          if (!blob) {
+            console.error('[useShareCard] canvas.toBlob() returned null');
+            setCapturing(false);
+            setGenerateError(true);
+            resolve(null);
+            return;
+          }
           const url = URL.createObjectURL(blob);
           setImageBlob(blob);
-          setPreviewUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
+          setPreviewUrl(url);
           setCapturing(false);
           resolve({ blob, url });
         }, 'image/png');
       });
     } catch (err) {
-      console.error('Canvas generation error:', err);
+      // Fix 4: full error visible in DevTools
+      console.error('[useShareCard] generate() threw:', err);
+      clearTimeout(timeoutRef.current);
       setCapturing(false);
+      setGenerateError(true);
       return null;
     }
   }, [mode, card, cards, filterLabel, user]);
@@ -369,6 +385,9 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
       ? `Check out my ${cardName} on The Vault!`
       : 'Check out my trading card collection on The Vault!';
 
+    // Fix 5: never silently fail when image isn't ready
+    if (!imageBlob) return 'not-ready';
+
     // ── Download helper ───────────────────────────────────────────────────
     function triggerDownload() {
       const a = document.createElement('a');
@@ -380,23 +399,20 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     }
 
     if (destination === 'download') {
-      if (!imageBlob) return 'no-image';
       triggerDownload();
       return 'saved';
     }
 
-    if (!imageBlob) return 'no-image';
-
-    // ── Native Web Share API (image file) ─────────────────────────────────
-    // Works on iOS Safari, Android Chrome, and modern mobile browsers.
-    // canShare + files is the only reliable way to share an image binary.
+    // Fix 6: Only attempt native file share on mobile (maxTouchPoints > 0).
+    // On desktop, download the image + open the platform.
+    const mobile = isMobile();
     const file = new File([imageBlob], 'vault-share.png', { type: 'image/png' });
-    let canShareFiles = false;
-    try { canShareFiles = !!(navigator.share && navigator.canShare?.({ files: [file] })); } catch {}
 
-    // Attempt OS native share sheet (image file). Returns 'shared' | 'cancelled' | 'unsupported'.
-    const tryFileShare = async () => {
-      if (!canShareFiles) return 'unsupported';
+    const tryMobileShare = async () => {
+      if (!mobile) return 'unsupported';
+      let canShare = false;
+      try { canShare = !!(navigator.share && navigator.canShare?.({ files: [file] })); } catch {}
+      if (!canShare) return 'unsupported';
       try {
         await navigator.share({ files: [file], title: shareTitle, text: shareText });
         return 'shared';
@@ -406,30 +422,30 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     };
 
     if (destination === 'native') {
-      const result = await tryFileShare();
+      const result = await tryMobileShare();
       if (result === 'unsupported') {
-        // Desktop fallback: download the image
         triggerDownload();
         return 'saved';
       }
-      return result; // 'shared' or 'cancelled'
+      return result;
     }
 
-    // ── Social platform buttons ───────────────────────────────────────────
-    // On mobile: tryFileShare() opens the OS share sheet → user picks the app.
-    // On desktop: Web Share API doesn't support files, so save the image and
-    //             open the platform so the user can attach it manually.
-    const socialPlatforms = {
+    // ── Social buttons ────────────────────────────────────────────────────
+    // Mobile → OS share sheet (user picks app).
+    // Desktop → download image + open platform.
+    //           Returns 'saved-social' so the modal shows the explicit message:
+    //           "Image saved — attach it manually when posting."
+    const socialUrls = {
       whatsapp: 'https://web.whatsapp.com/',
-      facebook: `https://www.facebook.com/`,
+      facebook: 'https://www.facebook.com/',
       reddit: `https://www.reddit.com/submit?title=${encodeURIComponent(shareTitle)}`,
     };
-    if (destination in socialPlatforms) {
-      const result = await tryFileShare();
+    if (destination in socialUrls) {
+      const result = await tryMobileShare();
       if (result === 'unsupported') {
         triggerDownload();
-        window.open(socialPlatforms[destination], '_blank', 'noopener,noreferrer');
-        return 'saved';
+        window.open(socialUrls[destination], '_blank', 'noopener,noreferrer');
+        return 'saved-social';
       }
       return result;
     }
@@ -444,8 +460,9 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
       }
       return 'copied';
     }
+
     return false;
   }, [imageBlob, card, cards, mode, filterLabel, user]);
 
-  return { generate, share, imageBlob, previewUrl, capturing };
+  return { generate, share, imageBlob, previewUrl, capturing, generateError };
 }

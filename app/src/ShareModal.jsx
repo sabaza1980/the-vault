@@ -73,7 +73,7 @@ function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
 
 // ── Main modal ───────────────────────────────────────────────────────────────
 export default function ShareModal({ mode, card, cards, filterLabel, user, onClose }) {
-  const { generate, share, previewUrl, capturing } = useShareCard({
+  const { generate, share, previewUrl, capturing, generateError } = useShareCard({
     card, cards, mode, filterLabel, user,
   });
   const [copiedUrl, setCopiedUrl] = useState(false);
@@ -108,7 +108,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
 
   const handleShare = useCallback(async (destination) => {
     const result = await share(destination);
-    if (result === 'saved' || result === 'shared' || result === 'copied') {
+    if (result === 'saved' || result === 'shared' || result === 'copied' || result === 'not-ready' || result === 'saved-social') {
       setShareResult(result);
       setTimeout(() => setShareResult(null), 3000);
     }
@@ -165,7 +165,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
 
           {/* Preview thumbnail */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-            {capturing || !previewUrl ? (
+            {capturing ? (
               <div style={{
                 width: 200, height: 200, borderRadius: 12,
                 background: '#07070f', border: '1px solid rgba(255,107,53,0.2)',
@@ -182,7 +182,29 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
                   fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.5,
                 }}>GENERATING IMAGE…</span>
               </div>
-            ) : (
+            ) : generateError ? (
+              <div style={{
+                width: 200, height: 200, borderRadius: 12,
+                background: '#07070f', border: '1px solid rgba(244,67,54,0.35)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexDirection: 'column', gap: 12, padding: '12px',
+              }}>
+                <span style={{ fontSize: 24 }}>⚠️</span>
+                <span style={{
+                  fontSize: 10, color: '#f44336', textAlign: 'center',
+                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
+                }}>FAILED TO GENERATE IMAGE</span>
+                <button
+                  onClick={generate}
+                  style={{
+                    background: 'rgba(244,67,54,0.15)', border: '1px solid rgba(244,67,54,0.4)',
+                    color: '#f44336', borderRadius: 8, padding: '6px 16px',
+                    cursor: 'pointer', fontSize: 10, fontWeight: 700,
+                    fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
+                  }}
+                >TAP TO RETRY</button>
+              </div>
+            ) : previewUrl ? (
               <img
                 src={previewUrl}
                 alt="Share preview"
@@ -191,6 +213,23 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
                   borderRadius: 12, border: '1px solid rgba(255,107,53,0.2)',
                 }}
               />
+            ) : (
+              <div style={{
+                width: 200, height: 200, borderRadius: 12,
+                background: '#07070f', border: '1px solid rgba(255,107,53,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexDirection: 'column', gap: 10,
+              }}>
+                <div style={{
+                  width: 26, height: 26,
+                  border: '3px solid #ff6b35', borderTopColor: 'transparent',
+                  borderRadius: '50%', animation: 'shareSpinner 0.8s linear infinite',
+                }} />
+                <span style={{
+                  fontSize: 9, color: '#555',
+                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.5,
+                }}>GENERATING IMAGE…</span>
+              </div>
             )}
           </div>
 
@@ -231,24 +270,37 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           {/* Share feedback toast */}
           {shareResult && (
             <div style={{
-              background: shareResult === 'saved' ? 'rgba(255,107,53,0.12)' : 'rgba(76,175,80,0.12)',
-              border: `1px solid ${shareResult === 'saved' ? 'rgba(255,107,53,0.3)' : 'rgba(76,175,80,0.3)'}`,
+              background: shareResult === 'not-ready' ? 'rgba(255,152,0,0.12)'
+                : shareResult === 'saved' || shareResult === 'saved-social' ? 'rgba(255,107,53,0.12)'
+                : 'rgba(76,175,80,0.12)',
+              border: `1px solid ${shareResult === 'not-ready' ? 'rgba(255,152,0,0.3)'
+                : shareResult === 'saved' || shareResult === 'saved-social' ? 'rgba(255,107,53,0.3)'
+                : 'rgba(76,175,80,0.3)'}`,
               borderRadius: 10, padding: '10px 14px', marginBottom: 12,
               display: 'flex', alignItems: 'center', gap: 10,
               animation: 'fadeInUp 0.2s ease',
             }}>
               <span style={{ fontSize: 16, flexShrink: 0 }}>
-                {shareResult === 'saved' ? '✅' : shareResult === 'copied' ? '📋' : '🚀'}
+                {shareResult === 'not-ready' ? '⏳'
+                  : shareResult === 'saved' || shareResult === 'saved-social' ? '✅'
+                  : shareResult === 'copied' ? '📋'
+                  : '🚀'}
               </span>
               <span style={{ fontSize: 11, fontFamily: "'Barlow', sans-serif", lineHeight: 1.5,
-                color: shareResult === 'saved' ? 'rgba(255,107,53,0.9)' : 'rgba(76,175,80,0.9)' }}>
-                {shareResult === 'saved'
-                  ? isDesktop
-                    ? 'Image saved to Downloads! Attach it when posting.'
-                    : 'Image saved to your camera roll!'
-                  : shareResult === 'copied'
-                    ? 'Link copied to clipboard!'
-                    : 'Shared!'}
+                color: shareResult === 'not-ready' ? 'rgba(255,152,0,0.9)'
+                  : shareResult === 'saved' || shareResult === 'saved-social' ? 'rgba(255,107,53,0.9)'
+                  : 'rgba(76,175,80,0.9)' }}>
+                {shareResult === 'not-ready'
+                  ? 'Image not ready yet, please wait…'
+                  : shareResult === 'saved-social'
+                    ? 'Image saved — attach it manually when posting.'
+                    : shareResult === 'saved'
+                      ? isDesktop
+                        ? 'Image saved to Downloads! Attach it when posting.'
+                        : 'Image saved to your camera roll!'
+                      : shareResult === 'copied'
+                        ? 'Link copied to clipboard!'
+                        : 'Shared!'}
               </span>
             </div>
           )}
