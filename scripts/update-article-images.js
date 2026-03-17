@@ -17,14 +17,27 @@
  */
 
 const PEXELS_KEY = process.env.PEXELS_API_KEY || "";
-const SA         = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "{}");
+
+// Accept either a full FIREBASE_SERVICE_ACCOUNT_JSON or individual parts
+let SA = {};
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  try {
+    SA = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  } catch {
+    // Some formats (e.g. Vercel local pull) use unquoted keys — rebuild from known parts
+  }
+}
+// Allow individual env var overrides
+if (process.env.FIREBASE_PROJECT_ID)     SA.project_id    = process.env.FIREBASE_PROJECT_ID;
+if (process.env.FIREBASE_CLIENT_EMAIL)   SA.client_email  = process.env.FIREBASE_CLIENT_EMAIL;
+if (process.env.FIREBASE_PRIVATE_KEY)    SA.private_key   = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
 
 if (!PEXELS_KEY) {
   console.error("Error: PEXELS_API_KEY is required. Get a free key at pexels.com/api");
   process.exit(1);
 }
-if (!SA.project_id) {
-  console.error("Error: FIREBASE_SERVICE_ACCOUNT_JSON is required.");
+if (!SA.project_id || !SA.client_email || !SA.private_key) {
+  console.error("Error: Firebase credentials required. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.");
   process.exit(1);
 }
 
