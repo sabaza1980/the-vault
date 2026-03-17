@@ -71,6 +71,84 @@ async function fsAdd(token, projectId, collectionId, data) {
   return (await r.json()).name?.split("/").pop();
 }
 
+// ── Royalty-free image pools per category (Pexels CDN — free to use) ────────
+// All images are verified Pexels photos. Format: w=1260&h=750 for hero (16:9)
+const CATEGORY_IMAGES = {
+  "Pokemon": [
+    "https://images.pexels.com/photos/9661254/pexels-photo-9661254.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9572050/pexels-photo-9572050.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661257/pexels-photo-9661257.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7708408/pexels-photo-7708408.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661258/pexels-photo-9661258.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/8811594/pexels-photo-8811594.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9560283/pexels-photo-9560283.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "MTG": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661254/pexels-photo-9661254.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7708411/pexels-photo-7708411.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "Yu-Gi-Oh": [
+    "https://images.pexels.com/photos/31296167/pexels-photo-31296167.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/31296169/pexels-photo-31296169.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/20131195/pexels-photo-20131195.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "Basketball": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "American Football": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7708408/pexels-photo-7708408.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "Soccer": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661258/pexels-photo-9661258.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "Baseball": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7708408/pexels-photo-7708408.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "Hockey": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+  "General": [
+    "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/9661254/pexels-photo-9661254.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    "https://images.pexels.com/photos/7708408/pexels-photo-7708408.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+  ],
+};
+
+function pickImages(category) {
+  return CATEGORY_IMAGES[category] || CATEGORY_IMAGES["General"];
+}
+
+// Cycle through the pool to supply N images (repeats if pool is smaller than N)
+function pickNImages(category, n) {
+  const pool = CATEGORY_IMAGES[category] || CATEGORY_IMAGES["General"];
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(pool[i % pool.length]);
+  return out;
+}
+
 // ── Topic rotation pool ──────────────────────────────────────────────────────
 // Each entry: { category, articleType, title, keyFocus }
 const TOPIC_POOL = [
@@ -117,7 +195,18 @@ const TOPIC_POOL = [
 ];
 
 // ── Article prompt builder ───────────────────────────────────────────────────
-function buildArticlePrompt(topic) {
+function buildArticlePrompt(topic, inlineImages, listSize) {
+  let imgInstructions = "";
+  if (listSize && inlineImages.length > 0) {
+    imgInstructions = `8. **Images — one per list entry**: This is a "Top ${listSize}" article. After the paragraph describing EACH numbered entry (${listSize} entries total), insert one <img> tag from the list below IN ORDER. Use descriptive, relevant alt text for each.
+${inlineImages.slice(0, listSize).map((url, i) => `   Entry ${i + 1}: <img src="${url}" alt="[descriptive alt text]" class="article-img" />`).join("\n")}
+   This means ${listSize} images total, one per entry, placed after the last paragraph of each numbered section.`;
+  } else if (inlineImages.length > 0) {
+    imgInstructions = `8. **Inline images**: You MUST include exactly ${Math.min(inlineImages.length, 3)} images inside \`htmlContent\` as \`<img>\` tags. Place each one after a paragraph where a visual adds context — never in the middle of running text. Use this exact HTML format for each (write descriptive alt text relevant to the article):
+${inlineImages.slice(0, 3).map((url, i) => `   Image ${i + 1}: <img src="${url}" alt="[descriptive alt text]" class="article-img" />`).join("\n")}
+   Vary the placement: put Image 1 after the intro, Image 2 mid-article, Image 3 near the end.`;
+  }
+
   return `You are The Vault's expert content editor, writing high-quality SEO articles for a card collecting app. Write a fully formatted, long-form article for the following brief.
 
 BRIEF
@@ -137,7 +226,8 @@ REQUIREMENTS
    - Include a brief closing CTA paragraph referring readers to The Vault app at https://www.thevaultapp.com without sounding like an ad — frame it as a natural recommendation.
 5. **Structure**: Intro → 3–5 body sections with H2s → conclusion with soft CTA.
 6. **Accuracy**: Only state things that are factually correct about the hobby. If referencing recent pricing, frame them as "as of early 2025" or "recent eBay sold data".
-7. **Output format**: Return ONLY a JSON object with these fields — no markdown code fences, no extra text:
+7. **HTML tags**: Use only h1, h2, p, ul, li, strong, em, a tags — no outer wrapper div.
+${imgInstructions ? imgInstructions + "\n" : ""}${imgInstructions ? "9" : "8"}. **Output format**: Return ONLY a JSON object with these fields — no markdown code fences, no extra text:
    {
      "title": "exact article title",
      "slug": "url-friendly-slug-from-title",
@@ -145,7 +235,7 @@ REQUIREMENTS
      "articleType": "${topic.articleType}",
      "excerpt": "1-2 sentence compelling summary for SEO meta description (max 155 chars)",
      "tags": ["array", "of", "5-8", "relevant", "keyword", "tags"],
-     "htmlContent": "<full article HTML using h1, h2, p, ul, li tags — no outer wrapper>"
+     "htmlContent": "<full article HTML using h1, h2, p, ul, li tags${(listSize || inlineImages.length > 0) ? " — includes the <img class=\\\"article-img\\\"> tags exactly as specified above" : ""} — no outer wrapper>"
    }`;
 }
 
@@ -178,7 +268,18 @@ export default async function handler(req, res) {
       topic = TOPIC_POOL[dayOfYear % TOPIC_POOL.length];
     }
 
-    const prompt = buildArticlePrompt(topic);
+    // Pick images for this article (hero = first, inline = rest)
+    const listSize = (req.body && req.body.listSize) ? req.body.listSize : null;
+    const images = pickImages(topic.category);
+    const heroImageUrl = images[0];
+    let inlineImages;
+    if (listSize) {
+      inlineImages = pickNImages(topic.category, listSize);
+    } else {
+      inlineImages = images.slice(1, 4); // up to 3 inline images
+    }
+
+    const prompt = buildArticlePrompt(topic, inlineImages, listSize);
 
     // Call Claude
     const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
@@ -218,6 +319,7 @@ export default async function handler(req, res) {
     const token = await googleToken(sa);
     const docId = await fsAdd(token, sa.project_id, "articles", {
       ...article,
+      heroImageUrl,
       publishedAt: new Date().toISOString(),
       status: "published",
       source: "auto-generated",

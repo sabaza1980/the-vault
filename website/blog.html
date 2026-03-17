@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Collecting Blog — Pokémon, MTG, Sports Cards & More | The Vault</title>
+  <meta name="description" content="Expert articles on Pokémon cards, Magic: The Gathering, sports cards (basketball, football, soccer, baseball), card grading, eBay pricing and collection tips." />
+  <link rel="canonical" href="https://www.thevaultapp.com/blog.html" />
+  <meta name="keywords" content="Pokémon card collecting, MTG investing, sports card grading, PSA grading guide, eBay card prices, basketball card values, football card collector, soccer card market, card collection tips, The Vault app" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.thevaultapp.com/blog.html" />
+  <meta property="og:title" content="Card Collecting Blog — The Vault" />
+  <meta property="og:description" content="Expert articles on Pokémon cards, MTG, sports cards and collecting — market analysis, guides, reviews, news and more." />
+  <meta property="og:image" content="https://www.thevaultapp.com/og-image.jpg" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Card Collecting Blog — The Vault" />
+  <meta name="twitter:description" content="Expert articles on Pokémon, MTG and sports cards — market analysis, guides, news and more." />
+
+  <!-- JSON-LD Blog structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "The Vault Card Collecting Blog",
+    "url": "https://www.thevaultapp.com/blog.html",
+    "description": "Expert articles on Pokémon cards, Magic: The Gathering, sports cards and all card collecting categories.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Vault",
+      "url": "https://www.thevaultapp.com"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --orange: #ff6b35;
+      --gold: #f0c040;
+      --dark: #07070f;
+      --dark2: #0d0d1a;
+      --dark3: #12121f;
+      --border: #ffffff0a;
+      --text: #f0f0f0;
+      --muted: #555;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--dark); color: var(--text); font-family: 'Barlow', sans-serif; overflow-x: hidden; }
+
+    /* Noise overlay */
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
+
+    /* Nav */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      background: linear-gradient(180deg, rgba(7,7,15,0.95) 0%, transparent 100%);
+      backdrop-filter: blur(12px);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--muted); font-size: 13px; font-weight: 600;
+      text-decoration: none; letter-spacing: 1px; text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--orange); color: #fff !important;
+      padding: 8px 20px; border-radius: 8px;
+      font-weight: 700 !important;
+    }
+
+    /* Main layout */
+    main {
+      max-width: 1100px; margin: 0 auto;
+      padding: 140px 24px 80px;
+      position: relative; z-index: 1;
+    }
+
+    /* Header */
+    .blog-header { margin-bottom: 60px; }
+    .blog-header .label {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
+      letter-spacing: 4px; text-transform: uppercase; color: var(--orange); margin-bottom: 12px;
+    }
+    .blog-header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 8vw, 90px); letter-spacing: 2px; line-height: 0.95;
+    }
+    .blog-header h1 span {
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .blog-header p { font-size: 16px; color: #666; max-width: 500px; margin-top: 16px; line-height: 1.6; }
+
+    /* Category filter */
+    .category-filter {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 48px;
+    }
+    .cat-btn {
+      padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);
+      background: transparent; color: var(--muted); cursor: pointer;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 12px;
+      font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .cat-btn:hover, .cat-btn.active {
+      border-color: rgba(255,107,53,0.4);
+      background: rgba(255,107,53,0.1);
+      color: var(--orange);
+    }
+
+    /* Article grid */
+    .articles-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+    }
+
+    .article-card {
+      background: var(--dark2); border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px; padding: 28px 24px; cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+      text-decoration: none; display: block; color: inherit;
+    }
+    .article-card:hover { border-color: rgba(255,107,53,0.3); transform: translateY(-2px); }
+
+    .article-type {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--orange); margin-bottom: 10px;
+    }
+
+    .article-title {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700;
+      color: #e0e0e0; line-height: 1.3; margin-bottom: 12px;
+    }
+
+    .article-excerpt {
+      font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 16px;
+    }
+
+    .article-meta {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+    .article-category-pill {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      padding: 3px 10px; border-radius: 20px;
+      background: rgba(240,192,64,0.1); color: #c8a020;
+      border: 1px solid rgba(240,192,64,0.2);
+    }
+    .article-date { font-size: 11px; color: #333; }
+
+    /* Static fallback cards */
+    .article-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .article-tag {
+      font-size: 10px; color: #444; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 8px;
+    }
+
+    /* Article reader panel */
+    #article-panel {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.92); backdrop-filter: blur(20px);
+      overflow-y: auto; padding: 40px 24px 80px;
+    }
+    .article-reader {
+      max-width: 740px; margin: 0 auto;
+    }
+    .reader-back {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--orange); font-size: 13px; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; margin-bottom: 40px;
+      background: none; border: none;
+    }
+    .reader-back:hover { opacity: 0.8; }
+
+    /* Prose styles for article HTML */
+    .article-body h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px);
+      letter-spacing: 2px; line-height: 0.95; margin-bottom: 24px;
+    }
+    .article-body h2 {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; color: var(--orange);
+      margin: 40px 0 16px;
+    }
+    .article-body p { font-size: 16px; color: #bbb; line-height: 1.8; margin-bottom: 20px; }
+    .article-body ul, .article-body ol { padding-left: 24px; margin-bottom: 20px; }
+    .article-body li { font-size: 15px; color: #aaa; line-height: 1.7; margin-bottom: 8px; }
+    .article-body a { color: var(--orange); text-decoration: underline; }
+    .article-body strong { color: #e8e8e8; font-weight: 600; }
+
+    /* Inline images in article body */
+    .article-body img.article-img {
+      width: 100%; border-radius: 14px; margin: 28px 0;
+      display: block; object-fit: cover; max-height: 480px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+    }
+
+    /* Hero image in article reader */
+    .article-hero {
+      width: 100%; border-radius: 16px; margin-bottom: 36px;
+      object-fit: cover; max-height: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      display: block;
+    }
+
+    /* Hero thumbnail on article card */
+    .article-thumb {
+      width: 100%; height: 160px; object-fit: cover;
+      border-radius: 10px; margin-bottom: 18px;
+      display: block;
+    }
+
+    /* Empty / loading states */
+    .state-msg {
+      text-align: center; padding: 80px 0;
+      color: #333; font-size: 14px;
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 48px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px; position: relative; z-index: 1;
+    }
+    .footer-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .footer-copy { font-size: 12px; color: #2a2a3a; }
+
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      footer { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="/" class="nav-logo">🃏 The Vault</a>
+    <ul class="nav-links">
+      <li><a href="/#app-section">Try It</a></li>
+      <li><a href="/#collections">Collections</a></li>
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/blog.html" style="color:#f0f0f0;">Blog</a></li>
+      <li><a href="/#waitlist" class="nav-cta">Join Waitlist</a></li>
+    </ul>
+  </nav>
+
+  <!-- ARTICLE READING PANEL (hidden by default) -->
+  <div id="article-panel">
+    <div class="article-reader">
+      <button class="reader-back" onclick="closeArticle()">← Back to Blog</button>
+      <div id="article-content"></div>
+    </div>
+  </div>
+
+  <!-- MAIN BLOG LIST -->
+  <main>
+    <div class="blog-header">
+      <div class="label">The Vault Blog</div>
+      <h1>Collector<br/><span>Insights.</span></h1>
+      <p>Market analysis, guides, news and opinions — across Pokémon, MTG, sports cards and every format collectors love.</p>
+    </div>
+
+    <!-- Category filter -->
+    <div class="category-filter" id="cat-filter">
+      <button class="cat-btn active" data-cat="All" onclick="filterCategory('All', this)">All</button>
+      <button class="cat-btn" data-cat="Pokemon" onclick="filterCategory('Pokemon', this)">⚡ Pokémon</button>
+      <button class="cat-btn" data-cat="MTG" onclick="filterCategory('MTG', this)">🧙 MTG</button>
+      <button class="cat-btn" data-cat="Basketball" onclick="filterCategory('Basketball', this)">🏀 Basketball</button>
+      <button class="cat-btn" data-cat="American Football" onclick="filterCategory('American Football', this)">🏈 Football</button>
+      <button class="cat-btn" data-cat="Soccer" onclick="filterCategory('Soccer', this)">⚽ Soccer</button>
+      <button class="cat-btn" data-cat="Baseball" onclick="filterCategory('Baseball', this)">⚾ Baseball</button>
+      <button class="cat-btn" data-cat="Hockey" onclick="filterCategory('Hockey', this)">🏒 Hockey</button>
+      <button class="cat-btn" data-cat="General" onclick="filterCategory('General', this)">🃏 General</button>
+    </div>
+
+    <!-- Articles grid — populated by JS -->
+    <div class="articles-grid" id="articles-grid">
+      <div class="state-msg" id="loading-msg">Loading articles…</div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-logo">The Vault</div>
+    <div class="footer-copy">© 2025 The Vault. All rights reserved.</div>
+  </footer>
+
+  <script>
+    // ── Config ──────────────────────────────────────────────────────────────
+    // The app API URL — update this to your actual Vercel app deployment URL.
+    const APP_API_BASE = "https://app-five-xi-40.vercel.app";
+
+    // ── State ───────────────────────────────────────────────────────────────
+    let allArticles = [];
+    let currentCategory = "All";
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    const ARTICLE_TYPE_LABELS = {
+      "market-analysis": "Market Analysis",
+      "guide": "Guide",
+      "opinion": "Opinion",
+      "news": "News",
+    };
+    const CATEGORY_EMOJIS = {
+      "Pokemon": "⚡",
+      "MTG": "🧙",
+      "Basketball": "🏀",
+      "American Football": "🏈",
+      "Soccer": "⚽",
+      "Baseball": "⚾",
+      "Hockey": "🏒",
+      "Yu-Gi-Oh": "🐉",
+      "General": "🃏",
+    };
+
+    const CATEGORY_HERO_FALLBACKS = {
+      "Pokemon":          "https://images.pexels.com/photos/9661254/pexels-photo-9661254.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "MTG":              "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "Yu-Gi-Oh":         "https://images.pexels.com/photos/31296167/pexels-photo-31296167.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "Basketball":       "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "American Football":"https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "Soccer":           "https://images.pexels.com/photos/7809125/pexels-photo-7809125.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "Baseball":         "https://images.pexels.com/photos/9343494/pexels-photo-9343494.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "Hockey":           "https://images.pexels.com/photos/9661256/pexels-photo-9661256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "General":          "https://images.pexels.com/photos/7708410/pexels-photo-7708410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+    };
+
+    function getHeroImage(article) {
+      return article.heroImageUrl || CATEGORY_HERO_FALLBACKS[article.category] || CATEGORY_HERO_FALLBACKS["General"];
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "";
+      return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    }
+
+    function makeCard(article) {
+      const typeLabel = ARTICLE_TYPE_LABELS[article.articleType] || article.articleType || "";
+      const catEmoji = CATEGORY_EMOJIS[article.category] || "🃏";
+      const tagsHtml = (article.tags || []).slice(0, 4).map(t => `<span class="article-tag">${t}</span>`).join("");
+      const heroImg = getHeroImage(article);
+      const slugOrId = article.slug || article.id;
+      return `
+        <a class="article-card" href="?article=${encodeURIComponent(slugOrId)}" onclick="event.preventDefault();openArticle('${slugOrId.replace(/'/g, "\\'")}')">
+          <img src="${heroImg}" alt="${article.title}" class="article-thumb" loading="lazy" onerror="this.style.display='none'" />
+          <div class="article-type">${typeLabel}</div>
+          <div class="article-title">${article.title}</div>
+          <div class="article-excerpt">${article.excerpt || ""}</div>
+          <div class="article-tags">${tagsHtml}</div>
+          <div class="article-meta" style="margin-top:16px">
+            <span class="article-category-pill">${catEmoji} ${article.category}</span>
+            <span class="article-date">${formatDate(article.publishedAt)}</span>
+          </div>
+        </a>`;
+    }
+
+    // Static fallback articles shown when API is unavailable
+    const FALLBACK_ARTICLES = [
+      {
+        id: "fallback-1", slug: "fallback-1",
+        title: "The 10 Most Valuable Pokémon Cards Right Now (And Why)",
+        category: "Pokemon", articleType: "market-analysis",
+        excerpt: "From Scarlet & Violet alt arts to vintage Base Set holos — here's where the real money is in the Pokémon card market right now.",
+        tags: ["Pokémon", "PSA 10", "alt art", "market analysis", "special illustration rare"],
+        publishedAt: new Date().toISOString(),
+      },
+      {
+        id: "fallback-2", slug: "fallback-2",
+        title: "PSA vs Beckett vs SGC: Which Grading Service Is Right for Your Card?",
+        category: "General", articleType: "guide",
+        excerpt: "A practical breakdown of the three biggest grading companies — costs, turnaround times, label prestige and when each service makes sense.",
+        tags: ["PSA grading", "BGS", "SGC", "card grading", "grading guide"],
+        publishedAt: new Date(Date.now() - 86400000).toISOString(),
+      },
+      {
+        id: "fallback-3", slug: "fallback-3",
+        title: "Why Modern Horizons 3 Is Reshaping the MTG Collector Market",
+        category: "MTG", articleType: "market-analysis",
+        excerpt: "Fetch lands, Commander staples and jaw-dropping collector booster pull rates — Modern Horizons 3 has changed MTG investing.",
+        tags: ["MTG", "Modern Horizons 3", "fetch lands", "collector booster", "Commander"],
+        publishedAt: new Date(Date.now() - 172800000).toISOString(),
+      },
+      {
+        id: "fallback-4", slug: "fallback-4",
+        title: "The Top 10 NFL Rookie Card Investments of 2025",
+        category: "American Football", articleType: "market-analysis",
+        excerpt: "From Caleb Williams to Bo Nix — the rookie cards that matter this year and what collectors should know before buying.",
+        tags: ["NFL", "rookie cards", "Panini Prizm", "RPA", "football cards"],
+        publishedAt: new Date(Date.now() - 259200000).toISOString(),
+      },
+      {
+        id: "fallback-5", slug: "fallback-5",
+        title: "The Most Valuable Soccer Cards in 2025 — From Mbappé to Haaland",
+        category: "Soccer", articleType: "market-analysis",
+        excerpt: "The global soccer card market is booming. Here are the players and sets driving the biggest sales right now.",
+        tags: ["soccer cards", "Mbappé", "Haaland", "Topps UCL Chrome", "Panini Prizm World Cup"],
+        publishedAt: new Date(Date.now() - 345600000).toISOString(),
+      },
+      {
+        id: "fallback-6", slug: "fallback-6",
+        title: "Bowman Chrome Baseball: Why These Prospects Are Worth Watching in 2025",
+        category: "Baseball", articleType: "market-analysis",
+        excerpt: "Bowman Chrome first autographs remain the gold standard in baseball collecting. Here are the names to know heading into the 2025 season.",
+        tags: ["Bowman Chrome", "baseball prospects", "first Bowman auto", "PSA 10", "rookie"],
+        publishedAt: new Date(Date.now() - 432000000).toISOString(),
+      },
+    ];
+
+    // ── Fetch from API ───────────────────────────────────────────────────────
+    async function fetchArticles() {
+      try {
+        const url = `${APP_API_BASE}/api/articles?limit=50`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data = await res.json();
+        return data.articles && data.articles.length > 0 ? data.articles : FALLBACK_ARTICLES;
+      } catch (e) {
+        console.warn("Articles API unavailable, using fallbacks:", e.message);
+        return FALLBACK_ARTICLES;
+      }
+    }
+
+    // ── Render ───────────────────────────────────────────────────────────────
+    function renderArticles(articles, category) {
+      const grid = document.getElementById("articles-grid");
+      const filtered = category === "All" ? articles : articles.filter(a => a.category === category);
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="state-msg">No articles in this category yet — check back soon.</div>`;
+        return;
+      }
+      grid.innerHTML = filtered.map(makeCard).join("");
+    }
+
+    function filterCategory(cat, btn) {
+      currentCategory = cat;
+      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderArticles(allArticles, cat);
+    }
+
+    // ── Article reader ───────────────────────────────────────────────────────
+    async function openArticle(slugOrId) {
+      const panel = document.getElementById("article-panel");
+      const content = document.getElementById("article-content");
+
+      // Update the URL so this article is shareable / bookmarkable
+      const newUrl = slugOrId ? `${location.pathname}?article=${encodeURIComponent(slugOrId)}` : location.pathname;
+      history.pushState({ article: slugOrId }, "", newUrl);
+
+      // First try to find in already-fetched list
+      let found = allArticles.find(a => a.slug === slugOrId || a.id === slugOrId);
+
+      // If no htmlContent (list endpoint strips it), fetch full article from API
+      if (found && !found.htmlContent) {
+        try {
+          const res = await fetch(`${APP_API_BASE}/api/articles?slug=${encodeURIComponent(found.slug || slugOrId)}`);
+          if (res.ok) found = await res.json();
+        } catch {}
+      }
+
+      if (!found || !found.htmlContent) {
+        // Static fallback — show a teaser message
+        const fallback = allArticles.find(a => a.id === slugOrId);
+        const heroImg = fallback ? getHeroImage(fallback) : null;
+        content.innerHTML = `
+          ${heroImg ? `<img src="${heroImg}" alt="" class="article-hero" />` : ""}
+          <h1 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);letter-spacing:2px;line-height:0.95;margin-bottom:24px;">
+            ${fallback?.title || "Article"}
+          </h1>
+          <p style="color:#bbb;font-size:16px;line-height:1.8;">${fallback?.excerpt || ""}</p>
+          <p style="color:#555;font-size:14px;margin-top:32px;">
+            Full article content is generated daily by The Vault's AI. Check back soon — or <a href="/#waitlist" style="color:var(--orange)">join the waitlist</a> to get articles in your inbox.
+          </p>`;
+      } else {
+        const heroImg = getHeroImage(found);
+        content.innerHTML = `
+          ${heroImg ? `<img src="${heroImg}" alt="${found.title}" class="article-hero" />` : ""}
+          <div class="article-body">${found.htmlContent}</div>`;
+      }
+
+      panel.style.display = "block";
+      panel.scrollTop = 0;
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeArticle() {
+      document.getElementById("article-panel").style.display = "none";
+      document.body.style.overflow = "";
+      history.pushState({}, "", location.pathname);
+    }
+
+    // Handle browser back/forward while article panel is open
+    window.addEventListener("popstate", (e) => {
+      const slug = e.state && e.state.article;
+      if (slug) {
+        openArticle(slug);
+      } else {
+        document.getElementById("article-panel").style.display = "none";
+        document.body.style.overflow = "";
+      }
+    });
+
+    // Close panel on Escape
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeArticle(); });
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    (async function init() {
+      allArticles = await fetchArticles();
+      document.getElementById("loading-msg")?.remove();
+      renderArticles(allArticles, "All");
+
+      // Handle deep-link: /blog.html?article=SLUG
+      const deepSlug = new URLSearchParams(location.search).get("article");
+      if (deepSlug) openArticle(deepSlug);
+    })();
+  </script>
+</body>
+</html>

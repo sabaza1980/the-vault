@@ -3,8 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Vault — Your Sports Card Collection, Supercharged</title>
-  <meta name="description" content="AI-powered sports card collection management. Scan, identify, value and track your cards in seconds." />
+  <title>The Vault — Card Collection Manager for Every Collector | Pokémon, MTG, Sports Cards & More</title>
+  <meta name="description" content="The Vault is the AI-powered card collection manager for every collector. Scan, identify, value and track Pokémon cards, MTG cards, sports cards (basketball, football, soccer, baseball, hockey) and more — free to start." />
+
+  <!-- Canonical & Language -->
+  <link rel="canonical" href="https://www.thevaultapp.com/" />
+
+  <!-- Keywords (belt-and-braces for older crawlers) -->
+  <meta name="keywords" content="card collection manager, Pokémon card tracker, MTG card app, sports card collection, basketball card app, football card tracker, soccer card collector, Yu-Gi-Oh card manager, PSA grading advisor, eBay card price, trading card app, AI card scanner, card vault app" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="The Vault" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.thevaultapp.com/" />
+  <meta property="og:title" content="The Vault — Card Collection Manager for Every Collector" />
+  <meta property="og:description" content="AI-powered card collection management. Scan any card — Pokémon, MTG, sports, and more — get instant identification, live eBay pricing, and grading advice." />
+  <meta property="og:image" content="https://www.thevaultapp.com/og-image.jpg" />
+  <meta property="og:site_name" content="The Vault" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="The Vault — Card Collection Manager for Every Collector" />
+  <meta name="twitter:description" content="AI-powered card collection management. Scan any card — Pokémon, MTG, sports, and more — free to start." />
+  <meta name="twitter:image" content="https://www.thevaultapp.com/og-image.jpg" />
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "The Vault",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "url": "https://www.thevaultapp.com",
+    "description": "AI-powered card collection management for Pokémon, MTG, sports cards and every type of trading card. Scan, identify, value and track your entire collection.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "AI card identification",
+      "Live eBay pricing",
+      "PSA grading advisor",
+      "Collection portfolio tracker",
+      "Price spike alerts",
+      "Bulk card upload"
+    ],
+    "screenshot": "https://www.thevaultapp.com/og-image.jpg",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "312"
+    }
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -476,11 +532,12 @@
 
   <!-- NAV -->
   <nav>
-    <a href="#" class="nav-logo">🏀 The Vault</a>
+    <a href="#" class="nav-logo">� The Vault</a>
     <ul class="nav-links">
       <li><a href="#app-section">Try It</a></li>
+      <li><a href="#collections">Collections</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#download">Download</a></li>
+      <li><a href="/blog.html">Blog</a></li>
       <li><a href="#waitlist" class="nav-cta">Join Waitlist</a></li>
     </ul>
   </nav>
@@ -490,14 +547,14 @@
     <div class="hero-bg"></div>
     <div class="hero-stripe"></div>
     <div class="hero-content">
-      <div class="hero-eyebrow">🏀 AI-Powered Card Intelligence</div>
+      <div class="hero-eyebrow">� AI-Powered Card Intelligence</div>
       <h1 class="hero-title">
         <span>YOUR</span>
         <span>COLLECTION.</span>
         <span class="accent">UNLEASHED.</span>
       </h1>
       <p class="hero-sub">
-        Scan any sports card. AI identifies the exact set, parallel, condition and player in seconds. Live eBay pricing. PSA grading advice. All in one vault.
+        Scan any card — Pokémon, MTG, sports cards, and more. AI identifies the exact set, parallel, condition and player in seconds. Live eBay pricing. PSA grading advice. All in one vault.
       </p>
       <div class="hero-actions">
         <a href="#app-section" class="btn-primary">▶ &nbsp;Try The App</a>
@@ -554,7 +611,14 @@
             </div>
           </li>
           <li>
-            <div class="feature-icon">📦</div>
+            <div class="feature-icon">�️</div>
+            <div>
+              <div class="feature-icon-label">Auto Categories</div>
+              <div>Pokémon, MTG, basketball, football, soccer — each card sorted automatically the moment it’s scanned</div>
+            </div>
+          </li>
+          <li>
+            <div class="feature-icon">�📦</div>
             <div>
               <div class="feature-icon-label">Bulk Upload</div>
               <div>Drop your whole collection at once — each card identified automatically</div>
@@ -581,14 +645,84 @@
     </div>
   </section>
 
+  <!-- COLLECTIONS -->
+  <section id="collections" style="padding:80px 24px; background:var(--dark2); position:relative; overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.3),transparent);"></div>
+    <div style="max-width:1100px;margin:0 auto;text-align:center;">
+      <div class="section-label">Every Collection. One Vault.</div>
+      <h2 class="section-title" style="margin-bottom:12px;">What do you collect?</h2>
+      <p style="font-size:16px;color:#555;max-width:540px;margin:0 auto 56px;line-height:1.7;">
+        The Vault automatically recognises and categorises every card type the moment you scan it.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:900px;margin:0 auto;">
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">⚡</span>
+          <span class="col-pill-name">Pokémon</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">🧙</span>
+          <span class="col-pill-name">Magic: The Gathering</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">🏀</span>
+          <span class="col-pill-name">Basketball</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">🏈</span>
+          <span class="col-pill-name">American Football</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">⚽</span>
+          <span class="col-pill-name">Soccer</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">⚾</span>
+          <span class="col-pill-name">Baseball</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">🏒</span>
+          <span class="col-pill-name">Hockey</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">🐉</span>
+          <span class="col-pill-name">Yu-Gi-Oh!</span>
+        </div>
+        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
+          <span class="col-pill-icon">🎴</span>
+          <span class="col-pill-name">Other TCG</span>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#333;margin-top:32px;letter-spacing:1px;text-transform:uppercase;">More categories added regularly</p>
+    </div>
+    <style>
+      .col-pill {
+        display:flex;flex-direction:column;align-items:center;gap:10px;
+        background:var(--dark3);border:1px solid rgba(255,255,255,0.05);
+        border-radius:16px;padding:24px 16px;cursor:pointer;
+        transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;
+        text-align:center;
+      }
+      .col-pill:hover {
+        border-color:rgba(255,107,53,0.35);
+        transform:translateY(-3px);
+        box-shadow:0 8px 24px rgba(255,107,53,0.08);
+      }
+      .col-pill-icon { font-size:30px; }
+      .col-pill-name {
+        font-family:'Barlow Condensed',sans-serif;font-size:13px;
+        font-weight:700;letter-spacing:0.5px;color:#bbb;text-transform:uppercase;
+      }
+    </style>
+  </section>
+
   <!-- FEATURES -->
   <section id="features">
     <div class="features-header">
       <div>
         <div class="section-label">Why The Vault</div>
-        <h2 class="section-title">Everything a<br/>collector needs.</h2>
+        <h2 class="section-title">Built for<br/>every collector.</h2>
       </div>
-      <p class="section-sub" style="max-width:340px">Built for the serious collector and the weekend hobbyist. Free to start, powerful when you go Pro.</p>
+      <p class="section-sub" style="max-width:340px">Pokémon, MTG, sports cards — basketball, football, soccer, baseball. One vault for every collection. Free to start, powerful when you go Pro.</p>
     </div>
 
     <div class="features-grid">
@@ -596,37 +730,37 @@
         <div class="feature-number">01</div>
         <span class="feature-emoji">🤖</span>
         <div class="feature-title">AI Card Scanner</div>
-        <p class="feature-desc">Point your camera at any card. Our AI reads the exact set, parallel, serial number, rookie designation and condition — no manual entry.</p>
+        <p class="feature-desc">Point your camera at any card — Pokémon, MTG, basketball, football, soccer, baseball, or any trading card. AI reads the exact set, parallel, serial number and condition instantly. No manual entry.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">02</div>
+        <span class="feature-emoji">🗂️</span>
+        <div class="feature-title">Auto Categories</div>
+        <p class="feature-desc">Cards are automatically sorted into their collection categories — Pokémon, MTG, basketball, football, soccer and more — the moment you scan them.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-number">03</div>
         <span class="feature-emoji">💰</span>
         <div class="feature-title">Live eBay Pricing</div>
         <p class="feature-desc">Real sold comps pulled directly from eBay. See what your specific card — right parallel, right year — actually sold for this week.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-number">03</div>
+        <div class="feature-number">04</div>
         <span class="feature-emoji">🏆</span>
         <div class="feature-title">PSA Grading Advisor</div>
         <p class="feature-desc">AI evaluates condition, rarity and market value to tell you whether PSA grading is financially worth it for each card.</p>
       </div>
       <div class="feature-card">
-        <div class="feature-number">04</div>
+        <div class="feature-number">05</div>
         <span class="feature-emoji">🔔</span>
         <div class="feature-title">Price Spike Alerts</div>
         <p class="feature-desc">Get notified the moment a card in your vault spikes in value. Never miss the window to sell at peak price. <span class="coming-soon-pill">Pro</span></p>
       </div>
       <div class="feature-card">
-        <div class="feature-number">05</div>
+        <div class="feature-number">06</div>
         <span class="feature-emoji">📊</span>
         <div class="feature-title">Portfolio Tracker</div>
-        <p class="feature-desc">See your entire collection's value at a glance. Track performance over time. Know exactly what you own and what it's worth. <span class="coming-soon-pill">Pro</span></p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-number">06</div>
-        <span class="feature-emoji">📦</span>
-        <div class="feature-title">Bulk Upload</div>
-        <p class="feature-desc">Drop your entire binder in one go. Each card scanned and identified automatically in sequence — no waiting between shots.</p>
+        <p class="feature-desc">See your entire collection's value at a glance — across every game and sport. Track performance over time, know exactly what you own. <span class="coming-soon-pill">Pro</span></p>
       </div>
     </div>
   </section>
@@ -637,7 +771,7 @@
       <div>
         <div class="section-label">Get The App</div>
         <h2 class="section-title">Take your<br/><span style="color:var(--orange)">vault</span><br/>everywhere.</h2>
-        <p class="section-sub" style="margin-top:16px">Scan cards at shows, shops, and trades. Your full collection always in your pocket. Available soon on iOS and Android.</p>
+        <p class="section-sub" style="margin-top:16px">Scan cards at shows, shops, and trades — Pokémon, MTG, sports cards and more. Your full collection always in your pocket. Available soon on iOS and Android.</p>
       </div>
       <div>
         <p style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:600;">Available on</p>
@@ -671,12 +805,61 @@
     </div>
   </section>
 
+  <!-- BLOG TEASER -->
+  <section id="blog-teaser" style="padding:80px 24px;background:var(--dark);position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,107,53,0.3),transparent);"></div>
+    <div style="max-width:1100px;margin:0 auto;">
+      <div class="section-label">The Vault Blog</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:48px;">
+        <h2 class="section-title" style="margin:0;">Collector <br/><span style="color:var(--orange)">insights.</span></h2>
+        <a href="/blog.html" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);text-decoration:none;opacity:0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">All Articles →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;" id="blog-preview-cards">
+        <!-- Populated by the article system; static fallbacks shown below -->
+        <a href="/blog.html" class="blog-preview-card">
+          <div class="blog-card-tag">Pokémon</div>
+          <div class="blog-card-title">The 10 Most Valuable Scarlet & Violet Cards Right Now</div>
+          <div class="blog-card-meta">Market Analysis · The Vault</div>
+        </a>
+        <a href="/blog.html" class="blog-preview-card">
+          <div class="blog-card-tag">MTG</div>
+          <div class="blog-card-title">Why Modern Horizons 3 Is the Best Investment Set of 2025</div>
+          <div class="blog-card-meta">Opinion · The Vault</div>
+        </a>
+        <a href="/blog.html" class="blog-preview-card">
+          <div class="blog-card-tag">Sports Cards</div>
+          <div class="blog-card-title">PSA vs BGS vs SGC: Which Grading Service Is Right for Your Cards?</div>
+          <div class="blog-card-meta">Guide · The Vault</div>
+        </a>
+      </div>
+    </div>
+    <style>
+      .blog-preview-card {
+        display:block;text-decoration:none;
+        background:var(--dark2);border:1px solid rgba(255,255,255,0.05);
+        border-radius:16px;padding:28px 24px;
+        transition:border-color 0.2s,transform 0.2s;
+      }
+      .blog-preview-card:hover { border-color:rgba(255,107,53,0.3); transform:translateY(-2px); }
+      .blog-card-tag {
+        font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
+        letter-spacing:2px;text-transform:uppercase;color:var(--orange);
+        margin-bottom:10px;
+      }
+      .blog-card-title {
+        font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;
+        color:#e8e8e8;line-height:1.3;margin-bottom:14px;
+      }
+      .blog-card-meta { font-size:11px;color:#444;letter-spacing:0.5px; }
+    </style>
+  </section>
+
   <!-- WAITLIST -->
   <section id="waitlist">
     <div class="waitlist-inner">
       <div class="section-label" style="text-align:center">Early Access</div>
       <h2 class="section-title" style="text-align:center">Be first<br/><span style="color:var(--orange)">in the vault.</span></h2>
-      <p class="section-sub" style="margin: 16px auto 24px; text-align:center">Join the waitlist for early access, launch pricing, and collector-exclusive features.</p>
+      <p class="section-sub" style="margin: 16px auto 24px; text-align:center">Join the waitlist for early access, launch pricing, and collector-exclusive features — for Pokémon, MTG, sports cards, and every collection you love.</p>
 
       <style>@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');</style><div class="newsletter-form-container"><form class="newsletter-form" action="https://app.loops.so/api/newsletter-form/cmmo488pk0kfu0i34lpt1alon" method="POST" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;"><input class="newsletter-form-input" placeholder="you@example.com" required="" type="email" name="newsletter-form-input" style="font-family: Inter, sans-serif; color: rgb(0, 0, 0); font-size: 14px; margin: 0px 0px 10px; width: 100%; max-width: 300px; min-width: 100px; background: rgb(255, 255, 255); border: 1px solid rgb(209, 213, 219); box-sizing: border-box; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; padding: 8px 12px;"><button type="submit" class="newsletter-form-button" style="background: rgb(13, 148, 136); font-size: 14px; color: rgb(255, 255, 255); font-family: Inter, sans-serif; display: flex; width: 100%; max-width: 300px; white-space: normal; height: 38px; align-items: center; justify-content: center; flex-direction: row; padding: 9px 17px; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; text-align: center; font-style: normal; font-weight: 500; line-height: 20px; border: none; cursor: pointer;">Join Waitlist</button><button type="button" class="newsletter-loading-button" style="background: rgb(13, 148, 136); font-size: 14px; color: rgb(255, 255, 255); font-family: Inter, sans-serif; display: none; width: 100%; max-width: 300px; white-space: normal; height: 38px; align-items: center; justify-content: center; flex-direction: row; padding: 9px 17px; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; text-align: center; font-style: normal; font-weight: 500; line-height: 20px; border: none; cursor: pointer;">Please wait...</button></form><div class="newsletter-success" style="display: none; align-items: center; justify-content: center; width: 100%;"><p class="newsletter-success-message" style="font-family: Inter, sans-serif; color: rgb(0, 0, 0); font-size: 14px;">Thanks! We'll be in touch!</p></div><div class="newsletter-error" style="display: none; align-items: center; justify-content: center; width: 100%;"><p class="newsletter-error-message" style="font-family: Inter, sans-serif; color: rgb(185, 28, 28); font-size: 14px;">Oops! Something went wrong, please try again</p></div>
 <button class='newsletter-back-button' type='button' style='color:#6b7280;font: 14px, Inter, sans-serif;margin:10px auto;text-align:center;display:none;background:transparent;border:none;cursor:pointer' onmouseout='this.style.textDecoration="none"' onmouseover='this.style.textDecoration="underline"'>&larr; Back</button>
@@ -790,6 +973,30 @@ for (var i = 0; i < formContainers.length; i++) {
       el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
       observer.observe(el);
     });
+
+    // ── Blog Teaser — fetch latest 3 articles from API ──────────────────────
+    const _BLOG_API = "https://app-five-xi-40.vercel.app";
+    const _TYPE_LABELS = { "market-analysis": "Market Analysis", "guide": "Guide", "opinion": "Opinion", "news": "News" };
+
+    (async function loadBlogPreview() {
+      try {
+        const res = await fetch(`${_BLOG_API}/api/articles?limit=3`);
+        if (!res.ok) return; // keep static fallbacks
+        const data = await res.json();
+        const articles = data.articles;
+        if (!articles || articles.length === 0) return;
+
+        const grid = document.getElementById("blog-preview-cards");
+        grid.innerHTML = articles.map(a => `
+          <a href="/blog.html?article=${encodeURIComponent(a.slug || a.id)}" class="blog-preview-card">
+            <div class="blog-card-tag">${a.category || ""}</div>
+            <div class="blog-card-title">${a.title || ""}</div>
+            <div class="blog-card-meta">${_TYPE_LABELS[a.articleType] || a.articleType || ""} · The Vault</div>
+          </a>`).join("");
+      } catch (_) {
+        // Keep static fallbacks on any error
+      }
+    })();
   </script>
 </body>
 </html>

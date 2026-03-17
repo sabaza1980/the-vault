@@ -121,8 +121,8 @@ function StatBadge({ label, value, color }) {
 function DetailRow({ label, value, color }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
-      <span style={{ fontSize: 12, color: color || "var(--ts)", fontWeight: 600 }}>{value}</span>
+      <span style={{ fontSize: 10, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>{label}</span>
+      <span style={{ fontSize: 13, color: color || "var(--ts)", fontWeight: 600 }}>{value}</span>
     </div>
   );
 }
@@ -273,7 +273,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             onClick={() => bundleMode ? onToggleBundle(String(card.id)) : setLightboxSrc(card.imageUrl)}
             title={bundleMode ? (inBundle ? "Remove from bundle" : "Add to bundle") : "Click to zoom"}
             style={{
-              width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0,
+              width: 90, height: 124, borderRadius: 9, overflow: "hidden", flexShrink: 0,
               border: bundleMode ? `2px solid ${inBundle ? "#e53935" : "var(--b)"}` : `2px solid ${rColor}40`,
               boxShadow: bundleMode ? (inBundle ? "0 0 14px #e5393540" : "none") : `0 0 14px ${rColor}18`,
               cursor: bundleMode ? "pointer" : "zoom-in", position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
@@ -303,7 +303,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={handleExpand}>
 
             {/* Set name — top line */}
-            <div style={{ fontSize: 10, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3 }}>
+            <div style={{ fontSize: 11, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3 }}>
               {fullCardName}
               {parallelLabel && <span style={{ color: "#ff6b3580" }}> · {parallelLabel}</span>}
               {card.pack && <span style={{ color: "var(--tg)" }}> · {card.pack}</span>}
@@ -312,12 +312,12 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {/* Player name + rarity badge */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
               <h3 style={{
-                margin: 0, fontSize: 20, fontWeight: 800, color: "var(--t)",
+                margin: 0, fontSize: 22, fontWeight: 800, color: "var(--t)",
                 fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1.5, lineHeight: 1
               }}>{card.playerName}</h3>
               {card.rarity !== "Common" && (
                 <span style={{
-                  fontSize: 9, padding: "3px 8px", borderRadius: 20, flexShrink: 0, marginTop: 1,
+                  fontSize: 10, padding: "3px 8px", borderRadius: 20, flexShrink: 0, marginTop: 1,
                   background: `${rColor}18`, color: rColor, border: `1px solid ${rColor}35`,
                   fontWeight: 700, textTransform: "uppercase", letterSpacing: 1
                 }}>{card.rarity}</span>
@@ -326,14 +326,14 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
 
             {/* Team */}
             {card.team && card.team !== "Unknown" && (
-              <div style={{ color: "var(--tm)", fontSize: 12, marginTop: 3 }}>{card.team}</div>
+              <div style={{ color: "var(--tm)", fontSize: 13, marginTop: 3 }}>{card.team}</div>
             )}
 
             {/* Category pill */}
             {card.cardCategory && card.cardCategory !== "Other" && card.cardCategory !== "Unknown" && (
               <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 5 }}>
                 <span style={{
-                  fontSize: 9, padding: "2px 8px", borderRadius: 20,
+                  fontSize: 10, padding: "2px 8px", borderRadius: 20,
                   background: "rgba(240,192,64,0.1)", color: "#c8a020",
                   border: "1px solid rgba(240,192,64,0.2)",
                   fontWeight: 700, textTransform: "uppercase", letterSpacing: 1
@@ -390,7 +390,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   <div
                     onClick={() => setLightboxSrc(card.backImageUrl)}
                     title="Click to zoom"
-                    style={{ width: 80, height: 110, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid var(--bs)", cursor: "zoom-in" }}
+                    style={{ width: 90, height: 124, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid var(--bs)", cursor: "zoom-in" }}
                   >
                     <img src={card.backImageUrl} alt="back" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   </div>
@@ -558,7 +558,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
 function Badge({ label, color }) {
   return (
     <span style={{
-      fontSize: 10, padding: "2px 8px", borderRadius: 10,
+      fontSize: 11, padding: "2px 8px", borderRadius: 10,
       background: `${color}15`, color, border: `1px solid ${color}35`, fontWeight: 700
     }}>{label}</span>
   );
@@ -1050,7 +1050,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         {/* Category Tiles */}
         {cards.length > 0 && categories.filter(c => c !== "All" && c !== "Favourites").length > 1 && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10 }}>
               {categories.filter(c => c !== "All" && c !== "Favourites").map(cat => {
                 const img = CATEGORY_IMAGES[cat];
                 const emoji = CATEGORY_EMOJI[cat] || "🃏";
@@ -1065,7 +1065,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                     key={cat}
                     onClick={() => setFilter(isActive ? "All" : cat)}
                     style={{
-                      position: "relative", height: 86, borderRadius: 12, overflow: "hidden",
+                      position: "relative", aspectRatio: "3/4", width: "100%", borderRadius: 12, overflow: "hidden",
                       border: `2px solid ${isActive ? "#ff6b35" : "rgba(255,255,255,0.06)"}`,
                       cursor: "pointer", padding: 0, background: "var(--deep)",
                       boxShadow: isActive ? "0 0 16px #ff6b3540" : "none",
@@ -1085,8 +1085,8 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                       display: "flex", flexDirection: "column", justifyContent: "flex-end",
                       padding: "0 7px 7px", transition: "background 0.15s",
                     }}>
-                      <div style={{ fontSize: 9, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: 0.7, lineHeight: 1.3 }}>{cat}</div>
-                      <div style={{ fontSize: 8, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{count} card{count !== 1 ? "s" : ""}</div>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: 0.7, lineHeight: 1.3 }}>{cat}</div>
+                      <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{count} card{count !== 1 ? "s" : ""}</div>
                     </div>
                   </button>
                 );
@@ -1108,7 +1108,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 style={{
                   width: "100%", padding: "8px 12px 8px 34px",
                   background: "var(--input)", border: "1px solid var(--b)",
-                  borderRadius: 10, color: "var(--t)", fontSize: 13, outline: "none"
+                  borderRadius: 10, color: "var(--t)", fontSize: 14, outline: "none"
                 }}
               />
               {search && (
@@ -1128,7 +1128,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                     borderColor: filter === t ? activeColor : "var(--b)",
                     background: filter === t ? `${activeColor}15` : "transparent",
                     color: filter === t ? activeColor : "var(--tm)",
-                    cursor: "pointer", fontSize: 11, fontWeight: 600
+                    cursor: "pointer", fontSize: 12, fontWeight: 600
                   }}>{isFav ? "★ Faves" : t}</button>
                 );
               })}
