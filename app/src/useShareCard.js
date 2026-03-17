@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
 const RARITY_COLORS = {
-  Common: '#555', Uncommon: '#4caf50', Rare: '#2196f3',
+  Common: '#555555', Uncommon: '#4caf50', Rare: '#2196f3',
   'Very Rare': '#9c27b0', 'Ultra Rare': '#ff9800', Legendary: '#f44336',
 };
 
