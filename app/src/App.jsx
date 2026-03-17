@@ -354,20 +354,38 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             </div>
           </div>
 
-          {/* Favourite star */}
-          <button
-            onClick={e => { e.stopPropagation(); onUpdate(card.id, { isFavourite: !card.isFavourite }); }}
-            title={card.isFavourite ? "Remove from favourites" : "Add to favourites"}
-            style={{
-              background: "none", border: "none", cursor: "pointer",
-              fontSize: 20, lineHeight: 1, padding: "2px 4px",
-              color: card.isFavourite ? "#f0c040" : "var(--so)",
-              alignSelf: "flex-start", marginTop: 10,
-              transition: "color 0.15s, transform 0.1s"
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--sh)"}
-            onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--so)"}
-          >{card.isFavourite ? "★" : "☆"}</button>
+          {/* Star + Share column */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, alignSelf: "flex-start", marginTop: 10 }}>
+            <button
+              onClick={e => { e.stopPropagation(); onUpdate(card.id, { isFavourite: !card.isFavourite }); }}
+              title={card.isFavourite ? "Remove from favourites" : "Add to favourites"}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: 20, lineHeight: 1, padding: "2px 4px",
+                color: card.isFavourite ? "#f0c040" : "var(--so)",
+                transition: "color 0.15s"
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--sh)"}
+              onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--so)"}
+            >{card.isFavourite ? "★" : "☆"}</button>
+            <button
+              onClick={e => { e.stopPropagation(); onShare?.(card); }}
+              title="Share this card"
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                padding: "2px 4px", color: "rgba(255,107,53,0.45)",
+                transition: "color 0.15s", lineHeight: 1
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "#ff6b35"}
+              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,107,53,0.45)"}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Expanded panel */}
@@ -550,9 +568,17 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   background: "rgba(255,107,53,0.1)", border: "1px solid rgba(255,107,53,0.25)",
                   color: "#ff6b35", borderRadius: 8, padding: "5px 14px",
                   cursor: "pointer", fontSize: 11, fontWeight: 600,
-                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5
+                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
+                  display: "flex", alignItems: "center", gap: 5
                 }}
-              >Share ↑</button>
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                Share
+              </button>
               {confirmingDelete ? (
                 <>
                   <span style={{ fontSize: 11, color: "#ff6b6b" }}>Remove this card?</span>
