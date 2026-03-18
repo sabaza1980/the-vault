@@ -1,0 +1,19 @@
+{
+  "name": "The Vault",
+  "short_name": "The Vault",
+  "description": "AI-powered trading card collection tracker",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07070f",
+  "theme_color": "#07070f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/the-vault-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "splash_pages": null
+}
