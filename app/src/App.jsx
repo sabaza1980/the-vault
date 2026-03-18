@@ -808,6 +808,7 @@ export default function App() {
   const [view, setView] = useState("cards"); // "cards" | "table"
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
   const [showChat, setShowChat] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
   const [publicView, setPublicView] = useState(null); // null | { mode, card?, cards?, filterLabel? }
   const [bundleMode, setBundleMode] = useState(false);
@@ -1087,7 +1088,22 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         * { box-sizing: border-box; }
         .nav-extra { display: flex; gap: 8px; align-items: center; }
         @media (max-width: 500px) { .nav-extra { display: none; } }
-        @media (max-width: 400px) { .nav-sign-text { display: none; } }
+        .profile-dropdown {
+          position: absolute; top: calc(100% + 8px); right: 0;
+          background: var(--card); border: 1px solid var(--b);
+          border-radius: 14px; padding: 6px;
+          min-width: 180px; z-index: 200;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+          animation: fadeIn 0.15s ease;
+        }
+        .profile-dropdown button {
+          width: 100%; background: none; border: none;
+          color: var(--ts); font-size: 12px; font-weight: 600;
+          padding: 9px 12px; border-radius: 9px; cursor: pointer;
+          display: flex; align-items: center; gap: 9px; text-align: left;
+          transition: background 0.12s;
+        }
+        .profile-dropdown button:hover { background: var(--gbg); }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
         ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 3px; }
@@ -1137,24 +1153,26 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               <div className="nav-extra">
                 <StatBadge label="Cards" value={cards.length} color="#ff6b35" />
                 {rareCounts > 0 && <StatBadge label="Rare+" value={rareCounts} color="#9c27b0" />}
-                <button
-                  onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
-                  title="Share your vault"
-                  style={{
-                    background: "var(--gbg)", border: "1px solid var(--gb)",
-                    borderRadius: 20, padding: "5px 12px",
-                    color: "var(--gc)", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 5, letterSpacing: 0.3
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                    <polyline points="16 6 12 2 8 6" />
-                    <line x1="12" y1="2" x2="12" y2="15" />
-                  </svg>
-                  Share
-                </button>
               </div>
+            )}
+            {cards.length > 0 && (
+              <button
+                onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
+                title="Share your vault"
+                style={{
+                  background: "var(--gbg)", border: "1px solid var(--gb)",
+                  borderRadius: 20, padding: "5px 12px",
+                  color: "var(--gc)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 5, letterSpacing: 0.3, flexShrink: 0
+                }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+                Share
+              </button>
             )}
             <button
               onClick={() => setShowChat(v => !v)}
@@ -1165,37 +1183,49 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 borderRadius: 20, padding: "5px 12px",
                 color: showChat ? "#ff6b35" : "var(--gc)",
                 fontSize: 11, fontWeight: 700, cursor: "pointer",
-                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5
+                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
               }}
             >
               <span style={{ fontSize: 13 }}>✦</span> Ask AI
             </button>
-            <button
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              style={{
-                background: "var(--gbg)", border: "1px solid var(--gb)",
-                borderRadius: 20, padding: "5px 10px",
-                color: "var(--gc)", fontSize: 15, cursor: "pointer",
-                display: "flex", alignItems: "center"
-              }}
-            >{theme === "dark" ? "☀️" : "🌙"}</button>
             {user === undefined ? null : user ? (
-              <button
-                onClick={signOut}
-                title={`Signed in as ${user.displayName || user.email}`}
-                style={{
-                  background: "var(--gbg)", border: "1px solid var(--gb)",
-                  borderRadius: 20, padding: "5px 12px",
-                  color: "var(--gc)", fontSize: 11, fontWeight: 600,
-                  cursor: "pointer", display: "flex", alignItems: "center", gap: 6
-                }}
-              >
-                {user.photoURL && (
-                  <img src={user.photoURL} alt="" style={{ width: 18, height: 18, borderRadius: "50%" }} />
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <button
+                  onClick={() => setProfileMenuOpen(v => !v)}
+                  title={`Signed in as ${user.displayName || user.email}`}
+                  style={{
+                    background: "none", border: "2px solid var(--b)",
+                    borderRadius: "50%", padding: 0, cursor: "pointer",
+                    width: 32, height: 32, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0, transition: "border-color 0.15s"
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "#ff6b3580"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
+                >
+                  {user.photoURL
+                    ? <img src={user.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <span style={{ fontSize: 14, color: "var(--gc)" }}>👤</span>
+                  }
+                </button>
+                {profileMenuOpen && (
+                  <>
+                    <div onClick={() => setProfileMenuOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 199 }} />
+                    <div className="profile-dropdown">
+                      <div style={{ padding: "8px 12px 6px", borderBottom: "1px solid var(--b)", marginBottom: 4 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.displayName || "Signed in"}</div>
+                        <div style={{ fontSize: 10, color: "var(--tg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                      </div>
+                      <button onClick={() => { toggleTheme(); setProfileMenuOpen(false); }}>
+                        <span style={{ fontSize: 15 }}>{theme === "dark" ? "☀️" : "🌙"}</span>
+                        {theme === "dark" ? "Light mode" : "Dark mode"}
+                      </button>
+                      <button onClick={() => { signOut(); setProfileMenuOpen(false); }} style={{ color: "#ff6b35" }}>
+                        <span style={{ fontSize: 14 }}>→</span> Sign out
+                      </button>
+                    </div>
+                  </>
                 )}
-                <span className="nav-sign-text">Sign out</span>
-              </button>
+              </div>
             ) : (
               <button
                 onClick={() => setShowAuth(true)}
@@ -1203,7 +1233,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                   background: "var(--gbg)", border: "1px solid #ff6b3530",
                   borderRadius: 20, padding: "5px 14px",
                   color: "#ff6b35", fontSize: 11, fontWeight: 700,
-                  cursor: "pointer", letterSpacing: 0.4
+                  cursor: "pointer", letterSpacing: 0.4, flexShrink: 0
                 }}
               >
                 Sign in
