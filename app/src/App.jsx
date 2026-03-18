@@ -5,6 +5,7 @@ import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
+import CardtraderModal from "./CardtraderModal";
 import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -31,6 +32,25 @@ function resizeImageFile(file) {
     };
     img.src = objectUrl;
   });
+}
+
+async function fetchCardTraderPrices(cardInfo) {
+  try {
+    const res = await fetch("/api/cardtrader-prices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        playerName: cardInfo.playerName,
+        fullCardName: cardInfo.fullCardName,
+        parallel: cardInfo.parallel,
+      }),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.error("CardTrader fetch error:", e);
+    return null;
+  }
 }
 
 async function fetchEbaySales(cardInfo) {
@@ -128,12 +148,15 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare }) {
+function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare, onCtSell }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [ebayData, setEbayData] = useState(null);
   const [ebayLoading, setEbayLoading] = useState(false);
   const [ebayFetched, setEbayFetched] = useState(false);
+  const [ctData, setCtData] = useState(null);
+  const [ctLoading, setCtLoading] = useState(false);
+  const [ctFetched, setCtFetched] = useState(false);
   const [localNotes, setLocalNotes] = useState(card.userNotes || "");
   const [backAnalyzing, setBackAnalyzing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -145,10 +168,17 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     if (next && !ebayFetched) {
       setEbayLoading(true);
       setEbayFetched(true);
-      const result = await fetchEbaySales(card);
-      setEbayData(result);
-      if (result?.avg) onUpdate(card.id, { estimatedValue: result.avg });
+      setCtLoading(true);
+      setCtFetched(true);
+      const [ebayResult, ctResult] = await Promise.all([
+        fetchEbaySales(card),
+        fetchCardTraderPrices(card),
+      ]);
+      setEbayData(ebayResult);
+      if (ebayResult?.avg) onUpdate(card.id, { estimatedValue: ebayResult.avg });
       setEbayLoading(false);
+      setCtData(ctResult);
+      setCtLoading(false);
     }
   }, [expanded, ebayFetched, card, onUpdate]);
 
@@ -545,6 +575,60 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               )}
             </div>
 
+            {/* CardTrader Pricing */}
+            {(ctLoading || ctData || ctFetched) && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                  CardTrader Prices
+                  {ctData?.blueprint && (
+                    <span style={{ fontSize: 9, fontWeight: 600, color: "#555", textTransform: "none", letterSpacing: 0 }}>
+                      — {ctData.blueprint.name}
+                    </span>
+                  )}
+                  <span style={{
+                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                    background: "rgba(0,180,120,0.12)", color: "#00b478", border: "1px solid rgba(0,180,120,0.25)"
+                  }}>live listings</span>
+                </div>
+                {ctLoading && (
+                  <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 10, height: 10, border: "2px solid #00b478", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    Fetching CardTrader prices…
+                  </div>
+                )}
+                {!ctLoading && ctData && (
+                  <>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: "#00b478", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
+                        €{ctData.avg.toFixed(2)}
+                      </span>
+                      <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ctData.listings.length} listings</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {ctData.listings.slice(0, 8).map((l, i) => (
+                        <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
+                          border: "1px solid var(--b)", textDecoration: "none",
+                          transition: "border-color 0.15s", gap: 8
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = "#00b47840"}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
+                        >
+                          <span style={{ fontSize: 11, color: "var(--ts)", flex: 1 }}>{l.sellerName || "Seller"}</span>
+                          <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0 }}>{l.condition}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#00b478", flexShrink: 0 }}>€{l.price.toFixed(2)}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {!ctLoading && !ctData && ctFetched && (
+                  <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>Not found on CardTrader.</div>
+                )}
+              </div>
+            )}
+
             {/* My Notes */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>My Notes</div>
@@ -562,7 +646,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               />
             </div>
 
-            {/* Sell on eBay */}
+            {/* Sell */}
             {!bundleMode && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Sell</div>
@@ -579,6 +663,14 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                       fontSize: 11, color: "#e53935", textDecoration: "none", fontWeight: 600
                     }}>↗ View listing</a>
                   )}
+                  <button
+                    onClick={() => onCtSell?.(card, ctData?.blueprint)}
+                    style={{
+                      background: "rgba(0,180,120,0.12)", border: "1px solid rgba(0,180,120,0.3)",
+                      color: "#00b478", borderRadius: 8, padding: "6px 16px", cursor: "pointer",
+                      fontSize: 12, fontWeight: 700
+                    }}
+                  >List on CardTrader</button>
                 </div>
               </div>
             )}
@@ -811,6 +903,7 @@ export default function App() {
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
+  const [ctModal, setCtModal] = useState(null); // null | { card, blueprintId, blueprintName }
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
     localStorage.setItem("vault-theme", next);
@@ -985,6 +1078,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   }, []);
 
   const handleSellCard = useCallback((card) => setSellModalCards([card]), []);
+  const handleCtSell = useCallback((card, blueprint) => {
+    setCtModal({ card, blueprintId: blueprint?.id ?? null, blueprintName: blueprint?.name ?? null });
+  }, []);
   const handleBundleToggle = useCallback((id) => setBundleCardIds(prev => {
     const next = new Set(prev);
     next.has(String(id)) ? next.delete(String(id)) : next.add(String(id));
@@ -1462,7 +1558,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} onCtSell={handleCtSell} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
@@ -1577,6 +1673,15 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           user={user}
           onClose={() => setSellModalCards(null)}
           onSuccess={handleSellSuccess}
+        />
+      )}
+      {ctModal && (
+        <CardtraderModal
+          card={ctModal.card}
+          blueprintId={ctModal.blueprintId}
+          blueprintName={ctModal.blueprintName}
+          onClose={() => setCtModal(null)}
+          onSuccess={() => setCtModal(null)}
         />
       )}
       {publicView && (
