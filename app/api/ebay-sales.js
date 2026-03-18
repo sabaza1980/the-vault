@@ -1,7 +1,10 @@
+// Primary: eBay Finding API — findCompletedItems (soldItemsOnly=true)
+// Fallback: eBay Browse API — live listings (if no sold data found)
+
 let cachedToken = null;
 let tokenExpiry = 0;
 
-async function getEbayToken() {
+async function getBrowseToken() {
   if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
   const credentials = Buffer.from(
     `${process.env.VITE_EBAY_CLIENT_ID}:${process.env.VITE_EBAY_CLIENT_SECRET}`
@@ -21,51 +24,87 @@ async function getEbayToken() {
   return cachedToken;
 }
 
+async function findSoldItems(q) {
+  const appId = process.env.VITE_EBAY_CLIENT_ID;
+  const params = new URLSearchParams({
+    'RESPONSE-DATA-FORMAT': 'JSON',
+    'OPERATION-NAME': 'findCompletedItems',
+    'SERVICE-VERSION': '1.0.0',
+    'SECURITY-APPNAME': appId,
+    'keywords': q,
+    'itemFilter(0).name': 'SoldItemsOnly',
+    'itemFilter(0).value': 'true',
+    'sortOrder': 'EndTimeSoonest',
+    'paginationInput.entriesPerPage': '10',
+    'paginationInput.pageNumber': '1',
+  });
+  const url = `https://svcs.ebay.com/services/search/FindingService/v1?${params}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Finding API ${res.status}`);
+  const data = await res.json();
+  const resp = data?.findCompletedItemsResponse?.[0];
+  if (resp?.ack?.[0] !== 'Success' && resp?.ack?.[0] !== 'Warning') return [];
+  const items = resp?.searchResult?.[0]?.item || [];
+  return items
+    .filter(i => i?.sellingStatus?.[0]?.currentPrice?.[0]?.__value__)
+    .map(i => ({
+      title: i.title?.[0] || '',
+      price: parseFloat(i.sellingStatus[0].currentPrice[0].__value__),
+      currency: i.sellingStatus[0].currentPrice[0]['@currencyId'] || 'USD',
+      url: i.viewItemURL?.[0] || '',
+      date: i.listingInfo?.[0]?.endTime?.[0] || null,
+    }));
+}
+
+async function findActiveItems(q) {
+  const token = await getBrowseToken();
+  const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=conditionIds%3A%7B3000%7D&sort=newlyListed&limit=10`;
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+    },
+  });
+  if (!res.ok) throw new Error(`Browse API ${res.status}`);
+  const data = await res.json();
+  return (data.itemSummaries || [])
+    .filter(i => i.price)
+    .map(i => ({
+      title: i.title,
+      price: parseFloat(i.price.value),
+      currency: i.price.currency,
+      url: i.itemWebUrl,
+      date: i.itemEndDate || null,
+    }));
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { playerName, fullCardName, parallel } = req.body || {};
   if (!playerName) return res.status(400).json({ error: 'playerName required' });
 
+  const q = [playerName, fullCardName, parallel && parallel !== 'Base' ? parallel : '']
+    .filter(Boolean).join(' ').trim();
+
   try {
-    const token = await getEbayToken();
-    const q = [playerName, fullCardName, parallel && parallel !== 'Base' ? parallel : '']
-      .filter(Boolean).join(' ').trim();
+    // Try sold listings first
+    let sales = await findSoldItems(q);
+    let source = 'sold';
 
-    const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=conditionIds%3A%7B3000%7D&sort=newlyListed&limit=5`;
-    const ebayRes = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
-      },
-    });
-
-    if (!ebayRes.ok) {
-      const errText = await ebayRes.text();
-      return res.status(ebayRes.status).json({ error: errText });
+    // If no sold data, fall back to active listings
+    if (sales.length === 0) {
+      sales = await findActiveItems(q);
+      source = 'active';
     }
-
-    const data = await ebayRes.json();
-    if (!data.itemSummaries || data.itemSummaries.length === 0) {
-      return res.status(200).json(null);
-    }
-
-    const sales = data.itemSummaries
-      .filter(item => item.price)
-      .map(item => ({
-        title: item.title,
-        price: parseFloat(item.price.value),
-        currency: item.price.currency,
-        url: item.itemWebUrl,
-        date: item.itemEndDate || null,
-      }));
 
     if (sales.length === 0) return res.status(200).json(null);
 
     const avg = sales.reduce((s, i) => s + i.price, 0) / sales.length;
-    return res.status(200).json({ sales, avg: Math.round(avg * 100) / 100 });
+    return res.status(200).json({ sales, avg: Math.round(avg * 100) / 100, source });
   } catch (err) {
     console.error('eBay sales error:', err);
     return res.status(500).json({ error: err.message });
   }
 }
+

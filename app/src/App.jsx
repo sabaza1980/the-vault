@@ -490,11 +490,18 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
             )}
 
-            {/* eBay Live Pricing */}
+            {/* eBay Pricing */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                Recent eBay Sales
-                <span style={{ fontSize: 8, color: "var(--tf)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>live data</span>
+                {ebayData?.source === 'active' ? 'Active eBay Listings' : 'Recent eBay Sales'}
+                <span style={{
+                  fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                  background: ebayData?.source === 'active' ? 'rgba(255,152,0,0.12)' : 'rgba(76,175,80,0.12)',
+                  color: ebayData?.source === 'active' ? '#ff9800' : '#4caf50',
+                  border: `1px solid ${ebayData?.source === 'active' ? 'rgba(255,152,0,0.25)' : 'rgba(76,175,80,0.25)'}`
+                }}>
+                  {ebayData?.source === 'active' ? 'no sold data — showing live listings' : 'sold listings'}
+                </span>
               </div>
               {ebayLoading && (
                 <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
@@ -508,20 +515,25 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     <span style={{ fontSize: 22, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
                       ${ebayData.avg.toFixed(2)}
                     </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ebayData.sales.length} recent sales</span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ebayData.sales.length} {ebayData.source === 'active' ? 'listings' : 'sold'}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {ebayData.sales.slice(0, 4).map((sale, i) => (
+                    {ebayData.sales.slice(0, 10).map((sale, i) => (
                       <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
                         display: "flex", justifyContent: "space-between", alignItems: "center",
                         padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
                         border: "1px solid var(--b)", textDecoration: "none",
-                        transition: "border-color 0.15s"
+                        transition: "border-color 0.15s", gap: 8
                       }}
                         onMouseEnter={e => e.currentTarget.style.borderColor = "#4caf5040"}
                         onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
                       >
-                        <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginRight: 8 }}>{sale.title}</span>
+                        <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sale.title}</span>
+                        {sale.date && (
+                          <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                            {new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                          </span>
+                        )}
                         <span style={{ fontSize: 12, fontWeight: 700, color: "#4caf50", flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
                       </a>
                     ))}
