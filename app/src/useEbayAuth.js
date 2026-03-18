@@ -72,7 +72,7 @@ export function useEbayAuth(user) {
     setConnectError(null);
     try {
       // 1. Exchange auth code for user tokens (server-side — keeps secret safe)
-      const tokenRes = await fetch("/api/ebay-token", {
+      const tokenRes = await fetch("/api/ebay-auth", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ code }),
@@ -239,7 +239,7 @@ export function useEbayAuth(user) {
     }
 
     // Refresh
-    const res = await fetch("/api/ebay-refresh", {
+    const res = await fetch("/api/ebay-auth", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ refreshToken: ebayAuth.refreshToken }),

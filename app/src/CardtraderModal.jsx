@@ -47,10 +47,11 @@ export default function CardtraderModal({ card, blueprintId, blueprintName, onCl
     setListing(true);
     setError(null);
     try {
-      const res = await fetch("/api/cardtrader-list", {
+      const res = await fetch("/api/cardtrader", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "list",
           ctToken: token,
           blueprint_id: effectiveBlueprintId,
           price: parseFloat(price),

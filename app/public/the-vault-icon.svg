@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#ff6b35" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#07070f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#07070f"/>
+  <rect width="1024" height="1024" fill="url(#bgGlow)"/>
+
+  <!-- Outer vault ring -->
+  <circle cx="512" cy="540" r="380" fill="#1a1a1a" stroke="#ff6b35" stroke-width="28"/>
+
+  <!-- Steel plate -->
+  <circle cx="512" cy="540" r="330" fill="#141414" stroke="#2a2a2a" stroke-width="14"/>
+
+  <!-- Corner bolts -->
+  <circle cx="262" cy="290" r="44" fill="#0a0a0a" stroke="#ff6b35" stroke-width="14"/>
+  <circle cx="762" cy="290" r="44" fill="#0a0a0a" stroke="#ff6b35" stroke-width="14"/>
+  <circle cx="262" cy="790" r="44" fill="#0a0a0a" stroke="#ff6b35" stroke-width="14"/>
+  <circle cx="762" cy="790" r="44" fill="#0a0a0a" stroke="#ff6b35" stroke-width="14"/>
+
+  <!-- Inner dial ring -->
+  <circle cx="512" cy="540" r="200" fill="#111111" stroke="#333333" stroke-width="14"/>
+
+  <!-- Dial notches -->
+  <line x1="512" y1="342" x2="512" y2="388" stroke="#ff6b35" stroke-width="22" stroke-linecap="round"/>
+  <line x1="512" y1="692" x2="512" y2="738" stroke="#444444" stroke-width="16" stroke-linecap="round"/>
+  <line x1="314" y1="540" x2="360" y2="540" stroke="#444444" stroke-width="16" stroke-linecap="round"/>
+  <line x1="664" y1="540" x2="710" y2="540" stroke="#444444" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Diagonal notches -->
+  <line x1="372" y1="400" x2="404" y2="432" stroke="#333" stroke-width="12" stroke-linecap="round"/>
+  <line x1="620" y1="400" x2="652" y2="432" stroke="#333" stroke-width="12" stroke-linecap="round"/>
+  <line x1="372" y1="680" x2="404" y2="648" stroke="#333" stroke-width="12" stroke-linecap="round"/>
+  <line x1="620" y1="680" x2="652" y2="648" stroke="#333" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- Dial center -->
+  <circle cx="512" cy="540" r="80" fill="#ff6b35"/>
+  <circle cx="512" cy="540" r="40" fill="#07070f"/>
+
+  <!-- Handle -->
+  <rect x="640" y="498" width="155" height="84" rx="42" fill="#222222" stroke="#ff6b35" stroke-width="14"/>
+  <circle cx="718" cy="540" r="28" fill="#ff6b35"/>
+
+  <!-- Hinges -->
+  <rect x="66" y="230" width="88" height="148" rx="30" fill="#ff6b35"/>
+  <rect x="66" y="622" width="88" height="148" rx="30" fill="#ff6b35"/>
+</svg>

@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" width="1080" height="1920">
+  <defs>
+    <radialGradient id="topGlow" cx="50%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="#ff6b35" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#07070f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bottomGlow" cx="50%" cy="85%" r="45%">
+      <stop offset="0%" stop-color="#f0c040" stop-opacity="0.09"/>
+      <stop offset="100%" stop-color="#07070f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1080" height="1920" fill="#07070f"/>
+  <rect width="1080" height="1920" fill="url(#topGlow)"/>
+  <rect width="1080" height="1920" fill="url(#bottomGlow)"/>
+
+  <!-- Diagonal stripe accents -->
+  <polygon points="580,0 780,0 480,1920 280,1920" fill="#ff6b35" fill-opacity="0.025"/>
+  <polygon points="720,0 820,0 620,1920 520,1920" fill="#ff6b35" fill-opacity="0.018"/>
+
+  <!-- Icon background circle -->
+  <rect x="390" y="480" width="300" height="300" rx="68" fill="#0d0d1a" stroke="#ff6b35" stroke-opacity="0.35" stroke-width="2"/>
+
+  <!-- Vault door scaled for icon box -->
+  <!-- Outer ring -->
+  <circle cx="540" cy="630" r="118" fill="#1a1a1a" stroke="#ff6b35" stroke-width="9"/>
+  <!-- Steel plate -->
+  <circle cx="540" cy="630" r="100" fill="#141414" stroke="#2a2a2a" stroke-width="4"/>
+  <!-- Corner bolts -->
+  <circle cx="462" cy="552" r="14" fill="#0a0a0a" stroke="#ff6b35" stroke-width="4.5"/>
+  <circle cx="618" cy="552" r="14" fill="#0a0a0a" stroke="#ff6b35" stroke-width="4.5"/>
+  <circle cx="462" cy="708" r="14" fill="#0a0a0a" stroke="#ff6b35" stroke-width="4.5"/>
+  <circle cx="618" cy="708" r="14" fill="#0a0a0a" stroke="#ff6b35" stroke-width="4.5"/>
+  <!-- Inner dial -->
+  <circle cx="540" cy="630" r="62" fill="#111" stroke="#333" stroke-width="4"/>
+  <!-- Notch top -->
+  <line x1="540" y1="569" x2="540" y2="583" stroke="#ff6b35" stroke-width="7" stroke-linecap="round"/>
+  <!-- Notch bottom -->
+  <line x1="540" y1="677" x2="540" y2="691" stroke="#444" stroke-width="5" stroke-linecap="round"/>
+  <!-- Notch left -->
+  <line x1="479" y1="630" x2="493" y2="630" stroke="#444" stroke-width="5" stroke-linecap="round"/>
+  <!-- Notch right -->
+  <line x1="587" y1="630" x2="601" y2="630" stroke="#444" stroke-width="5" stroke-linecap="round"/>
+  <!-- Center dial -->
+  <circle cx="540" cy="630" r="25" fill="#ff6b35"/>
+  <circle cx="540" cy="630" r="12" fill="#07070f"/>
+  <!-- Handle -->
+  <rect x="584" y="604" width="48" height="26" rx="13" fill="#222" stroke="#ff6b35" stroke-width="4.5"/>
+  <circle cx="608" cy="630" r="9" fill="#ff6b35"/>
+  <!-- Hinges -->
+  <rect x="414" y="568" width="26" height="44" rx="9" fill="#ff6b35"/>
+  <rect x="414" y="648" width="26" height="44" rx="9" fill="#ff6b35"/>
+
+  <!-- Wordmark — THE -->
+  <text
+    x="540"
+    y="910"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="168"
+    font-weight="900"
+    letter-spacing="18"
+    fill="url(#wordmarkGrad)"
+  >THE</text>
+
+  <!-- Wordmark — VAULT -->
+  <text
+    x="540"
+    y="1070"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="168"
+    font-weight="900"
+    letter-spacing="18"
+    fill="url(#wordmarkGrad)"
+  >VAULT</text>
+
+  <defs>
+    <linearGradient id="wordmarkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff6b35"/>
+      <stop offset="50%" stop-color="#ff8c5a"/>
+      <stop offset="100%" stop-color="#f0c040"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Divider line -->
+  <line x1="340" y1="1120" x2="540" y2="1120" stroke="#ff6b35" stroke-opacity="0.25" stroke-width="1.5"/>
+  <circle cx="540" cy="1120" r="5" fill="#ff6b35" fill-opacity="0.6"/>
+  <line x1="540" y1="1120" x2="740" y2="1120" stroke="#ff6b35" stroke-opacity="0.25" stroke-width="1.5"/>
+
+  <!-- Tagline -->
+  <text
+    x="540"
+    y="1178"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    font-family="Arial Narrow, Arial, sans-serif"
+    font-size="38"
+    font-weight="700"
+    letter-spacing="8"
+    fill="#3a3a4a"
+  >YOUR COLLECTION. SUPERCHARGED.</text>
+
+  <!-- Domain -->
+  <text
+    x="540"
+    y="1720"
+    text-anchor="middle"
+    dominant-baseline="auto"
+    font-family="Arial Narrow, Arial, sans-serif"
+    font-size="34"
+    font-weight="700"
+    letter-spacing="6"
+    fill="#252535"
+  >MYVAULTS.IO</text>
+
+  <!-- Loading indicator -->
+  <rect x="490" y="1780" width="16" height="16" rx="8" fill="#ff6b35" fill-opacity="0.3"/>
+  <rect x="512" y="1780" width="56" height="16" rx="8" fill="#ff6b35" fill-opacity="0.85"/>
+  <rect x="574" y="1780" width="16" height="16" rx="8" fill="#ff6b35" fill-opacity="0.3"/>
+</svg>

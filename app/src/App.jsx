@@ -36,10 +36,11 @@ function resizeImageFile(file) {
 
 async function fetchCardTraderPrices(cardInfo) {
   try {
-    const res = await fetch("/api/cardtrader-prices", {
+    const res = await fetch("/api/cardtrader", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        action: "prices",
         playerName: cardInfo.playerName,
         fullCardName: cardInfo.fullCardName,
         parallel: cardInfo.parallel,
