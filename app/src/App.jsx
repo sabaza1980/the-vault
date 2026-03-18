@@ -5,7 +5,6 @@ import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
-import CardtraderModal from "./CardtraderModal";
 import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -32,26 +31,6 @@ function resizeImageFile(file) {
     };
     img.src = objectUrl;
   });
-}
-
-async function fetchCardTraderPrices(cardInfo) {
-  try {
-    const res = await fetch("/api/cardtrader", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "prices",
-        playerName: cardInfo.playerName,
-        fullCardName: cardInfo.fullCardName,
-        parallel: cardInfo.parallel,
-      }),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    console.error("CardTrader fetch error:", e);
-    return null;
-  }
 }
 
 async function fetchEbaySales(cardInfo) {
@@ -149,15 +128,12 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare, onCtSell }) {
+function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [ebayData, setEbayData] = useState(null);
   const [ebayLoading, setEbayLoading] = useState(false);
   const [ebayFetched, setEbayFetched] = useState(false);
-  const [ctData, setCtData] = useState(null);
-  const [ctLoading, setCtLoading] = useState(false);
-  const [ctFetched, setCtFetched] = useState(false);
   const [localNotes, setLocalNotes] = useState(card.userNotes || "");
   const [backAnalyzing, setBackAnalyzing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -169,17 +145,10 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     if (next && !ebayFetched) {
       setEbayLoading(true);
       setEbayFetched(true);
-      setCtLoading(true);
-      setCtFetched(true);
-      const [ebayResult, ctResult] = await Promise.all([
-        fetchEbaySales(card),
-        fetchCardTraderPrices(card),
-      ]);
+      const ebayResult = await fetchEbaySales(card);
       setEbayData(ebayResult);
       if (ebayResult?.avg) onUpdate(card.id, { estimatedValue: ebayResult.avg });
       setEbayLoading(false);
-      setCtData(ctResult);
-      setCtLoading(false);
     }
   }, [expanded, ebayFetched, card, onUpdate]);
 
@@ -576,59 +545,6 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               )}
             </div>
 
-            {/* CardTrader Pricing */}
-            {(ctLoading || ctData || ctFetched) && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                  CardTrader Prices
-                  {ctData?.blueprint && (
-                    <span style={{ fontSize: 9, fontWeight: 600, color: "#555", textTransform: "none", letterSpacing: 0 }}>
-                      — {ctData.blueprint.name}
-                    </span>
-                  )}
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                    background: "rgba(0,180,120,0.12)", color: "#00b478", border: "1px solid rgba(0,180,120,0.25)"
-                  }}>live listings</span>
-                </div>
-                {ctLoading && (
-                  <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
-                    <div style={{ width: 10, height: 10, border: "2px solid #00b478", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                    Fetching CardTrader prices…
-                  </div>
-                )}
-                {!ctLoading && ctData && (
-                  <>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: "#00b478", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
-                        €{ctData.avg.toFixed(2)}
-                      </span>
-                      <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ctData.listings.length} listings</span>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {ctData.listings.slice(0, 8).map((l, i) => (
-                        <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{
-                          display: "flex", justifyContent: "space-between", alignItems: "center",
-                          padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
-                          border: "1px solid var(--b)", textDecoration: "none",
-                          transition: "border-color 0.15s", gap: 8
-                        }}
-                          onMouseEnter={e => e.currentTarget.style.borderColor = "#00b47840"}
-                          onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
-                        >
-                          <span style={{ fontSize: 11, color: "var(--ts)", flex: 1 }}>{l.sellerName || "Seller"}</span>
-                          <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0 }}>{l.condition}</span>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: "#00b478", flexShrink: 0 }}>€{l.price.toFixed(2)}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </>
-                )}
-                {!ctLoading && !ctData && ctFetched && (
-                  <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>Not found on CardTrader.</div>
-                )}
-              </div>
-            )}
 
             {/* My Notes */}
             <div style={{ marginBottom: 14 }}>
@@ -664,14 +580,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                       fontSize: 11, color: "#e53935", textDecoration: "none", fontWeight: 600
                     }}>↗ View listing</a>
                   )}
-                  <button
-                    onClick={() => onCtSell?.(card, ctData?.blueprint)}
-                    style={{
-                      background: "rgba(0,180,120,0.12)", border: "1px solid rgba(0,180,120,0.3)",
-                      color: "#00b478", borderRadius: 8, padding: "6px 16px", cursor: "pointer",
-                      fontSize: 12, fontWeight: 700
-                    }}
-                  >List on CardTrader</button>
+
                 </div>
               </div>
             )}
@@ -904,7 +813,6 @@ export default function App() {
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
-  const [ctModal, setCtModal] = useState(null); // null | { card, blueprintId, blueprintName }
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
     localStorage.setItem("vault-theme", next);
@@ -1084,9 +992,6 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   }, []);
 
   const handleSellCard = useCallback((card) => setSellModalCards([card]), []);
-  const handleCtSell = useCallback((card, blueprint) => {
-    setCtModal({ card, blueprintId: blueprint?.id ?? null, blueprintName: blueprint?.name ?? null });
-  }, []);
   const handleBundleToggle = useCallback((id) => setBundleCardIds(prev => {
     const next = new Set(prev);
     next.has(String(id)) ? next.delete(String(id)) : next.add(String(id));
@@ -1173,13 +1078,16 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   const doneCount = queue.filter(q => q.status === "done").length;
 
   return (
-    <div data-theme={theme} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--t)", fontFamily: "'Inter', sans-serif" }}>
+    <div data-theme={theme} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--t)", fontFamily: "'Inter', sans-serif", overflowX: "hidden", width: "100%" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         * { box-sizing: border-box; }
+        .nav-extra { display: flex; gap: 8px; align-items: center; }
+        @media (max-width: 500px) { .nav-extra { display: none; } }
+        @media (max-width: 400px) { .nav-sign-text { display: none; } }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
         ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 3px; }
@@ -1208,10 +1116,10 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       {/* Header */}
       <div style={{
         background: "var(--hbg)",
-        borderBottom: "1px solid var(--hb)", padding: "22px 24px 18px",
+        borderBottom: "1px solid var(--hb)", padding: "16px 16px 14px",
         position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(20px)"
       }}>
-        <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minWidth: 0 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 24 }}>🏀</span>
@@ -1224,9 +1132,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             </div>
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · eBay pricing</p>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 1, minWidth: 0 }}>
             {cards.length > 0 && (
-              <>
+              <div className="nav-extra">
                 <StatBadge label="Cards" value={cards.length} color="#ff6b35" />
                 {rareCounts > 0 && <StatBadge label="Rare+" value={rareCounts} color="#9c27b0" />}
                 <button
@@ -1246,7 +1154,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                   </svg>
                   Share
                 </button>
-              </>
+              </div>
             )}
             <button
               onClick={() => setShowChat(v => !v)}
@@ -1286,7 +1194,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 {user.photoURL && (
                   <img src={user.photoURL} alt="" style={{ width: 18, height: 18, borderRadius: "50%" }} />
                 )}
-                Sign out
+                <span className="nav-sign-text">Sign out</span>
               </button>
             ) : (
               <button
@@ -1564,7 +1472,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} onCtSell={handleCtSell} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
@@ -1679,15 +1587,6 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           user={user}
           onClose={() => setSellModalCards(null)}
           onSuccess={handleSellSuccess}
-        />
-      )}
-      {ctModal && (
-        <CardtraderModal
-          card={ctModal.card}
-          blueprintId={ctModal.blueprintId}
-          blueprintName={ctModal.blueprintName}
-          onClose={() => setCtModal(null)}
-          onSuccess={() => setCtModal(null)}
         />
       )}
       {publicView && (
