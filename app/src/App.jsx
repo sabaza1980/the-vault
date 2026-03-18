@@ -924,6 +924,12 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       try {
         const clean = text.replace(/```json|```/g, "").trim();
         cardInfo = JSON.parse(clean);
+        // Strip <cite ...>...</cite> tags injected by the web search tool into string fields
+        for (const key of Object.keys(cardInfo)) {
+          if (typeof cardInfo[key] === "string") {
+            cardInfo[key] = cardInfo[key].replace(/<cite[^>]*>|<\/cite>/g, "").replace(/\s{2,}/g, " ").trim();
+          }
+        }
       } catch {
         cardInfo = { playerName: "Unknown Player", fullCardName: "Unknown Card", team: "Unknown", year: "Unknown", brand: "Unknown", rarity: "Unknown", condition: "Unknown", confidenceLevel: "Low" };
       }
