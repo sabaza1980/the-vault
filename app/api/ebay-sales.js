@@ -58,7 +58,7 @@ async function findSoldItems(q) {
 
 async function findActiveItems(q) {
   const token = await getBrowseToken();
-  const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&filter=conditionIds%3A%7B3000%7D&sort=newlyListed&limit=10`;
+  const url = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=${encodeURIComponent(q)}&sort=newlyListed&limit=10`;
   const res = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -88,11 +88,16 @@ export default async function handler(req, res) {
     .filter(Boolean).join(' ').trim();
 
   try {
-    // Try sold listings first
-    let sales = await findSoldItems(q);
+    // Try sold listings first — isolate errors so a Finding API failure doesn't block the fallback
+    let sales = [];
     let source = 'sold';
+    try {
+      sales = await findSoldItems(q);
+    } catch (soldErr) {
+      console.error('Finding API failed, will fall back to Browse:', soldErr.message);
+    }
 
-    // If no sold data, fall back to active listings
+    // If no sold data (or sold lookup failed), fall back to active listings
     if (sales.length === 0) {
       sales = await findActiveItems(q);
       source = 'active';
