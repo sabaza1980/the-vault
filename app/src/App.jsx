@@ -963,7 +963,7 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
-          max_tokens: 2000,
+          max_tokens: 3000,
           tools: [{ type: "web_search_20250305", name: "web_search" }],
           tool_choice: { type: "auto" },
           messages: [{
@@ -1028,7 +1028,12 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
 
       let cardInfo;
       try {
-        const clean = text.replace(/```json|```/g, "").trim();
+        // Find the outermost JSON object in the response — handles cases where Claude
+        // wraps the JSON with explanatory text (e.g. after a web search)
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start === -1 || end === -1) throw new Error('No JSON object found');
+        const clean = text.slice(start, end + 1);
         cardInfo = JSON.parse(clean);
         // Strip <cite ...>...</cite> tags injected by the web search tool into string fields
         for (const key of Object.keys(cardInfo)) {
