@@ -2,12 +2,17 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithCredential,
+  GoogleAuthProvider,
   signOut as firebaseSignOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
+import { Capacitor } from '@capacitor/core';
 import { auth, googleProvider } from './firebase';
+
+const isNative = Capacitor.isNativePlatform();
 
 const AuthContext = createContext(null);
 
@@ -19,7 +24,18 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+  const signInWithGoogle = async () => {
+    if (isNative) {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+      const result = await FirebaseAuthentication.signInWithGoogle();
+      const credential = GoogleAuthProvider.credential(
+        result.credential?.idToken,
+        result.credential?.accessToken
+      );
+      return signInWithCredential(auth, credential);
+    }
+    return signInWithPopup(auth, googleProvider);
+  };
   const signOut = () => firebaseSignOut(auth);
   const signUpWithEmail = (email, password, displayName) =>
     createUserWithEmailAndPassword(auth, email, password).then((cred) =>
