@@ -444,7 +444,17 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {/* Player context */}
             {card.playerContext && (
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 5 }}>About This Card</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>About This Card</div>
+                  {card.playerContextSearched && (
+                    <span style={{
+                      fontSize: 9, padding: "2px 7px", borderRadius: 6, fontWeight: 700,
+                      background: "rgba(76,175,80,0.1)", color: "#4caf50",
+                      border: "1px solid rgba(76,175,80,0.25)",
+                      fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5
+                    }}>🔍 Live data</span>
+                  )}
+                </div>
                 <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.playerContext}</p>
               </div>
             )}
@@ -847,7 +857,9 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
-          max_tokens: 1500,
+          max_tokens: 2000,
+          tools: [{ type: "web_search_20250305", name: "web_search" }],
+          tool_choice: { type: "auto" },
           messages: [{
             role: "user",
             content: [
@@ -890,7 +902,8 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
   "condition": "Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown",
   "conditionDetail": "1-2 sentences: describe corners (sharp/worn/dinged), surface (clean/scratched), centering (well-centered/off). Only describe what is visible.",
-  "playerContext": "2-3 sentences: card significance, why this card is or isn't notable for collectors in this category, any notable value drivers.",
+  "playerContext": "IMPORTANT: Before writing this field, use the web_search tool to search for '[playerName] basketball player career stats' (substitute the actual player/character name) to get current accurate information. Then write 2-3 sentences describing: who this player or character is today (current team, career stage — rookie/veteran/legend/college prospect/etc. — or game format for TCG cards), their most notable career achievements or current season highlights, and why this specific card is or isn't particularly collectible. Base this on current search results, not prior knowledge. If not found in search results, write what you can observe from the card itself and note that information is limited.",
+  "playerContextSearched": true,
   "confidenceLevel": "High | Medium | Low",
   "notes": "Any other observations: print defects, surface damage, foil scratches, staining, etc. or null"
 }`
@@ -1277,7 +1290,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             <>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
               <div style={{ color: "var(--ts)", fontWeight: 600, fontSize: 14 }}>Drop card photos here</div>
-              <div style={{ color: "var(--td)", fontSize: 12, marginTop: 3 }}>Select one or multiple — each card is identified automatically</div>
+              <div style={{ color: "var(--td)", fontSize: 12, marginTop: 3 }}>Reading card details &amp; researching player...</div>
             </>
           )}
         </div>
