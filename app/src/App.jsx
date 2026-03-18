@@ -820,6 +820,7 @@ export default function App() {
     return next;
   });
   const fileRef = useRef();
+  const cameraRef = useRef();
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
 
@@ -1284,15 +1285,16 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          onClick={() => fileRef.current?.click()}
           style={{
             border: `2px dashed ${dragOver ? "#ff6b35" : "var(--b)"}`,
             borderRadius: 18, padding: "24px 24px", textAlign: "center",
-            cursor: "pointer", background: dragOver ? "#ff6b3506" : "var(--surface)",
+            background: dragOver ? "#ff6b3506" : "var(--surface)",
             transition: "all 0.2s", marginBottom: 20
           }}
         >
           <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+            onChange={e => handleFiles(e.target.files)} />
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }}
             onChange={e => handleFiles(e.target.files)} />
 
           {queue.length > 0 ? (
@@ -1342,13 +1344,41 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                   </div>
                 ))}
               </div>
-              <div style={{ fontSize: 11, color: "#333", marginTop: 10 }}>Tap to add more cards</div>
+              <div style={{ fontSize: 11, color: "#333", marginTop: 10, display: "flex", gap: 8, justifyContent: "center" }}>
+                <span onClick={() => cameraRef.current?.click()} style={{ cursor: "pointer", color: "#ff6b35", fontWeight: 600 }}>📷 Camera</span>
+                <span style={{ color: "#444" }}>·</span>
+                <span onClick={() => fileRef.current?.click()} style={{ cursor: "pointer", color: "var(--ts)", fontWeight: 600 }}>🗂️ Files</span>
+              </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
-              <div style={{ color: "var(--ts)", fontWeight: 600, fontSize: 14 }}>Drop card photos here</div>
-              <div style={{ color: "var(--td)", fontSize: 12, marginTop: 3 }}>Reading card details &amp; researching player...</div>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>📸</div>
+              <div style={{ color: "var(--ts)", fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Add card photos to identify</div>
+              <div style={{ color: "var(--td)", fontSize: 12, marginBottom: 16 }}>Reading card details &amp; researching player...</div>
+              <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+                <button
+                  onClick={e => { e.stopPropagation(); cameraRef.current?.click(); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    background: "linear-gradient(135deg, #ff6b35 0%, #f7931a 100%)",
+                    border: "none", borderRadius: 12, padding: "10px 20px",
+                    color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: 0.3
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>📷</span> Take Photo
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    background: "var(--card)", border: "1px solid var(--b)",
+                    borderRadius: 12, padding: "10px 20px",
+                    color: "var(--ts)", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: 0.3
+                  }}
+                >
+                  <span style={{ fontSize: 16 }}>🗂️</span> Choose Files
+                </button>
+              </div>
             </>
           )}
         </div>
