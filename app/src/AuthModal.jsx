@@ -64,6 +64,12 @@ export default function AuthModal({ onClose }) {
           </svg>
           Continue with Google
         </button>
+        <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 11, color: '#555', lineHeight: 1.5 }}>
+          By continuing, you agree to our{' '}
+          <a href="https://www.myvaults.io/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Terms</a>
+          {' '}&amp;{' '}
+          <a href="https://www.myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
+        </p>
 
         <div style={styles.divider}><span>or</span></div>
 

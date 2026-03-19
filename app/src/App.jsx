@@ -1674,6 +1674,22 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         isOpen={showChat}
         onClose={() => setShowChat(false)}
       />
+
+      {/* Footer */}
+      <div style={{
+        borderTop: '1px solid var(--b)', padding: '18px 16px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        flexWrap: 'wrap', gap: 10, marginTop: 40,
+      }}>
+        <span style={{ fontSize: 11, color: 'var(--tm)', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>THE VAULT</span>
+        <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+          <a href="https://www.myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 11, color: 'var(--ts)', textDecoration: 'none' }}>Privacy Policy</a>
+          <a href="https://www.myvaults.io/terms" target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 11, color: 'var(--ts)', textDecoration: 'none' }}>Terms &amp; Conditions</a>
+        </div>
+        <span style={{ fontSize: 11, color: 'var(--tm)' }}>© 2026 Abaza Business Services</span>
+      </div>
     </div>
   );
 }
