@@ -66,9 +66,9 @@ export default function AuthModal({ onClose }) {
         </button>
         <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 11, color: '#555', lineHeight: 1.5 }}>
           By continuing, you agree to our{' '}
-          <a href="https://www.myvaults.io/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Terms</a>
+          <a href="https://myvaults.io/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Terms</a>
           {' '}&amp;{' '}
-          <a href="https://www.myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
+          <a href="https://myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
         </p>
 
         <div style={styles.divider}><span>or</span></div>
@@ -113,9 +113,9 @@ export default function AuthModal({ onClose }) {
               />
               <span style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>
                 I agree to the{' '}
-                <a href="https://www.myvaults.io/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Terms &amp; Conditions</a>
+                <a href="https://myvaults.io/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Terms &amp; Conditions</a>
                 {' '}and{' '}
-                <a href="https://www.myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
+                <a href="https://myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
               </span>
             </label>
           )}

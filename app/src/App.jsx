@@ -1221,10 +1221,10 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                         {theme === "dark" ? "Light mode" : "Dark mode"}
                       </button>
                       <div style={{ borderTop: "1px solid var(--b)", margin: "4px 0" }} />
-                      <button onClick={() => { window.open("https://www.myvaults.io/privacy-policy", "_blank"); setProfileMenuOpen(false); }}>
+                      <button onClick={() => { window.open("https://myvaults.io/privacy-policy", "_blank"); setProfileMenuOpen(false); }}>
                         <span style={{ fontSize: 13 }}>🔒</span> Privacy Policy
                       </button>
-                      <button onClick={() => { window.open("https://www.myvaults.io/terms", "_blank"); setProfileMenuOpen(false); }}>
+                      <button onClick={() => { window.open("https://myvaults.io/terms", "_blank"); setProfileMenuOpen(false); }}>
                         <span style={{ fontSize: 13 }}>📄</span> Terms &amp; Conditions
                       </button>
                       <div style={{ borderTop: "1px solid var(--b)", margin: "4px 0" }} />
@@ -1691,9 +1691,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       }}>
         <span style={{ fontSize: 11, color: 'var(--tm)', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>THE VAULT</span>
         <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-          <a href="https://www.myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer"
+          <a href="https://myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 11, color: 'var(--ts)', textDecoration: 'none' }}>Privacy Policy</a>
-          <a href="https://www.myvaults.io/terms" target="_blank" rel="noopener noreferrer"
+          <a href="https://myvaults.io/terms" target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 11, color: 'var(--ts)', textDecoration: 'none' }}>Terms &amp; Conditions</a>
         </div>
         <span style={{ fontSize: 11, color: 'var(--tm)' }}>© 2026 Abaza Business Services</span>
