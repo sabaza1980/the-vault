@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './AuthContext.jsx'
+import { Analytics } from '@vercel/analytics/react'
 
 // ── eBay OAuth callback handler ───────────────────────────────────────────────
 // If the React app loads inside the eBay auth popup (e.g. the Vercel catch-all
@@ -37,5 +38,6 @@ createRoot(document.getElementById('root')).render(
     <AuthProvider>
       <App />
     </AuthProvider>
+    <Analytics />
   </StrictMode>,
 )
