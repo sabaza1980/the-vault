@@ -7,6 +7,7 @@ export default function AuthModal({ onClose }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +32,11 @@ export default function AuthModal({ onClose }) {
     setLoading(true);
     try {
       if (mode === 'signup') {
+        if (!termsAccepted) {
+          setError('Please accept the Terms & Conditions to create an account.');
+          setLoading(false);
+          return;
+        }
         await signUpWithEmail(email, password, name.trim() || undefined);
       } else {
         await signInWithEmail(email, password);
@@ -91,6 +97,22 @@ export default function AuthModal({ onClose }) {
             autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
             minLength={6}
           />
+          {mode === 'signup' && (
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                style={{ marginTop: 3, accentColor: '#6366f1', flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, color: '#888', lineHeight: 1.5 }}>
+                I agree to the{' '}
+                <a href="https://www.myvaults.io/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Terms &amp; Conditions</a>
+                {' '}and{' '}
+                <a href="https://www.myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
+              </span>
+            </label>
+          )}
           {error && <p style={styles.error}>{error}</p>}
           <button style={styles.submitBtn} type="submit" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Create Account'}
