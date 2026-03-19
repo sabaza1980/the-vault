@@ -2,6 +2,9 @@
 .env
 .env.local
 .env.*.local
+.env.*
+.env.production
+.env.staging
 
 # Capacitor native projects (large; add/remove per your workflow)
 ios/
