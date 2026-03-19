@@ -1220,6 +1220,14 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                         <span style={{ fontSize: 15 }}>{theme === "dark" ? "☀️" : "🌙"}</span>
                         {theme === "dark" ? "Light mode" : "Dark mode"}
                       </button>
+                      <div style={{ borderTop: "1px solid var(--b)", margin: "4px 0" }} />
+                      <button onClick={() => { window.open("https://www.myvaults.io/privacy-policy", "_blank"); setProfileMenuOpen(false); }}>
+                        <span style={{ fontSize: 13 }}>🔒</span> Privacy Policy
+                      </button>
+                      <button onClick={() => { window.open("https://www.myvaults.io/terms", "_blank"); setProfileMenuOpen(false); }}>
+                        <span style={{ fontSize: 13 }}>📄</span> Terms &amp; Conditions
+                      </button>
+                      <div style={{ borderTop: "1px solid var(--b)", margin: "4px 0" }} />
                       <button onClick={() => { signOut(); setProfileMenuOpen(false); }} style={{ color: "#ff6b35" }}>
                         <span style={{ fontSize: 14 }}>→</span> Sign out
                       </button>
