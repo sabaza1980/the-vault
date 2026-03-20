@@ -943,6 +943,10 @@ export default function App() {
   const [showValueBreakdown, setShowValueBreakdown] = useState(false);
   // adGate: null | { type: 'upload' | 'daily' | 'streak10' | 'value' }
   const [adGate, setAdGate] = useState(null);
+  // Non-blocking daily / streak bonus notification (set instead of auto-opening gate)
+  const [dailyBonusReady, setDailyBonusReady] = useState(null);
+  // Files waiting to be queued after the effectiveLimit Firestore update arrives
+  const [pendingAdUploadFiles, setPendingAdUploadFiles] = useState(null);
   const pendingFilesRef = useRef(null);
   const loginBonusChecked = useRef(false);
   const toggleTheme = () => setTheme(t => {
@@ -1015,12 +1019,9 @@ export default function App() {
       longest_streak: newLongest,
     });
 
-    // Show the 10-day bonus or the daily bonus modal
-    if (newStreak === 10) {
-      setAdGate({ type: 'streak10', streak: newStreak });
-    } else {
-      setAdGate({ type: 'daily', streak: newStreak });
-    }
+    // Don't auto-open a blocking modal — store as a claimable notification
+    // so the gate only appears when the user intentionally taps "Daily Bonus".
+    setDailyBonusReady({ type: newStreak === 10 ? 'streak10' : 'daily', streak: newStreak });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid, profile?.lastLoginDate]);
 
@@ -1219,21 +1220,35 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   const handleFilesRef = useRef(handleFiles);
   handleFilesRef.current = handleFiles;
 
+  // After awardCredits() the Firestore onSnapshot fires and updates effectiveLimit.
+  // At that point we process any files that were held back by the upload gate,
+  // using the freshly-updated effectiveLimit so the gate doesn't stale-reopen.
+  useEffect(() => {
+    if (!pendingAdUploadFiles?.length) return;
+    const files = pendingAdUploadFiles;
+    setPendingAdUploadFiles(null);
+    handleFilesRef.current(files);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveLimit]);
+
   const handleAdWatched = useCallback(async () => {
     const gate = adGate;
     setAdGate(null);
 
     if (gate?.type === 'upload') {
-      // Grant 3 credits first, then re-run the pending files through handleFiles
-      // so the split logic re-evaluates the new effectiveLimit.
+      // Grant 3 credits, then store files in state.
+      // The useEffect above picks them up once effectiveLimit updates from
+      // the Firestore onSnapshot — avoiding the stale-closure re-open bug.
       const files = pendingFilesRef.current;
       pendingFilesRef.current = null;
       await awardCredits(3);
-      if (files?.length) handleFilesRef.current(files);
+      if (files?.length) setPendingAdUploadFiles(Array.from(files));
     } else if (gate?.type === 'daily') {
       await awardCredits(1);
+      setDailyBonusReady(null);
     } else if (gate?.type === 'streak10') {
       await awardCredits(10);
+      setDailyBonusReady(null);
     } else if (gate?.type === 'value') {
       await unlockValueView();
       setShowValueBreakdown(true);
@@ -1489,6 +1504,23 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 </span>
                 <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</span>
               </div>
+            )}
+            {/* Daily / streak bonus claim button — non-blocking, user-initiated */}
+            {dailyBonusReady && user && (
+              <button
+                onClick={() => setAdGate({ type: dailyBonusReady.type, streak: dailyBonusReady.streak })}
+                style={{
+                  marginLeft: "auto",
+                  background: "rgba(255,165,0,0.1)",
+                  border: "1px solid rgba(255,165,0,0.3)",
+                  borderRadius: 20, padding: "5px 14px",
+                  color: "#ffa030",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+                }}
+              >
+                🎁 Daily Bonus
+              </button>
             )}
             {/* Collection value breakdown button */}
             {totalValue > 0 && user && (
