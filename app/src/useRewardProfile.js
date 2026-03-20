@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, increment } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, increment, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
 
 const FREE_LIMIT = 3;
 
 /**
- * Manages the user's reward profile (ad credits, streaks, session state).
+ * Manages the user's reward profile (ad credits, streaks, session state, referrals).
  * All data lives in users/{uid} — a top-level doc separate from the cards subcollection.
  *
  * Firestore fields used:
  *   card_credits, free_limit, current_streak, longest_streak, last_login_date,
  *   ai_session_active, ai_sessions_total, value_unlock_expires_at,
- *   ads_watched_total, tier
+ *   ads_watched_total, tier,
+ *   referral_code, referral_source, referral_rewarded, referral_count
  */
 export function useRewardProfile(user) {
   // Profile includes the uid so we can safely discard stale data on user change
@@ -22,6 +23,10 @@ export function useRewardProfile(user) {
     const ref = doc(db, 'users', user.uid);
     const unsub = onSnapshot(ref, (snap) => {
       const d = snap.data() || {};
+      // Generate referral code on first profile load if missing
+      if (!d.referral_code) {
+        setDoc(ref, { referral_code: user.uid }, { merge: true }).catch(() => {});
+      }
       setRawProfile({
         _uid:                 user.uid,
         cardCredits:          d.card_credits           ?? 0,
@@ -34,6 +39,11 @@ export function useRewardProfile(user) {
         valueUnlockExpiresAt: d.value_unlock_expires_at ?? null,
         adsWatchedTotal:      d.ads_watched_total      ?? 0,
         tier:                 d.tier                   ?? 'free',
+        // Phase 2 — Referral fields
+        referralCode:         d.referral_code          ?? null,
+        referralSource:       d.referral_source        ?? null,
+        referralRewarded:     d.referral_rewarded      ?? false,
+        referralCount:        d.referral_count         ?? 0,
       });
     });
     return unsub;
@@ -82,6 +92,44 @@ export function useRewardProfile(user) {
     }, { merge: true });
   }, [user]);
 
+  /**
+   * Apply a referral code captured from the ?ref= URL param on first signup.
+   * Awards +20 credits to the invitee (self) and stores the referrer's uid.
+   * Self-referral is blocked server-side by Firestore rules; also guarded here.
+   */
+  const applyReferral = useCallback(async (referrerUid) => {
+    if (!user || referrerUid === user.uid) return;
+    await setDoc(doc(db, 'users', user.uid), {
+      referral_source: referrerUid,
+      card_credits: increment(20),
+    }, { merge: true });
+  }, [user]);
+
+  /**
+   * Triggered when the invitee uploads their 10th card.
+   * Runs a Firestore transaction to award +20 credits to the referrer and mark
+   * referral_rewarded = true on this user's doc to prevent double-payment.
+   * The Firestore security rule verifies invitee→referrer relationship server-side.
+   */
+  const triggerReferralMilestone = useCallback(async (referrerUid) => {
+    if (!user || !referrerUid) return;
+    const inviteeRef = doc(db, 'users', user.uid);
+    const referrerRef = doc(db, 'users', referrerUid);
+    try {
+      await runTransaction(db, async (tx) => {
+        const inviteeSnap = await tx.get(inviteeRef);
+        if (inviteeSnap.data()?.referral_rewarded) return; // already paid — idempotent
+        tx.update(referrerRef, {
+          card_credits:   increment(20),
+          referral_count: increment(1),
+        });
+        tx.update(inviteeRef, { referral_rewarded: true });
+      });
+    } catch (e) {
+      console.error('Referral milestone transaction failed:', e);
+    }
+  }, [user]);
+
   // Discard stale data if uid has changed (e.g., sign out then sign in as different user)
   const profile = (user && rawProfile?._uid === user.uid) ? rawProfile : null;
 
@@ -106,5 +154,7 @@ export function useRewardProfile(user) {
     startAISession,
     endAISession,
     unlockValueView,
+    applyReferral,
+    triggerReferralMilestone,
   };
 }

@@ -801,6 +801,199 @@ const CATEGORY_EMOJI = {
 };
 
 // ── Pro — Coming Soon Modal ───────────────────────────────────────────────────
+// ── Referral Modal ────────────────────────────────────────────────────────────
+function ReferralModal({ user, profile, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const referralLink = `https://app.myvaults.io/?ref=${user.uid}`;
+
+  const handleCopy = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(referralLink).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }).catch(() => fallbackCopy());
+    } else {
+      fallbackCopy();
+    }
+  };
+
+  const fallbackCopy = () => {
+    const el = document.createElement('textarea');
+    el.value = referralLink;
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.focus();
+    el.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    document.body.removeChild(el);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Join The Vault — AI card tracking',
+        text: 'I use The Vault to track and value my card collection. Use my link to get 20 free card slots when you sign up!',
+        url: referralLink,
+      }).catch(() => {});
+    } else {
+      handleCopy();
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 600,
+        background: "rgba(0,0,0,0.9)",
+        backdropFilter: "blur(18px)",
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+        animation: "fadeIn 0.2s ease",
+        padding: "20px 0 0",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "#0e0e1c",
+          border: "1px solid #1a1a2e",
+          borderRadius: "22px 22px 0 0",
+          width: "100%", maxWidth: 480,
+          maxHeight: "88vh", overflowY: "auto",
+          padding: "28px 24px 40px",
+          display: "flex", flexDirection: "column", gap: 20,
+        }}
+      >
+        {/* Header */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🎁</div>
+          <div style={{ fontSize: 24, fontWeight: 400, color: "#f0f0f0", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, marginBottom: 10 }}>
+            Invite Friends · Earn Cards
+          </div>
+          <div style={{ fontSize: 13, color: "#666", lineHeight: 1.7 }}>
+            Share your link. Your friend gets{" "}
+            <span style={{ color: "#ff6b35", fontWeight: 700 }}>+20 card slots</span>{" "}
+            the moment they sign up — and you earn{" "}
+            <span style={{ color: "#ff6b35", fontWeight: 700 }}>+20 more</span>{" "}
+            when they add their 10th card.
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { step: "1", text: "Share your referral link below" },
+            { step: "2", text: "Friend signs up — they get +20 card slots instantly" },
+            { step: "3", text: "They add their 10th card — you earn +20 slots too" },
+          ].map(item => (
+            <div key={item.step} style={{
+              display: "flex", gap: 12, alignItems: "center",
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid #1a1a2e",
+              borderRadius: 12, padding: "10px 14px",
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: "50%",
+                background: "rgba(255,107,53,0.12)",
+                border: "1px solid rgba(255,107,53,0.3)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, fontWeight: 800, color: "#ff6b35", flexShrink: 0,
+              }}>{item.step}</div>
+              <div style={{ fontSize: 12, color: "#888" }}>{item.text}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Referral link box */}
+        <div style={{
+          background: "rgba(255,107,53,0.05)",
+          border: "1px solid rgba(255,107,53,0.2)",
+          borderRadius: 14, padding: "14px 16px",
+        }}>
+          <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, fontWeight: 600 }}>
+            Your referral link
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{
+              flex: 1, fontSize: 11, color: "#888",
+              background: "#0a0a14", borderRadius: 8, padding: "8px 10px",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              border: "1px solid #1a1a2e", fontFamily: "monospace",
+            }}>
+              {referralLink}
+            </div>
+            <button
+              onClick={handleCopy}
+              style={{
+                flexShrink: 0,
+                background: copied ? "rgba(76,175,80,0.15)" : "rgba(255,107,53,0.12)",
+                border: copied ? "1px solid rgba(76,175,80,0.4)" : "1px solid rgba(255,107,53,0.3)",
+                borderRadius: 8, padding: "8px 14px",
+                color: copied ? "#4caf50" : "#ff6b35",
+                fontSize: 12, fontWeight: 700, cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              {copied ? "✓ Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        {/* Share button */}
+        <button
+          onClick={handleShare}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            background: "linear-gradient(135deg, #ff6b35 0%, #f7931a 100%)",
+            border: "none", borderRadius: 14, padding: "13px 20px",
+            color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: 0.3,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+          Share Your Referral Link
+        </button>
+
+        {/* Referral count badge */}
+        {(profile?.referralCount ?? 0) > 0 && (
+          <div style={{
+            textAlign: "center",
+            background: "rgba(76,175,80,0.05)",
+            border: "1px solid rgba(76,175,80,0.15)",
+            borderRadius: 12, padding: "14px",
+          }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
+              {profile.referralCount}
+            </div>
+            <div style={{ fontSize: 11, color: "#555" }}>
+              {profile.referralCount === 1 ? "friend" : "friends"} completed their vault
+              &nbsp;·&nbsp;
+              <span style={{ color: "#4caf50" }}>+{profile.referralCount * 20} bonus slots earned</span>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          style={{
+            background: "transparent", border: "none",
+            color: "#444", cursor: "pointer", fontSize: 12,
+            padding: "4px", alignSelf: "center",
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProComingSoonModal({ onClose }) {
   const features = [
     { icon: "♾️", title: "Unlimited Card Storage", desc: "Add as many cards as you want with no limits and no ads." },
@@ -1030,7 +1223,7 @@ function ValueBreakdownModal({ cards, totalValue, onClose }) {
 
 export default function App() {
   const { user, signOut } = useAuth();
-  const { profile, effectiveLimit, isPro, isValueUnlocked, updateProfile, awardCredits, startAISession, endAISession, unlockValueView } = useRewardProfile(user ?? null);
+  const { profile, effectiveLimit, isPro, isValueUnlocked, updateProfile, awardCredits, startAISession, endAISession, unlockValueView, applyReferral, triggerReferralMilestone } = useRewardProfile(user ?? null);
   const [showAuth, setShowAuth] = useState(false);
   const [cards, setCards] = useState([]);
   const [queue, setQueue] = useState([]); // [{id, file, previewBase64, status}]
@@ -1049,6 +1242,8 @@ export default function App() {
   const [sellModalCards, setSellModalCards] = useState(null);
   const [showValueBreakdown, setShowValueBreakdown] = useState(false);
   const [showProComingSoon, setShowProComingSoon] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
+  const [referralNotification, setReferralNotification] = useState(null);
   // adGate: null | { type: 'upload' | 'daily' | 'streak10' | 'value' }
   const [adGate, setAdGate] = useState(null);
   // Non-blocking daily / streak bonus notification (set instead of auto-opening gate)
@@ -1078,6 +1273,12 @@ export default function App() {
   const cameraRef = useRef();
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
+
+  // Capture referral code from URL param — store before auth so it survives sign-in
+  useEffect(() => {
+    const refCode = new URLSearchParams(window.location.search).get('ref');
+    if (refCode) localStorage.setItem('vault-ref-code', refCode);
+  }, []);
 
   // Detect share URL params — show public view without requiring auth
   useEffect(() => {
@@ -1144,6 +1345,44 @@ export default function App() {
     setDailyBonusReady({ type: newStreak === 10 ? 'streak10' : 'daily', streak: newStreak });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid, profile?.lastLoginDate]);
+
+  // ── Referral: apply stored ref code for new users ─────────────────────────
+  // Runs once the profile loads for the first time (no referral_source set yet).
+  useEffect(() => {
+    if (!user || !profile || profile.referralSource) return;
+    const storedRef = localStorage.getItem('vault-ref-code');
+    if (!storedRef || storedRef === user.uid) {
+      if (storedRef) localStorage.removeItem('vault-ref-code'); // clear self-referral
+      return;
+    }
+    localStorage.removeItem('vault-ref-code');
+    applyReferral(storedRef).then(() => {
+      setReferralNotification('🎁 Welcome bonus! +20 card slots added from your invite link.');
+      setTimeout(() => setReferralNotification(null), 6000);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, !!profile?.referralSource]);
+
+  // ── Referral milestone: award referrer when invitee hits 10 cards ──────────
+  useEffect(() => {
+    if (!user || !profile?.referralSource || profile?.referralRewarded) return;
+    if (cards.length >= 10) {
+      triggerReferralMilestone(profile.referralSource);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length, user?.uid, profile?.referralSource, profile?.referralRewarded]);
+
+  // ── Referral notification: tell the referrer when they earn bonus credits ──
+  const prevReferralCountRef = useRef(null);
+  useEffect(() => {
+    if (!profile) return;
+    const count = profile.referralCount ?? 0;
+    if (prevReferralCountRef.current !== null && count > prevReferralCountRef.current) {
+      setReferralNotification('🎉 A friend reached 10 cards — you earned 20 card slots!');
+      setTimeout(() => setReferralNotification(null), 6000);
+    }
+    prevReferralCountRef.current = count;
+  }, [profile?.referralCount]);
 
   const analyzeCard = useCallback(async (item) => {
     try {
@@ -1600,6 +1839,9 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                       <button onClick={() => { window.open("https://myvaults.io/terms", "_blank"); setProfileMenuOpen(false); }}>
                         <span style={{ fontSize: 13 }}>📄</span> Terms &amp; Conditions
                       </button>
+                      <button onClick={() => { setShowReferral(true); setProfileMenuOpen(false); }}>
+                        <span style={{ fontSize: 13 }}>🎁</span> Invite Friends (+20 cards)
+                      </button>
                       <div style={{ borderTop: "1px solid var(--b)", margin: "4px 0" }} />
                       <button onClick={() => { signOut(); setProfileMenuOpen(false); }} style={{ color: "#ff6b35" }}>
                         <span style={{ fontSize: 14 }}>→</span> Sign out
@@ -1701,9 +1943,34 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         />
       )}
 
+      {/* Referral modal */}
+      {showReferral && user && (
+        <ReferralModal user={user} profile={profile} onClose={() => setShowReferral(false)} />
+      )}
+
       {/* Pro coming soon modal */}
       {showProComingSoon && (
         <ProComingSoonModal onClose={() => setShowProComingSoon(false)} />
+      )}
+
+      {/* Referral notification toast */}
+      {referralNotification && (
+        <div style={{
+          position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
+          zIndex: 900, maxWidth: 340, width: "calc(100% - 32px)",
+          background: "#0e0e1c", border: "1px solid rgba(255,107,53,0.35)",
+          borderRadius: 14, padding: "12px 16px",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
+          display: "flex", alignItems: "center", gap: 10,
+          animation: "fadeIn 0.25s ease",
+        }}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>🎁</span>
+          <span style={{ fontSize: 12, color: "#e0e0e0", lineHeight: 1.5 }}>{referralNotification}</span>
+          <button
+            onClick={() => setReferralNotification(null)}
+            style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}
+          >×</button>
+        </div>
       )}
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px" }}>
