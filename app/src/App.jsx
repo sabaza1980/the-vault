@@ -1089,7 +1089,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         * { box-sizing: border-box; }
         .nav-extra { display: flex; gap: 8px; align-items: center; }
-        @media (max-width: 500px) { .nav-extra { display: none; } }
+        @media (max-width: 360px) { .nav-extra { display: none; } }
         .profile-dropdown {
           position: absolute; top: calc(100% + 8px); right: 0;
           background: var(--card); border: 1px solid var(--b);

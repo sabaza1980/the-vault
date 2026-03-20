@@ -4,6 +4,6 @@
     { "source": "/terms",           "destination": "/website/terms.html" },
     { "source": "/blog",            "destination": "/website/blog.html" },
     { "source": "/delete-account",  "destination": "/website/delete-account.html" },
-    { "source": "/(.*)",            "destination": "/index.html" }
+    { "source": "/(.*)",            "destination": "/website/index.html" }
   ]
 }
