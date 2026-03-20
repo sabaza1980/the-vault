@@ -1693,6 +1693,31 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                   <span style={{ fontSize: 16 }}>🗂️</span> Choose Files
                 </button>
               </div>
+              {/* Card slot indicator — free tier only */}
+              {user && !isPro && profile && (() => {
+                const used = cards.length;
+                const total = effectiveLimit;
+                const remaining = Math.max(0, total - used);
+                return (
+                  <div style={{
+                    marginTop: 14,
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: remaining === 0 ? "rgba(255,68,68,0.08)" : "rgba(255,107,53,0.07)",
+                    border: `1px solid ${remaining === 0 ? "rgba(255,68,68,0.25)" : "rgba(255,107,53,0.2)"}`,
+                    borderRadius: 20, padding: "5px 14px",
+                  }}>
+                    <span style={{ fontSize: 12 }}>{remaining === 0 ? "🔒" : "🃏"}</span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600,
+                      color: remaining === 0 ? "#ff4444" : "var(--td)",
+                    }}>
+                      {remaining === 0
+                        ? "No slots left — watch an ad for +3"
+                        : `${remaining} card slot${remaining === 1 ? "" : "s"} remaining`}
+                    </span>
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>
