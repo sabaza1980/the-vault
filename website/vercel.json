@@ -4,6 +4,7 @@
     { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
     { "source": "/terms", "destination": "/terms.html" },
     { "source": "/delete-account", "destination": "/delete-account.html" },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

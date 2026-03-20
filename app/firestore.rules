@@ -1,16 +1,50 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Helper: is the requester a registered admin? ──
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ── Admin registry ──
+    // Only existing admins can read/write the admins collection
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── User cards ──
     match /users/{uid}/cards/{cardId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      // Admins can read and write any card (moderation / deletion)
+      allow read, write: if isAdmin();
     }
+
+    // ── User settings ──
     match /users/{uid}/settings/{settingId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isAdmin();
     }
-    // Public blog articles — publicly readable, only written by server-side admin SDK
+
+    // ── User profile docs ──
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isAdmin();
+    }
+
+    // ── Public blog articles ──
     match /articles/{articleId} {
       allow read: if true;
       allow write: if false;
     }
+
+    // ── Push notifications (written by admin panel, read by the app) ──
+    match /notifications/{notifId} {
+      allow read: if request.auth != null;
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
   }
 }
