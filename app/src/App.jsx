@@ -1090,8 +1090,6 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         * { box-sizing: border-box; }
-        .nav-extra { display: flex; gap: 8px; align-items: center; }
-        @media (max-width: 360px) { .nav-extra { display: none; } }
         .profile-dropdown {
           position: absolute; top: calc(100% + 8px); right: 0;
           background: var(--card); border: 1px solid var(--b);
@@ -1152,13 +1150,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             </div>
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · eBay pricing</p>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 1, minWidth: 0 }}>
-            {cards.length > 0 && (
-              <div className="nav-extra">
-                <StatBadge label="Cards" value={cards.length} color="#ff6b35" />
-                {totalValue > 0 && <StatBadge label="Est. Value" value={totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`} color="#f0c040" />}
-              </div>
-            )}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, minWidth: 0 }}>
             {cards.length > 0 && (
               <button
                 onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
@@ -1254,6 +1246,33 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           </div>
         </div>
       </div>
+
+      {/* Stats strip — shown below the fixed header when cards exist */}
+      {cards.length > 0 && (
+        <div style={{
+          borderBottom: "1px solid var(--b)",
+          background: "var(--surface)",
+        }}>
+          <div style={{
+            maxWidth: 680, margin: "0 auto",
+            padding: "10px 16px",
+            display: "flex", gap: 24, alignItems: "center",
+          }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span style={{ fontSize: 20, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{cards.length}</span>
+              <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Cards</span>
+            </div>
+            {totalValue > 0 && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>
+                  {totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`}
+                </span>
+                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px" }}>
 
