@@ -1,4 +1,7 @@
 import { useState, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
+
+const API_BASE = Capacitor.isNativePlatform() ? 'https://app.myvaults.io' : '';
 
 const RARITY_COLORS = {
   Common: '#555555', Uncommon: '#4caf50', Rare: '#2196f3',
@@ -31,7 +34,7 @@ async function loadImg(src) {
 
   // ── HTTP URLs — fetch via server-side proxy to avoid canvas taint ────────
   try {
-    const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+    const res = await fetch(`${API_BASE}/api/image-proxy?url=${encodeURIComponent(src)}`);
     if (!res.ok) throw new Error(`proxy ${res.status}`);
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -428,19 +431,22 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     const BASE = 'https://app.myvaults.io';
     const uid = user?.uid || '';
     const cardId = card ? String(card.id) : '';
+    // OG-enabled URL: bots get proper meta tags; humans are redirected to the SPA
+    const ogBase = `${BASE}/api/og`;
     const shareUrl = mode === 'card' && cardId && uid
-      ? `${BASE}?shareCard=${cardId}&uid=${uid}`
+      ? `${ogBase}?shareCard=${cardId}&uid=${uid}`
       : uid
         ? filterLabel
-          ? `${BASE}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
-          : `${BASE}?shareVault=${uid}`
+          ? `${ogBase}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+          : `${ogBase}?shareVault=${uid}`
         : BASE;
     const shareTitle = mode === 'card' ? `${cardName} — The Vault` : 'My Trading Card Vault';
     // Include the link inline so every platform gets both the description and the URL
     const cardYear = card?.year ? ` (${card.year})` : '';
+    const cardSeries = card?.fullCardName ? ` — ${card.fullCardName}` : '';
     const shareText = mode === 'card'
-      ? `Check out my ${cardName}${cardYear} card on The Vault!\n${shareUrl}`
-      : `Check out my trading card collection on The Vault!\n${shareUrl}`;
+      ? `Check out my ${cardName}${cardYear}${cardSeries} card in The Vault!\n${shareUrl}`
+      : `Check out my trading card collection in The Vault!\n${shareUrl}`;
 
     // Fix 5: never silently fail when image isn't ready
     if (!imageBlob) return 'not-ready';
