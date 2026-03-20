@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/privacy-policy", "destination": "/website/privacy-policy.html" },
+    { "source": "/terms",           "destination": "/website/terms.html" },
+    { "source": "/blog",            "destination": "/website/blog.html" },
+    { "source": "/delete-account",  "destination": "/website/delete-account.html" },
+    { "source": "/(.*)",            "destination": "/index.html" }
+  ]
+}
