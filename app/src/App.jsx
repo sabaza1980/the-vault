@@ -800,6 +800,113 @@ const CATEGORY_EMOJI = {
   "Hockey": "🏒", "Non-Sports": "🎭", "Other": "🃏", "Favourites": "★",
 };
 
+// ── Pro — Coming Soon Modal ───────────────────────────────────────────────────
+function ProComingSoonModal({ onClose }) {
+  const features = [
+    { icon: "♾️", title: "Unlimited Card Storage", desc: "Add as many cards as you want with no limits and no ads." },
+    { icon: "📊", title: "Full Collection Analytics", desc: "Live value tracking, category breakdowns, and trend charts — always on." },
+    { icon: "🤖", title: "Unlimited AI Sessions", desc: "Chat with your vault AI as much as you like, any time." },
+    { icon: "📤", title: "Priority eBay Listing", desc: "One-tap bulk listing with pre-filled card data and smart pricing." },
+    { icon: "🏷️", title: "Advanced Card Identification", desc: "Deeper parallel, grading, and serial number detection." },
+    { icon: "☁️", title: "Cloud Backup & Sync", desc: "Your collection automatically backed up and synced across all your devices." },
+  ];
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 600,
+        background: "rgba(0,0,0,0.9)",
+        backdropFilter: "blur(18px)",
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+        animation: "fadeIn 0.2s ease",
+        padding: "20px 0 0",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "#0e0e1c",
+          border: "1px solid #1a1a2e",
+          borderRadius: "22px 22px 0 0",
+          width: "100%", maxWidth: 480,
+          maxHeight: "88vh", overflowY: "auto",
+          padding: "28px 24px 40px",
+          display: "flex", flexDirection: "column", gap: 24,
+        }}
+      >
+        {/* Header */}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#ff6b35", textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+            Coming Soon
+          </div>
+          <div style={{ fontSize: 28, fontWeight: 400, color: "#f0f0f0", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, marginBottom: 10 }}>
+            The Vault Pro
+          </div>
+          <div style={{ fontSize: 13, color: "#555", lineHeight: 1.6 }}>
+            We're building a premium experience for serious collectors. Here's what's coming.
+          </div>
+        </div>
+
+        {/* Feature list */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {features.map((f) => (
+            <div key={f.title} style={{
+              display: "flex", gap: 14, alignItems: "flex-start",
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid #1a1a2e",
+              borderRadius: 14, padding: "14px 16px",
+            }}>
+              <span style={{ fontSize: 22, flexShrink: 0, marginTop: 1 }}>{f.icon}</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#e0e0e0", marginBottom: 3 }}>{f.title}</div>
+                <div style={{ fontSize: 12, color: "#555", lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Notify CTA */}
+        <div style={{
+          background: "rgba(255,107,53,0.07)",
+          border: "1px solid rgba(255,107,53,0.2)",
+          borderRadius: 16, padding: "18px 20px", textAlign: "center",
+        }}>
+          <div style={{ fontSize: 13, color: "#ff6b35", fontWeight: 700, marginBottom: 6 }}>
+            Be the first to know
+          </div>
+          <div style={{ fontSize: 12, color: "#555", marginBottom: 14, lineHeight: 1.5 }}>
+            Pro is launching soon. Early supporters get a special introductory price.
+          </div>
+          <a
+            href="mailto:hello@myvaults.io?subject=Notify me about The Vault Pro&body=I'm interested in The Vault Pro — please let me know when it launches."
+            style={{
+              display: "inline-block",
+              background: "linear-gradient(135deg, #ff6b35 0%, #f7931a 100%)",
+              border: "none", borderRadius: 12, padding: "11px 28px",
+              color: "#fff", fontWeight: 700, fontSize: 13,
+              textDecoration: "none", letterSpacing: 0.3,
+            }}
+          >
+            ✉️ Notify Me at Launch
+          </a>
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            background: "transparent", border: "none",
+            color: "#333", cursor: "pointer", fontSize: 12,
+            padding: "4px", alignSelf: "center",
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Collection Value Breakdown Modal ─────────────────────────────────────────
 function ValueBreakdownModal({ cards, totalValue, onClose }) {
   const sorted = [...cards]
@@ -941,6 +1048,7 @@ export default function App() {
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
   const [showValueBreakdown, setShowValueBreakdown] = useState(false);
+  const [showProComingSoon, setShowProComingSoon] = useState(false);
   // adGate: null | { type: 'upload' | 'daily' | 'streak10' | 'value' }
   const [adGate, setAdGate] = useState(null);
   // Non-blocking daily / streak bonus notification (set instead of auto-opening gate)
@@ -1299,8 +1407,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   const handleAdUpgrade = useCallback(() => {
     setAdGate(null);
     pendingFilesRef.current = null;
-    // TODO: Navigate to Pro upgrade / subscription flow
-    window.open("https://myvaults.io", "_blank");
+    setShowProComingSoon(true);
   }, []);
 
   const handleDrop = useCallback((e) => {
@@ -1592,6 +1699,11 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           totalValue={totalValue}
           onClose={() => setShowValueBreakdown(false)}
         />
+      )}
+
+      {/* Pro coming soon modal */}
+      {showProComingSoon && (
+        <ProComingSoonModal onClose={() => setShowProComingSoon(false)} />
       )}
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px" }}>
@@ -2058,6 +2170,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         isPro={isPro}
         aiSessionActive={profile?.aiSessionActive ?? false}
         startAISession={startAISession}
+        onUpgradeClick={() => setShowProComingSoon(true)}
       />
 
       {/* Footer */}

@@ -202,7 +202,7 @@ function SuggestedPrompts({ hasCollection, onSelect, accentColor }) {
 // Main VaultChat component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessionActive, startAISession }) {
+export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessionActive, startAISession, onUpgradeClick }) {
   const [personaId, setPersonaId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -665,7 +665,7 @@ export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessi
           rewardLine="Unlock AI Chat Session"
           isDismissable={true}
           onWatched={handleChatAdWatched}
-          onUpgrade={() => { handleChatAdDismiss(); window.open("https://myvaults.io", "_blank"); }}
+          onUpgrade={() => { handleChatAdDismiss(); onUpgradeClick?.(); }}
           onDismiss={handleChatAdDismiss}
         />
       )}
