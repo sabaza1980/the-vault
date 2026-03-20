@@ -947,6 +947,20 @@ export default function App() {
   const [dailyBonusReady, setDailyBonusReady] = useState(null);
   const pendingFilesRef = useRef(null);
   const loginBonusChecked = useRef(false);
+
+  // Always-current refs so handleFiles never captures stale closure values.
+  // Assigned every render so any call to handleFiles reads the latest state.
+  const userRef = useRef(user);
+  userRef.current = user;
+  const cardsRef = useRef(cards);
+  cardsRef.current = cards;
+  const effectiveLimitRef = useRef(effectiveLimit);
+  effectiveLimitRef.current = effectiveLimit;
+  const isProRef = useRef(isPro);
+  isProRef.current = isPro;
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
+
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
     localStorage.setItem("vault-theme", next);
@@ -1169,25 +1183,35 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     cancelBundleMode();
   }, [handleUpdate, cancelBundleMode]);
 
-  // handleFiles is defined before handleAdWatched so the ad handler can call it.
+  // handleFiles reads live values via refs so it never uses stale closure data.
+  // Keeping [runQueue] as the only dep means the function reference is stable
+  // and won't cause unnecessary re-creation on every card/profile change.
   const handleFiles = useCallback(async (files) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!imageFiles.length) return;
 
+    // Read current values from refs — always fresh, never stale.
+    const currentUser = userRef.current;
+    const currentCards = cardsRef.current;
+    const currentEffectiveLimit = effectiveLimitRef.current;
+    const currentIsPro = isProRef.current;
+    const currentProfile = profileRef.current;
+
     // ── Upload gate logic ──────────────────────────────────────────────────
     // Unsigned users: gate at 3 cards total (prompt to sign in)
-    if (user === null && cards.length >= 3) {
+    if (currentUser === null && currentCards.length >= 3) {
       setShowAuth(true);
       return;
     }
 
     // Free-tier signed-in users: split the batch at the effective limit.
     // Cards up to the limit are processed immediately; the excess is held
-    // behind the ad gate. This handles bulk uploads correctly — e.g. a user
-    // with 0 cards uploading 7 is allowed their first 3, then gated on card 4.
+    // behind the ad gate.
     let filesToProcess = imageFiles;
-    if (user && !isPro && profile) {
-      const slotsAvailable = Math.max(0, effectiveLimit - cards.length);
+    if (currentUser && !currentIsPro) {
+      // Use FREE_LIMIT (3) as a safe floor if the profile hasn't loaded yet.
+      const limit = currentProfile ? currentEffectiveLimit : 3;
+      const slotsAvailable = Math.max(0, limit - currentCards.length);
       if (slotsAvailable < imageFiles.length) {
         pendingFilesRef.current = imageFiles.slice(slotsAvailable);
         filesToProcess = imageFiles.slice(0, slotsAvailable);
@@ -1212,7 +1236,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     setQueue(prev => [...prev, ...newItems]);
     pendingQueue.current = [...pendingQueue.current, ...newItems];
     runQueue();
-  }, [runQueue, user, isPro, profile, cards.length, effectiveLimit]);
+  }, [runQueue]);
 
   // ── Ad gate resolution ─────────────────────────────────────────────────────
   // Keep a ref to adGate so handleAdWatched always reads the live value without
