@@ -79,6 +79,32 @@ function docToCard(doc) {
 }
 
 // ── Handler ──────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function ogResponse(res, { title, description, ogImage, redirectUrl }) {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  return res.status(200).send(`<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escHtml(title)}</title>
+  <meta property="og:title" content="${escHtml(title)}">
+  <meta property="og:description" content="${escHtml(description)}">
+  <meta property="og:image" content="${escHtml(ogImage)}">
+  <meta property="og:url" content="${escHtml(redirectUrl)}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="The Vault">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${escHtml(title)}">
+  <meta name="twitter:description" content="${escHtml(description)}">
+  <meta name="twitter:image" content="${escHtml(ogImage)}">
+  <meta http-equiv="refresh" content="0;url=${escHtml(redirectUrl)}">
+  <script>window.location.replace(${JSON.stringify(redirectUrl)});</script>
+</head><body><p>Opening The Vault… <a href="${escHtml(redirectUrl)}">Tap here if not redirected</a></p></body></html>`);
+}
+
 export default async function handler(req, res) {
   // CORS headers so the SPA can call this from any origin
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -86,7 +112,50 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { uid, cardId } = req.query;
+  const { uid, cardId, shareVault, shareSet, og } = req.query;
+
+  // ── OG share-link preview (no uid required for vault/set defaults) ────────
+  if (og) {
+    const BASE_APP = 'https://app.myvaults.io';
+    let title = 'The Vault — Trading Card Collection';
+    let description = 'Track, identify, value, and share your trading card collection.';
+    let ogImage = `${BASE_APP}/the-vault-icon.png`;
+    let redirectUrl = BASE_APP;
+
+    if (uid && cardId && /^[a-zA-Z0-9_-]{1,128}$/.test(uid)) {
+      redirectUrl = `${BASE_APP}?shareCard=${encodeURIComponent(cardId)}&uid=${encodeURIComponent(uid)}`;
+      // Try to fetch the card to build a rich title/description
+      try {
+        const { projectId: PID } = getServiceAccount();
+        const token = await googleToken();
+        const fsBase = `https://firestore.googleapis.com/v1/projects/${PID}/databases/(default)/documents`;
+        const r = await fetch(`${fsBase}/users/${uid}/cards/${cardId}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (r.ok) {
+          const card = docToCard(await r.json());
+          if (card.playerName) {
+            const year = card.year ? ` (${card.year})` : '';
+            const series = card.fullCardName ? ` — ${card.fullCardName}` : '';
+            const par = card.parallel && card.parallel !== 'Base' ? ` ${card.parallel}` : '';
+            const rar = card.rarity && card.rarity !== 'Common' ? ` — ${card.rarity}` : '';
+            title = `Check out my ${card.playerName}${year} card in The Vault!`;
+            description = `${series}${par}${rar}. Tracked and valued on The Vault.`.trim().replace(/^[—\s]+/, '');
+            if (card.imageUrl && card.imageUrl.startsWith('https://')) ogImage = card.imageUrl;
+          }
+        }
+      } catch { /* use defaults */ }
+    } else if (uid && shareSet && /^[a-zA-Z0-9_-]{1,128}$/.test(uid)) {
+      const setName = decodeURIComponent(shareSet);
+      redirectUrl = `${BASE_APP}?shareSet=${encodeURIComponent(shareSet)}&uid=${encodeURIComponent(uid)}`;
+      title = `Check out my ${setName} collection in The Vault!`;
+      description = 'View my trading card set — tracked, identified, and valued on The Vault.';
+    } else if (uid && shareVault && /^[a-zA-Z0-9_-]{1,128}$/.test(uid)) {
+      redirectUrl = `${BASE_APP}?shareVault=${encodeURIComponent(uid)}`;
+      title = 'Check out my trading card vault in The Vault!';
+      description = 'View my complete trading card collection — tracked, identified, and valued on The Vault.';
+    }
+    return ogResponse(res, { title, description, ogImage, redirectUrl });
+  }
+
   if (!uid) return res.status(400).json({ error: 'uid is required' });
 
   // Basic sanity — uid must look like a Firebase UID

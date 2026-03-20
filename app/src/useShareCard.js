@@ -432,13 +432,13 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     const uid = user?.uid || '';
     const cardId = card ? String(card.id) : '';
     // OG-enabled URL: bots get proper meta tags; humans are redirected to the SPA
-    const ogBase = `${BASE}/api/og`;
+    const ogBase = `${BASE}/api/public-card`;
     const shareUrl = mode === 'card' && cardId && uid
-      ? `${ogBase}?shareCard=${cardId}&uid=${uid}`
+      ? `${ogBase}?og=1&cardId=${cardId}&uid=${uid}`
       : uid
         ? filterLabel
-          ? `${ogBase}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
-          : `${ogBase}?shareVault=${uid}`
+          ? `${ogBase}?og=1&shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+          : `${ogBase}?og=1&shareVault=1&uid=${uid}`
         : BASE;
     const shareTitle = mode === 'card' ? `${cardName} — The Vault` : 'My Trading Card Vault';
     // Include the link inline so every platform gets both the description and the URL
