@@ -945,8 +945,6 @@ export default function App() {
   const [adGate, setAdGate] = useState(null);
   // Non-blocking daily / streak bonus notification (set instead of auto-opening gate)
   const [dailyBonusReady, setDailyBonusReady] = useState(null);
-  // Files waiting to be queued after the effectiveLimit Firestore update arrives
-  const [pendingAdUploadFiles, setPendingAdUploadFiles] = useState(null);
   const pendingFilesRef = useRef(null);
   const loginBonusChecked = useRef(false);
   const toggleTheme = () => setTheme(t => {
@@ -1217,32 +1215,46 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   }, [runQueue, user, isPro, profile, cards.length, effectiveLimit]);
 
   // ── Ad gate resolution ─────────────────────────────────────────────────────
-  const handleFilesRef = useRef(handleFiles);
-  handleFilesRef.current = handleFiles;
-
-  // After awardCredits() the Firestore onSnapshot fires and updates effectiveLimit.
-  // At that point we process any files that were held back by the upload gate,
-  // using the freshly-updated effectiveLimit so the gate doesn't stale-reopen.
-  useEffect(() => {
-    if (!pendingAdUploadFiles?.length) return;
-    const files = pendingAdUploadFiles;
-    setPendingAdUploadFiles(null);
-    handleFilesRef.current(files);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveLimit]);
+  // Keep a ref to adGate so handleAdWatched always reads the live value without
+  // needing adGate in its dep array (which would cause it to be recreated on
+  // every state change and confuse AdGateModal's onWatched useEffect).
+  const adGateRef = useRef(adGate);
+  adGateRef.current = adGate;
 
   const handleAdWatched = useCallback(async () => {
-    const gate = adGate;
-    setAdGate(null);
+    const gate = adGateRef.current;
+    setAdGate(null); // close the modal immediately
 
     if (gate?.type === 'upload') {
-      // Grant 3 credits, then store files in state.
-      // The useEffect above picks them up once effectiveLimit updates from
-      // the Firestore onSnapshot — avoiding the stale-closure re-open bug.
-      const files = pendingFilesRef.current;
+      const allPending = pendingFilesRef.current ? Array.from(pendingFilesRef.current) : [];
       pendingFilesRef.current = null;
+
+      // Award 3 credits then directly queue up to 3 of the pending files
+      // (the slots the user just earned). We bypass handleFiles here so we
+      // don't hit the stale effectiveLimit closure — we KNOW the user earned
+      // exactly 3 slots regardless of what Firestore has propagated yet.
       await awardCredits(3);
-      if (files?.length) setPendingAdUploadFiles(Array.from(files));
+
+      const EARNED = 3;
+      const toAdd   = allPending.slice(0, EARNED);
+      const overflow = allPending.slice(EARNED);
+
+      if (toAdd.length) {
+        const newItems = await Promise.all(toAdd.map(async (file) => {
+          const { base64, mediaType, previewSrc } = await resizeImageFile(file);
+          return { id: Date.now() + Math.random(), file, base64, mediaType, previewSrc, name: file.name, status: 'pending' };
+        }));
+        setQueue(prev => [...prev, ...newItems]);
+        pendingQueue.current = [...pendingQueue.current, ...newItems];
+        runQueue();
+      }
+
+      // If there are still more files beyond the earned slots, re-gate them
+      // after a short pause so the user can see the modal close first.
+      if (overflow.length) {
+        pendingFilesRef.current = overflow;
+        setTimeout(() => setAdGate({ type: 'upload' }), 600);
+      }
     } else if (gate?.type === 'daily') {
       await awardCredits(1);
       setDailyBonusReady(null);
@@ -1253,7 +1265,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       await unlockValueView();
       setShowValueBreakdown(true);
     }
-  }, [adGate, awardCredits, unlockValueView]);
+  }, [awardCredits, unlockValueView, runQueue]);
 
   const handleAdDismiss = useCallback(() => {
     pendingFilesRef.current = null;
