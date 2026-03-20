@@ -879,7 +879,7 @@ function ProComingSoonModal({ onClose }) {
             Pro is launching soon. Early supporters get a special introductory price.
           </div>
           <a
-            href="mailto:hello@myvaults.io?subject=Notify me about The Vault Pro&body=I'm interested in The Vault Pro — please let me know when it launches."
+            href="mailto:cards@myvaults.io?subject=Notify me about The Vault Pro&body=I'm interested in The Vault Pro — please let me know when it launches."
             style={{
               display: "inline-block",
               background: "linear-gradient(135deg, #ff6b35 0%, #f7931a 100%)",
