@@ -1170,65 +1170,34 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     cancelBundleMode();
   }, [handleUpdate, cancelBundleMode]);
 
-  // ── Ad gate resolution ─────────────────────────────────────────────────────
-  const handleAdWatched = useCallback(async () => {
-    const gate = adGate;
-    setAdGate(null);
-
-    if (gate?.type === 'upload') {
-      // Grant 3 credits, then process the queued files
-      await awardCredits(3);
-      const files = pendingFilesRef.current;
-      pendingFilesRef.current = null;
-      if (files?.length) {
-        const newItems = await Promise.all(files.map(async (file) => {
-          const { base64, mediaType, previewSrc } = await resizeImageFile(file);
-          return { id: Date.now() + Math.random(), file, base64, mediaType, previewSrc, name: file.name, status: "pending" };
-        }));
-        setQueue(prev => [...prev, ...newItems]);
-        pendingQueue.current = [...pendingQueue.current, ...newItems];
-        runQueue();
-      }
-    } else if (gate?.type === 'daily') {
-      await awardCredits(1);
-    } else if (gate?.type === 'streak10') {
-      await awardCredits(10);
-    } else if (gate?.type === 'value') {
-      await unlockValueView();
-      setShowValueBreakdown(true);
-    }
-  }, [adGate, awardCredits, unlockValueView, runQueue]);
-
-  const handleAdDismiss = useCallback(() => {
-    pendingFilesRef.current = null;
-    setAdGate(null);
-  }, []);
-
-  const handleAdUpgrade = useCallback(() => {
-    setAdGate(null);
-    pendingFilesRef.current = null;
-    // TODO: Navigate to Pro upgrade / subscription flow
-    window.open("https://myvaults.io", "_blank");
-  }, []);
-
+  // handleFiles is defined before handleAdWatched so the ad handler can call it.
   const handleFiles = useCallback(async (files) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!imageFiles.length) return;
 
     // ── Upload gate logic ──────────────────────────────────────────────────
-    // Unsigned users: gate at 3 cards (prompt to sign in)
+    // Unsigned users: gate at 3 cards total (prompt to sign in)
     if (user === null && cards.length >= 3) {
       setShowAuth(true);
       return;
     }
-    // Free-tier signed-in users: gate every 3 cards after the first free_limit
-    if (user && !isPro && profile && cards.length >= effectiveLimit) {
-      pendingFilesRef.current = imageFiles;
-      setAdGate({ type: 'upload' });
-      return;
+
+    // Free-tier signed-in users: split the batch at the effective limit.
+    // Cards up to the limit are processed immediately; the excess is held
+    // behind the ad gate. This handles bulk uploads correctly — e.g. a user
+    // with 0 cards uploading 7 is allowed their first 3, then gated on card 4.
+    let filesToProcess = imageFiles;
+    if (user && !isPro && profile) {
+      const slotsAvailable = Math.max(0, effectiveLimit - cards.length);
+      if (slotsAvailable < imageFiles.length) {
+        pendingFilesRef.current = imageFiles.slice(slotsAvailable);
+        filesToProcess = imageFiles.slice(0, slotsAvailable);
+        setAdGate({ type: 'upload' });
+        if (filesToProcess.length === 0) return; // already at limit — gate only
+      }
     }
 
-    const newItems = await Promise.all(imageFiles.map(async (file) => {
+    const newItems = await Promise.all(filesToProcess.map(async (file) => {
       const { base64, mediaType, previewSrc } = await resizeImageFile(file);
       return {
         id: Date.now() + Math.random(),
@@ -1245,6 +1214,43 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     pendingQueue.current = [...pendingQueue.current, ...newItems];
     runQueue();
   }, [runQueue, user, isPro, profile, cards.length, effectiveLimit]);
+
+  // ── Ad gate resolution ─────────────────────────────────────────────────────
+  const handleFilesRef = useRef(handleFiles);
+  handleFilesRef.current = handleFiles;
+
+  const handleAdWatched = useCallback(async () => {
+    const gate = adGate;
+    setAdGate(null);
+
+    if (gate?.type === 'upload') {
+      // Grant 3 credits first, then re-run the pending files through handleFiles
+      // so the split logic re-evaluates the new effectiveLimit.
+      const files = pendingFilesRef.current;
+      pendingFilesRef.current = null;
+      await awardCredits(3);
+      if (files?.length) handleFilesRef.current(files);
+    } else if (gate?.type === 'daily') {
+      await awardCredits(1);
+    } else if (gate?.type === 'streak10') {
+      await awardCredits(10);
+    } else if (gate?.type === 'value') {
+      await unlockValueView();
+      setShowValueBreakdown(true);
+    }
+  }, [adGate, awardCredits, unlockValueView]);
+
+  const handleAdDismiss = useCallback(() => {
+    pendingFilesRef.current = null;
+    setAdGate(null);
+  }, []);
+
+  const handleAdUpgrade = useCallback(() => {
+    setAdGate(null);
+    pendingFilesRef.current = null;
+    // TODO: Navigate to Pro upgrade / subscription flow
+    window.open("https://myvaults.io", "_blank");
+  }, []);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
