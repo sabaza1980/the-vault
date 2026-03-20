@@ -4,6 +4,20 @@
     { "source": "/ebay-callback.html", "destination": "/ebay-callback.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
+    }
+  ],
+  "functions": {
+    "api/analyze.js": { "maxDuration": 60 },
+    "api/chat.js": { "maxDuration": 60 }
+  },
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",

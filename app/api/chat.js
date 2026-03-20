@@ -15,6 +15,7 @@ const DEFAULT_MAX_TOKENS = 800;
 const MAX_TOKENS_CEILING = 1200;
 
 export default async function handler(req, res) {
+  if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
