@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
 import AuthModal from "./AuthModal";
@@ -9,6 +10,7 @@ import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 
 function resizeImageFile(file) {
   return new Promise((resolve) => {
@@ -35,7 +37,7 @@ function resizeImageFile(file) {
 
 async function fetchEbaySales(cardInfo) {
   try {
-    const res = await fetch("/api/ebay-sales", {
+    const res = await fetch(`${API_BASE}/api/ebay-sales`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -219,7 +221,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
 }`
       });
 
-      const response = await fetch("/api/analyze", {
+      const response = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 600, messages: [{ role: "user", content }] })
@@ -834,12 +836,12 @@ export default function App() {
     if (!uid) return;
 
     if (shareCard) {
-      fetch(`/api/public-card?uid=${encodeURIComponent(uid)}&cardId=${encodeURIComponent(shareCard)}`)
+      fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}&cardId=${encodeURIComponent(shareCard)}`)
         .then(r => r.ok ? r.json() : null)
         .then(card => { if (card && !card.error) setPublicView({ mode: 'card', card }); })
         .catch(() => {});
     } else if (shareSet) {
-      fetch(`/api/public-card?uid=${encodeURIComponent(uid)}`)
+      fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           const all = data?.cards || [];
@@ -849,7 +851,7 @@ export default function App() {
         })
         .catch(() => {});
     } else if (shareVault) {
-      fetch(`/api/public-card?uid=${encodeURIComponent(uid)}`)
+      fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           const all = data?.cards || [];
@@ -868,7 +870,7 @@ export default function App() {
       const mediaType = item.mediaType;
       const imageUrl = `data:${mediaType};base64,${base64}`;
 
-      const response = await fetch("/api/analyze", {
+      const response = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

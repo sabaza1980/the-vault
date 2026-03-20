@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Capacitor } from "@capacitor/core";
 import { ALL_PERSONAS, getPersona } from "./ai/personas.js";
 import { buildSystemPrompt } from "./ai/systemPrompt.js";
 import { buildCollectionContext } from "./ai/collectionContext.js";
 
 const CHAT_MODEL = "claude-sonnet-4-20250514";
+const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PersonaSelector
@@ -263,7 +265,7 @@ export default function VaultChat({ cards, isOpen, onClose }) {
           .filter((m) => !(m.role === "assistant" && m.isWelcome))
           .map((m) => ({ role: m.role, content: m.content }));
 
-        const res = await fetch("/api/chat", {
+        const res = await fetch(`${API_BASE}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
