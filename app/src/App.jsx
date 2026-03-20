@@ -1074,6 +1074,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     });
 
   const rareCounts = cards.filter(c => ["Rare", "Very Rare", "Ultra Rare", "Legendary"].includes(c.rarity)).length;
+  const totalValue = cards.reduce((s, c) => s + (c.estimatedValue || 0), 0);
 
   const activeQueue = queue.filter(q => q.status !== "done");
   const isProcessingNow = queue.some(q => q.status === "processing");
@@ -1153,7 +1154,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             {cards.length > 0 && (
               <div className="nav-extra">
                 <StatBadge label="Cards" value={cards.length} color="#ff6b35" />
-                {rareCounts > 0 && <StatBadge label="Rare+" value={rareCounts} color="#9c27b0" />}
+                {totalValue > 0 && <StatBadge label="Est. Value" value={totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`} color="#f0c040" />}
               </div>
             )}
             {cards.length > 0 && (
@@ -1410,11 +1411,13 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
               {categories.filter(c => c !== "All" && c !== "Favourites").map(cat => {
                 const img = CATEGORY_IMAGES[cat];
                 const emoji = CATEGORY_EMOJI[cat] || "🃏";
-                const count = cards.filter(c =>
+                const catCards = cards.filter(c =>
                   cat === "Other"
                     ? (!c.cardCategory || c.cardCategory === "Other" || c.cardCategory === "Unknown")
                     : c.cardCategory === cat
-                ).length;
+                );
+                const count = catCards.length;
+                const catValue = catCards.reduce((s, c) => s + (c.estimatedValue || 0), 0);
                 const isActive = filter === cat;
                 return (
                   <button
@@ -1443,6 +1446,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                     }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: 0.7, lineHeight: 1.3 }}>{cat}</div>
                       <div style={{ fontSize: 9, color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>{count} card{count !== 1 ? "s" : ""}</div>
+                      {catValue > 0 && <div style={{ fontSize: 9, color: "rgba(240,192,64,0.9)", fontWeight: 700 }}>{catValue >= 1000 ? `$${(catValue / 1000).toFixed(1)}k` : `$${Math.round(catValue)}`}</div>}
                     </div>
                   </button>
                 );
