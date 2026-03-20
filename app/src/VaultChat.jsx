@@ -3,6 +3,7 @@ import { Capacitor } from "@capacitor/core";
 import { ALL_PERSONAS, getPersona } from "./ai/personas.js";
 import { buildSystemPrompt } from "./ai/systemPrompt.js";
 import { buildCollectionContext } from "./ai/collectionContext.js";
+import AdGateModal from "./AdGateModal.jsx";
 
 const CHAT_MODEL = "claude-sonnet-4-20250514";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
@@ -201,12 +202,15 @@ function SuggestedPrompts({ hasCollection, onSelect, accentColor }) {
 // Main VaultChat component
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function VaultChat({ cards, isOpen, onClose }) {
+export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessionActive, startAISession }) {
   const [personaId, setPersonaId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // AI chat gate state
+  const [chatGateVisible, setChatGateVisible] = useState(false);
+  const pendingPersonaIdRef = useRef(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -238,12 +242,18 @@ export default function VaultChat({ cards, isOpen, onClose }) {
 
   const selectPersona = useCallback(
     (id) => {
+      // Gate: free-tier users need to watch an ad to start each chat session
+      if (user && !isPro && !aiSessionActive) {
+        pendingPersonaIdRef.current = id;
+        setChatGateVisible(true);
+        return;
+      }
       const p = getPersona(id);
       setPersonaId(id);
       setMessages([{ role: "assistant", content: p.welcomeMessage }]);
       setError(null);
     },
-    []
+    [user, isPro, aiSessionActive]
   );
 
   const sendMessage = useCallback(
@@ -316,6 +326,24 @@ export default function VaultChat({ cards, isOpen, onClose }) {
     setMessages([]);
     setInput("");
     setError(null);
+  }, []);
+
+  const handleChatAdWatched = useCallback(async () => {
+    setChatGateVisible(false);
+    await startAISession?.();
+    const id = pendingPersonaIdRef.current;
+    pendingPersonaIdRef.current = null;
+    if (id) {
+      const p = getPersona(id);
+      setPersonaId(id);
+      setMessages([{ role: "assistant", content: p.welcomeMessage }]);
+      setError(null);
+    }
+  }, [startAISession]);
+
+  const handleChatAdDismiss = useCallback(() => {
+    setChatGateVisible(false);
+    pendingPersonaIdRef.current = null;
   }, []);
 
   if (!isOpen) return null;
@@ -628,6 +656,19 @@ export default function VaultChat({ cards, isOpen, onClose }) {
           </>
         )}
       </div>
+
+      {/* AI chat ad gate */}
+      {chatGateVisible && (
+        <AdGateModal
+          title="Chat with The Vault AI"
+          description="Watch a short ad to start an AI session. Your session stays active for as long as the chat is open."
+          rewardLine="Unlock AI Chat Session"
+          isDismissable={true}
+          onWatched={handleChatAdWatched}
+          onUpgrade={() => { handleChatAdDismiss(); window.open("https://myvaults.io", "_blank"); }}
+          onDismiss={handleChatAdDismiss}
+        />
+      )}
     </>
   );
 }

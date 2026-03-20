@@ -2,10 +2,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "./AuthContext";
 import { useFirestoreSync } from "./useFirestoreSync";
+import { useRewardProfile } from "./useRewardProfile";
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
+import AdGateModal from "./AdGateModal";
 import { storage } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -798,8 +800,130 @@ const CATEGORY_EMOJI = {
   "Hockey": "🏒", "Non-Sports": "🎭", "Other": "🃏", "Favourites": "★",
 };
 
+// ── Collection Value Breakdown Modal ─────────────────────────────────────────
+function ValueBreakdownModal({ cards, totalValue, onClose }) {
+  const sorted = [...cards]
+    .filter(c => c.estimatedValue > 0)
+    .sort((a, b) => b.estimatedValue - a.estimatedValue);
+
+  const byCategory = cards.reduce((acc, c) => {
+    if (!c.estimatedValue) return acc;
+    const cat = c.cardCategory || "Other";
+    acc[cat] = (acc[cat] || 0) + c.estimatedValue;
+    return acc;
+  }, {});
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 400,
+        background: "rgba(0,0,0,0.85)",
+        backdropFilter: "blur(16px)",
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+        animation: "fadeIn 0.2s ease",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: "var(--card)",
+          border: "1px solid var(--b)",
+          borderRadius: "20px 20px 0 0",
+          width: "100%", maxWidth: 680,
+          maxHeight: "80vh",
+          display: "flex", flexDirection: "column",
+          overflow: "hidden",
+          boxShadow: "0 -20px 60px rgba(0,0,0,0.4)",
+        }}
+      >
+        {/* Header */}
+        <div style={{
+          padding: "16px 20px 14px",
+          borderBottom: "1px solid var(--b)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexShrink: 0,
+        }}>
+          <div>
+            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 3 }}>Collection Value</div>
+            <div style={{ fontSize: 28, fontWeight: 400, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
+              {totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(2)}k` : `$${totalValue.toFixed(2)}`}
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            background: "var(--gbg)", border: "1px solid var(--b)",
+            borderRadius: 20, padding: "6px 16px",
+            color: "var(--ts)", fontSize: 11, fontWeight: 600, cursor: "pointer",
+          }}>✕ Close</button>
+        </div>
+
+        <div style={{ overflowY: "auto", flex: 1, padding: "16px 20px 32px" }}>
+          {/* Category breakdown */}
+          {Object.keys(byCategory).length > 1 && (
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 10 }}>By Category</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {Object.entries(byCategory).sort((a, b) => b[1] - a[1]).map(([cat, val]) => {
+                  const pct = Math.round((val / totalValue) * 100);
+                  return (
+                    <div key={cat} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 90, fontSize: 11, color: "var(--ts)", flexShrink: 0 }}>{cat}</div>
+                      <div style={{ flex: 1, height: 5, background: "var(--deep)", borderRadius: 3, overflow: "hidden" }}>
+                        <div style={{ width: `${pct}%`, height: "100%", background: "linear-gradient(90deg, #f0c040, #ff6b35)", borderRadius: 3 }} />
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#f0c040", width: 55, textAlign: "right", flexShrink: 0 }}>
+                        ${val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toFixed(0)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Per-card list */}
+          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 10 }}>
+            Cards by Value ({sorted.length} with eBay data)
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {sorted.map((card, i) => {
+              const rarityColors = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#f44336" };
+              const rc = rarityColors[card.rarity] || "#555";
+              return (
+                <div key={card.id} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  background: "var(--deep)", border: "1px solid var(--b)",
+                  borderRadius: 10, padding: "8px 12px",
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: "var(--tg)", width: 20, textAlign: "right", flexShrink: 0 }}>#{i + 1}</div>
+                  <div style={{ width: 36, height: 49, borderRadius: 5, overflow: "hidden", flexShrink: 0, border: `1px solid ${rc}30` }}>
+                    <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--t)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.playerName}</div>
+                    <div style={{ fontSize: 10, color: "var(--tg)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.fullCardName}</div>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#4caf50", flexShrink: 0, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 0.5 }}>
+                    ${card.estimatedValue.toFixed(2)}
+                  </div>
+                </div>
+              );
+            })}
+            {sorted.length === 0 && (
+              <div style={{ textAlign: "center", padding: "30px 0", color: "var(--tg)", fontSize: 12 }}>
+                No eBay price data yet — expand cards to fetch pricing.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { user, signOut } = useAuth();
+  const { profile, effectiveLimit, isPro, isValueUnlocked, updateProfile, awardCredits, startAISession, endAISession, unlockValueView } = useRewardProfile(user ?? null);
   const [showAuth, setShowAuth] = useState(false);
   const [cards, setCards] = useState([]);
   const [queue, setQueue] = useState([]); // [{id, file, previewBase64, status}]
@@ -816,6 +940,11 @@ export default function App() {
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
+  const [showValueBreakdown, setShowValueBreakdown] = useState(false);
+  // adGate: null | { type: 'upload' | 'daily' | 'streak10' | 'value' }
+  const [adGate, setAdGate] = useState(null);
+  const pendingFilesRef = useRef(null);
+  const loginBonusChecked = useRef(false);
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
     localStorage.setItem("vault-theme", next);
@@ -863,6 +992,37 @@ export default function App() {
 
   // Sync cards to/from Firestore when the user is signed in.
   useFirestoreSync(user ?? null, cards, setCards);
+
+  // ── Daily login bonus & streak check ──────────────────────────────────────
+  // Runs once per session after the user profile loads.
+  // The streak counter is always incremented on login; the ad gate grants the credit reward.
+  useEffect(() => {
+    if (!user || !profile || isPro || loginBonusChecked.current) return;
+    loginBonusChecked.current = true;
+
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    if (profile.lastLoginDate === today) return; // already logged in today
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const isConsecutive = profile.lastLoginDate === yesterday;
+    const newStreak = isConsecutive ? profile.currentStreak + 1 : 1;
+    const newLongest = Math.max(newStreak, profile.longestStreak);
+
+    // Update the streak in Firestore regardless of whether the user watches the ad
+    updateProfile({
+      last_login_date: today,
+      current_streak: newStreak,
+      longest_streak: newLongest,
+    });
+
+    // Show the 10-day bonus or the daily bonus modal
+    if (newStreak === 10) {
+      setAdGate({ type: 'streak10', streak: newStreak });
+    } else {
+      setAdGate({ type: 'daily', streak: newStreak });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, profile?.lastLoginDate]);
 
   const analyzeCard = useCallback(async (item) => {
     try {
@@ -1010,9 +1170,63 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     cancelBundleMode();
   }, [handleUpdate, cancelBundleMode]);
 
+  // ── Ad gate resolution ─────────────────────────────────────────────────────
+  const handleAdWatched = useCallback(async () => {
+    const gate = adGate;
+    setAdGate(null);
+
+    if (gate?.type === 'upload') {
+      // Grant 3 credits, then process the queued files
+      await awardCredits(3);
+      const files = pendingFilesRef.current;
+      pendingFilesRef.current = null;
+      if (files?.length) {
+        const newItems = await Promise.all(files.map(async (file) => {
+          const { base64, mediaType, previewSrc } = await resizeImageFile(file);
+          return { id: Date.now() + Math.random(), file, base64, mediaType, previewSrc, name: file.name, status: "pending" };
+        }));
+        setQueue(prev => [...prev, ...newItems]);
+        pendingQueue.current = [...pendingQueue.current, ...newItems];
+        runQueue();
+      }
+    } else if (gate?.type === 'daily') {
+      await awardCredits(1);
+    } else if (gate?.type === 'streak10') {
+      await awardCredits(10);
+    } else if (gate?.type === 'value') {
+      await unlockValueView();
+      setShowValueBreakdown(true);
+    }
+  }, [adGate, awardCredits, unlockValueView, runQueue]);
+
+  const handleAdDismiss = useCallback(() => {
+    pendingFilesRef.current = null;
+    setAdGate(null);
+  }, []);
+
+  const handleAdUpgrade = useCallback(() => {
+    setAdGate(null);
+    pendingFilesRef.current = null;
+    // TODO: Navigate to Pro upgrade / subscription flow
+    window.open("https://myvaults.io", "_blank");
+  }, []);
+
   const handleFiles = useCallback(async (files) => {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (!imageFiles.length) return;
+
+    // ── Upload gate logic ──────────────────────────────────────────────────
+    // Unsigned users: gate at 3 cards (prompt to sign in)
+    if (user === null && cards.length >= 3) {
+      setShowAuth(true);
+      return;
+    }
+    // Free-tier signed-in users: gate every 3 cards after the first free_limit
+    if (user && !isPro && profile && cards.length >= effectiveLimit) {
+      pendingFilesRef.current = imageFiles;
+      setAdGate({ type: 'upload' });
+      return;
+    }
 
     const newItems = await Promise.all(imageFiles.map(async (file) => {
       const { base64, mediaType, previewSrc } = await resizeImageFile(file);
@@ -1030,7 +1244,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
     setQueue(prev => [...prev, ...newItems]);
     pendingQueue.current = [...pendingQueue.current, ...newItems];
     runQueue();
-  }, [runQueue]);
+  }, [runQueue, user, isPro, profile, cards.length, effectiveLimit]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
@@ -1270,8 +1484,40 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</span>
               </div>
             )}
+            {/* Collection value breakdown button */}
+            {totalValue > 0 && user && (
+              <button
+                onClick={() => {
+                  if (isPro || isValueUnlocked) {
+                    setShowValueBreakdown(true);
+                  } else {
+                    setAdGate({ type: 'value' });
+                  }
+                }}
+                style={{
+                  marginLeft: "auto",
+                  background: isValueUnlocked || isPro ? "rgba(240,192,64,0.1)" : "rgba(255,255,255,0.04)",
+                  border: isValueUnlocked || isPro ? "1px solid rgba(240,192,64,0.25)" : "1px solid var(--b)",
+                  borderRadius: 20, padding: "5px 14px",
+                  color: isValueUnlocked || isPro ? "#f0c040" : "var(--td)",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+              >
+                {isValueUnlocked || isPro ? "📊 Full Breakdown" : "🔒 Full Breakdown"}
+              </button>
+            )}
           </div>
         </div>
+      )}
+
+      {/* Collection value breakdown modal */}
+      {showValueBreakdown && (
+        <ValueBreakdownModal
+          cards={cards}
+          totalValue={totalValue}
+          onClose={() => setShowValueBreakdown(false)}
+        />
       )}
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px" }}>
@@ -1705,7 +1951,14 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
       <VaultChat
         cards={cards}
         isOpen={showChat}
-        onClose={() => setShowChat(false)}
+        onClose={async () => {
+          setShowChat(false);
+          if (user && !isPro) await endAISession();
+        }}
+        user={user}
+        isPro={isPro}
+        aiSessionActive={profile?.aiSessionActive ?? false}
+        startAISession={startAISession}
       />
 
       {/* Footer */}
@@ -1723,6 +1976,54 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
         </div>
         <span style={{ fontSize: 11, color: 'var(--tm)' }}>© 2026 Abaza Business Services</span>
       </div>
+
+      {/* ── Ad gate modals ────────────────────────────────────────────────── */}
+      {adGate?.type === 'upload' && (
+        <AdGateModal
+          title="Unlock 3 More Card Slots"
+          description="Watch a short ad to add 3 more cards to your vault. It's a fair trade."
+          rewardLine="+3 card credits"
+          isDismissable={false}
+          onWatched={handleAdWatched}
+          onUpgrade={handleAdUpgrade}
+          onDismiss={handleAdDismiss}
+        />
+      )}
+      {adGate?.type === 'daily' && (
+        <AdGateModal
+          title={`Day ${adGate.streak} — Claim Your Daily Card!`}
+          description="Watch a short ad to claim today's card credit bonus."
+          rewardLine="+1 card credit"
+          streakCount={adGate.streak}
+          isDismissable={true}
+          onWatched={handleAdWatched}
+          onUpgrade={handleAdUpgrade}
+          onDismiss={handleAdDismiss}
+        />
+      )}
+      {adGate?.type === 'streak10' && (
+        <AdGateModal
+          title="🔥 10-Day Streak!"
+          description="You've logged in 10 days in a row. Watch an ad to claim your bonus card pack."
+          rewardLine="+10 card credits"
+          streakCount={10}
+          isDismissable={false}
+          onWatched={handleAdWatched}
+          onUpgrade={handleAdUpgrade}
+          onDismiss={handleAdDismiss}
+        />
+      )}
+      {adGate?.type === 'value' && (
+        <AdGateModal
+          title="Your Collection Value Breakdown"
+          description={`Your collection is estimated at ${totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`}. Watch a short ad to see the full per-card breakdown, unlocked for 24 hours.`}
+          rewardLine="24-Hour Breakdown Unlock"
+          isDismissable={true}
+          onWatched={handleAdWatched}
+          onUpgrade={handleAdUpgrade}
+          onDismiss={handleAdDismiss}
+        />
+      )}
     </div>
   );
 }

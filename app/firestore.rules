@@ -17,7 +17,12 @@ service cloud.firestore {
     // ── User cards ──
     match /users/{uid}/cards/{cardId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
-      // Admins can read and write any card (moderation / deletion)
+      allow read, write: if isAdmin();
+    }
+
+    // ── Collection group access for admin panel ──
+    // Allows collectionGroup('cards') queries across all user subcollections
+    match /{path=**}/cards/{cardId} {
       allow read, write: if isAdmin();
     }
 
@@ -28,8 +33,9 @@ service cloud.firestore {
     }
 
     // ── User profile docs ──
+    // Users can read/write their own profile doc (reward credits, streaks, AI session, etc.)
     match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if request.auth != null && request.auth.uid == uid;
       allow read, write: if isAdmin();
     }
 
