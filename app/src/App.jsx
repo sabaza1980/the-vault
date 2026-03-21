@@ -10,7 +10,7 @@ import ShareModal from "./ShareModal";
 import AdGateModal from "./AdGateModal";
 import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import { collection, doc, query, where, orderBy, limit, onSnapshot, updateDoc, setDoc, increment } from "firebase/firestore";
+import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, increment } from "firebase/firestore";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
@@ -1388,25 +1388,31 @@ export default function App() {
   }, [profile?.referralCount]);
 
   // ── Per-user credit gift notifications (admin → specific user) ──
+  const shownNotifIds = useRef(new Set());
   useEffect(() => {
     if (!user?.uid) return;
-    const q = query(
+    shownNotifIds.current.clear();
+    // Listen to the whole subcollection — no where() clause avoids
+    // any query-permission edge cases on subcollections.
+    return onSnapshot(
       collection(db, 'users', user.uid, 'notifications'),
-      where('read', '==', false),
-    );
-    return onSnapshot(q, snap => {
-      snap.docChanges()
-        .filter(c => c.type === 'added')
-        .forEach(change => {
-          const d = change.doc.data();
-          if (d.type === 'credit_gift') {
+      snap => {
+        snap.docChanges()
+          .filter(c => c.type === 'added')
+          .forEach(change => {
+            const d = change.doc.data();
+            if (d.read) return;                           // already read
+            if (d.type !== 'credit_gift') return;         // wrong type
+            if (shownNotifIds.current.has(change.doc.id)) return; // already shown this session
+            shownNotifIds.current.add(change.doc.id);
             const msg = d.message || `You received +${d.amount} card credits! 🎁`;
             setAdminGiftNotification(msg);
             setTimeout(() => setAdminGiftNotification(null), 7000);
             updateDoc(change.doc.ref, { read: true }).catch(() => {});
-          }
-        });
-    }, () => {});
+          });
+      },
+      err => console.error('[notifications listener]', err),
+    );
   }, [user?.uid]);
 
   // ── Global credit gift notifications (admin → all users) ──
