@@ -1361,7 +1361,7 @@ export default function App() {
       setTimeout(() => setReferralNotification(null), 6000);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, !!profile?.referralSource]);
+  }, [user?.uid, profile?._uid]);
 
   // ── Referral milestone: award referrer when invitee hits 10 cards ──────────
   useEffect(() => {
