@@ -2033,20 +2033,29 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
 
       {adminGiftNotification && (
         <div style={{
-          position: "fixed", bottom: referralNotification ? 148 : 80, left: "50%", transform: "translateX(-50%)",
-          zIndex: 901, maxWidth: 340, width: "calc(100% - 32px)",
-          background: "#0e0e1c", border: "1px solid rgba(240,192,64,0.45)",
-          borderRadius: 14, padding: "12px 16px",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
-          display: "flex", alignItems: "center", gap: 10,
-          animation: "fadeIn 0.25s ease",
+          position: "fixed", bottom: referralNotification ? 164 : 90, left: "50%", transform: "translateX(-50%)",
+          zIndex: 901, maxWidth: 400, width: "calc(100% - 24px)",
+          background: "linear-gradient(135deg, #1a1400 0%, #0e0e1c 60%)",
+          border: "1.5px solid rgba(240,192,64,0.6)",
+          borderRadius: 20, padding: "18px 20px 16px",
+          boxShadow: "0 0 0 1px rgba(240,192,64,0.12), 0 12px 60px rgba(0,0,0,0.75), 0 0 40px rgba(240,192,64,0.08)",
+          animation: "fadeIn 0.3s ease",
         }}>
-          <span style={{ fontSize: 18, flexShrink: 0 }}>🎁</span>
-          <span style={{ fontSize: 12, color: "#f0e0a0", lineHeight: 1.5 }}>{adminGiftNotification}</span>
-          <button
-            onClick={() => setAdminGiftNotification(null)}
-            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}
-          >×</button>
+          {/* header row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 26 }}>🎁</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#f0c040", letterSpacing: 0.4, textTransform: "uppercase" }}>You've received a gift!</span>
+            </div>
+            <button
+              onClick={() => setAdminGiftNotification(null)}
+              style={{ background: "none", border: "none", color: "rgba(240,192,64,0.5)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: "0 2px", flexShrink: 0 }}
+            >×</button>
+          </div>
+          {/* message */}
+          <p style={{ fontSize: 14, color: "#f5ead0", lineHeight: 1.55, margin: 0, paddingLeft: 2 }}>{adminGiftNotification}</p>
+          {/* bottom accent bar */}
+          <div style={{ marginTop: 14, height: 3, borderRadius: 2, background: "linear-gradient(90deg, #f0c040, #ff9800, transparent)" }} />
         </div>
       )}
 
