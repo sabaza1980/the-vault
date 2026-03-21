@@ -1,7 +1,132 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useShareCard } from './useShareCard';
 
-// ── Icon components ──────────────────────────────────────────────────────────
+// ── Caption generator ─────────────────────────────────────────────────────────
+const CATEGORY_META = {
+  'Pokemon':          { emoji: '⚡', verb: 'pulled',     tags: ['#PokemonTCG', '#PokemonCards', '#Pokemon'] },
+  'MTG':              { emoji: '🧙', verb: 'added',      tags: ['#MagicTheGathering', '#MTG', '#MTGCards'] },
+  'Yu-Gi-Oh':         { emoji: '🎴', verb: 'added',      tags: ['#YuGiOh', '#YuGiOhCards', '#TCG'] },
+  'Basketball':       { emoji: '🏀', verb: 'landed',     tags: ['#NBACards', '#Basketball', '#NBACollector'] },
+  'American Football':{ emoji: '🏈', verb: 'landed',     tags: ['#NFLCards', '#Football', '#NFLCollector'] },
+  'Soccer':           { emoji: '⚽', verb: 'picked up',  tags: ['#SoccerCards', '#FootballCards', '#SoccerCollector'] },
+  'Baseball':         { emoji: '⚾', verb: 'picked up',  tags: ['#BaseballCards', '#MLB', '#BaseballCollector'] },
+  'Hockey':           { emoji: '🏒', verb: 'landed',     tags: ['#HockeyCards', '#NHL', '#HockeyCollector'] },
+};
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function buildHashtags(card, meta) {
+  const tags = ['#TheVault', '#TradingCards', ...meta.tags];
+  if (card.playerName) {
+    const t = '#' + card.playerName.replace(/[^a-zA-Z0-9]/g, '');
+    if (t.length > 2) tags.push(t);
+  }
+  if (card.series) {
+    const t = '#' + card.series.replace(/[^a-zA-Z0-9]/g, '');
+    if (t.length > 2 && t.length < 30) tags.push(t);
+  }
+  // Dedupe and cap at 7
+  return [...new Set(tags)].slice(0, 7).join(' ');
+}
+
+function generateCardCaption(card) {
+  const cat = card.cardCategory || '';
+  const meta = CATEGORY_META[cat] || { emoji: '🃏', verb: 'picked up', tags: ['#TradingCards', '#CardCollector'] };
+  const player  = card.playerName || 'Unknown';
+  const setName = card.fullCardName || card.series || '';
+  const parallel = card.parallel && card.parallel !== 'Base' ? card.parallel : null;
+  const serial   = card.serialNumber;
+  const isAuto   = card.hasAutograph;
+  const isRookie = card.isRookie;
+  const rarity   = card.rarity;
+  const value    = card.estimatedValue;
+
+  // Build attribute snippets
+  const attrs = [];
+  if (isRookie) attrs.push('Rookie');
+  if (isAuto)   attrs.push(card.autographType === 'On-Card' ? 'On-Card Auto' : 'Auto');
+  if (serial)   attrs.push(`#${serial}`);
+  if (parallel) attrs.push(parallel);
+
+  const attrLine  = attrs.length ? attrs.join(' · ') : null;
+  const valueNote = value && value > 10
+    ? `\n\nRecent eBay sales sitting around $${Math.round(value)} 👀`
+    : '';
+  const setNote   = setName ? ` from ${setName}` : '';
+  const attrNote  = attrLine ? `\n\n${attrLine}` : '';
+  const emoji     = meta.emoji;
+  const verb      = meta.verb;
+  const isHype    = isAuto || !!serial || ['Legendary', 'Ultra Rare'].includes(rarity);
+
+  const templates = [
+    // 1. Excited pull
+    `Just ${verb} this ${player}${setNote} ${emoji}${attrNote}${valueNote}`,
+
+    // 2. Vault flex
+    `The vault keeps growing 📦 ${player}${setNote} just hit the shelf.${attrNote}${valueNote} ${emoji}`,
+
+    // 3. Show-and-tell
+    `Check this out — ${parallel ? `${parallel} ` : ''}${player}${setNote}${attrNote}${valueNote} ${emoji}`,
+
+    // 4. Fellow collector call-out
+    `Anyone else deep into ${cat || 'cards'}? Just ${verb} this ${player}${setNote}.${attrNote}${valueNote} ${emoji}`,
+
+    // 5. Minimal/aesthetic
+    `${player}${attrLine ? ` · ${attrLine}` : ''}${setName ? `\n${setName}` : ''} ${emoji}${valueNote}`,
+
+    // 6. Hunt/chase angle (best for hype cards, otherwise hidden but still valid)
+    isHype
+      ? `Been chasing this one — ${player}${attrNote}${setNote} ${emoji}${valueNote}`
+      : `New addition: ${player}${attrNote}${setNote}. Collection growing one card at a time. ${emoji}${valueNote}`,
+
+    // 7. Numbers-first (value-led, only shown if value exists, else collector angle)
+    value && value > 10
+      ? `${player}${setNote} — estimated at ~$${Math.round(value)}.${attrNote} Worth every penny. ${emoji}`
+      : `Every card tells a story. Here's this ${player}${setNote}.${attrNote} ${emoji}`,
+
+    // 8. Pure collector voice
+    `Logging this ${parallel || rarity || ''} ${player} in The Vault.${setName ? ` ${setName}.` : ''}${attrNote}${valueNote} ${emoji}`,
+  ];
+
+  const body = rand(templates).replace(/ +\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return `${body}\n\n${buildHashtags(card, meta)}`;
+}
+
+function generateCollectionCaption(mode, cards, filterLabel) {
+  const count    = (cards || []).length;
+  const label    = mode === 'set' ? (filterLabel || 'set') : 'collection';
+  const total    = (cards || []).reduce((s, c) => s + (c.estimatedValue || 0), 0);
+  const top      = [...(cards || [])]
+    .filter(c => c.playerName)
+    .sort((a, b) => (b.estimatedValue || 0) - (a.estimatedValue || 0))
+    .slice(0, 3).map(c => c.playerName);
+  const categories = [...new Set((cards || []).map(c => c.cardCategory).filter(Boolean))];
+  const meta     = CATEGORY_META[categories[0]] || { emoji: '🃏', tags: ['#TradingCards', '#CardCollector'] };
+  const catTags  = [...new Set(categories.flatMap(c => CATEGORY_META[c]?.tags || []))].slice(0, 3);
+  const hashtags = ['#TheVault', '#TradingCards', ...catTags].slice(0, 6).join(' ');
+
+  const playersNote = top.length ? `\n\nFeaturing: ${top.join(', ')}` : '';
+  const valueNote   = total > 0
+    ? `\n\nVaulted at ~${total >= 1000 ? `$${(total / 1000).toFixed(1)}k` : `$${Math.round(total)}`} 📈`
+    : '';
+
+  const templates = [
+    `Here's my ${label} — ${count} card${count === 1 ? '' : 's'} tracked in The Vault ${meta.emoji}${playersNote}${valueNote}`,
+    `${count} card${count === 1 ? '' : 's'} deep and still going 📦${playersNote}${valueNote}`,
+    `Sharing the ${label} ${meta.emoji} — ${count} card${count === 1 ? '' : 's'} in the vault.${playersNote}${valueNote}`,
+    `The vault doesn't lie 🔒 ${count} card${count === 1 ? '' : 's'} logged and counting.${playersNote}${valueNote}`,
+    `Check out the ${label === 'collection' ? 'collection' : label} ${meta.emoji} — ${count} card${count === 1 ? '' : 's'} in here.${playersNote}${valueNote}`,
+  ];
+
+  return `${rand(templates).trim()}\n\n${hashtags}`;
+}
+
+function generateCaption(mode, card, cards, filterLabel) {
+  if (mode === 'card' && card) return generateCardCaption(card);
+  return generateCollectionCaption(mode, cards, filterLabel);
+}
+
+
 function DownloadIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,6 +203,8 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
   });
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [shareResult, setShareResult] = useState(null); // 'saved' | 'shared' | 'copied' | null
+  const [caption, setCaption] = useState(() => generateCaption(mode, card, cards, filterLabel));
+  const [captionCopied, setCaptionCopied] = useState(false);
 
   const isDesktop = typeof navigator !== 'undefined'
     && !/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -120,6 +247,13 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
   }, [fullShareUrl]);
+
+  const handleCopyCaption = useCallback(async () => {
+    try { await navigator.clipboard.writeText(caption); }
+    catch { const ta = document.createElement('textarea'); ta.value = caption; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+    setCaptionCopied(true);
+    setTimeout(() => setCaptionCopied(false), 2500);
+  }, [caption]);
 
   const modalTitle = mode === 'card' ? 'SHARE CARD'
     : mode === 'set' ? `SHARE ${(filterLabel || 'SET').toUpperCase()}`
@@ -237,7 +371,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
             background: '#07070f', border: '1px solid #1a1a2e',
-            borderRadius: 10, padding: '8px 10px', marginBottom: 20,
+            borderRadius: 10, padding: '8px 10px', marginBottom: 16,
           }}>
             <span style={{
               flex: 1, fontSize: 12, color: '#555',
@@ -257,6 +391,63 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
               }}
             >{copiedUrl ? 'COPIED!' : 'COPY'}</button>
           </div>
+
+          {/* Post caption */}
+          {caption && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+                <span style={{
+                  fontSize: 9, color: '#555',
+                  textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  display: 'flex', alignItems: 'center', gap: 5,
+                }}>
+                  <span style={{ color: '#ff6b35' }}>✦</span> Post Caption
+                </span>
+                <button
+                  onClick={() => { setCaptionCopied(false); setCaption(generateCaption(mode, card, cards, filterLabel)); }}
+                  title="Generate a new variation"
+                  style={{
+                    background: 'none', border: 'none',
+                    color: '#444', cursor: 'pointer',
+                    fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif",
+                    letterSpacing: 0.5, padding: '2px 4px',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#888'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#444'}
+                >
+                  ↻ New variation
+                </button>
+              </div>
+              <div style={{
+                background: '#07070f', border: '1px solid #1a1a2e',
+                borderRadius: 10, padding: '12px 14px', marginBottom: 8,
+                fontSize: 12, color: '#aaa', lineHeight: 1.75,
+                whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                fontFamily: "'Barlow', sans-serif",
+                maxHeight: 180, overflowY: 'auto',
+              }}>
+                {caption}
+              </div>
+              <button
+                onClick={handleCopyCaption}
+                style={{
+                  width: '100%',
+                  background: captionCopied ? 'rgba(76,175,80,0.1)' : 'rgba(255,107,53,0.07)',
+                  border: `1px solid ${captionCopied ? 'rgba(76,175,80,0.3)' : 'rgba(255,107,53,0.2)'}`,
+                  borderRadius: 9, padding: '9px',
+                  color: captionCopied ? '#4caf50' : '#ff6b35',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1.2,
+                  transition: 'all 0.2s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                }}
+              >
+                {captionCopied ? <><span>✓</span> COPIED TO CLIPBOARD</> : <><span style={{ fontSize: 13 }}>📋</span> COPY CAPTION</>}
+              </button>
+            </div>
+          )}
 
           {/* Share buttons */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
