@@ -100,8 +100,9 @@ export function useRewardProfile(user) {
   const applyReferral = useCallback(async (referrerUid) => {
     if (!user || referrerUid === user.uid) return;
     await setDoc(doc(db, 'users', user.uid), {
-      referral_source: referrerUid,
-      card_credits: increment(20),
+      referral_source:   referrerUid,
+      referral_rewarded: false,   // explicit false so Firestore rule == false check passes
+      card_credits:      increment(20),
     }, { merge: true });
   }, [user]);
 
