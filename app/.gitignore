@@ -6,6 +6,9 @@
 .env.production
 .env.staging
 
+# Admin panel local config (contains Firebase + Loops keys — never commit)
+public/admin-config.js
+
 # Capacitor native projects (large; add/remove per your workflow)
 ios/
 android/
