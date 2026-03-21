@@ -1393,7 +1393,6 @@ export default function App() {
     const q = query(
       collection(db, 'users', user.uid, 'notifications'),
       where('read', '==', false),
-      orderBy('createdAt', 'desc'),
     );
     return onSnapshot(q, snap => {
       snap.docChanges()
