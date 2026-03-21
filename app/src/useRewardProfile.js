@@ -44,6 +44,8 @@ export function useRewardProfile(user) {
         referralSource:       d.referral_source        ?? null,
         referralRewarded:     d.referral_rewarded      ?? false,
         referralCount:        d.referral_count         ?? 0,
+        // Credit gifts
+        lastGiftClaimedAt:    d.last_gift_claimed_at   ?? null,
       });
     });
     return unsub;

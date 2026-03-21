@@ -630,7 +630,7 @@
           <canvas id="chart-grades"></canvas>
         </div>
         <div class="chart-box">
-          <h3>Cards by Sport</h3>
+          <h3>Cards by Category</h3>
           <canvas id="chart-sports"></canvas>
         </div>
       </div>
@@ -658,7 +658,7 @@
       <div class="page-sub">Browse, search and manage accounts</div>
       <div class="table-wrap">
         <div class="table-tools">
-          <input type="search" id="user-search" placeholder="Search by name or email…" />
+          <input type="search" id="user-search" placeholder="Search by UID…" />
           <select id="user-sort">
             <option value="joined-desc">Newest first</option>
             <option value="joined-asc">Oldest first</option>
@@ -727,6 +727,36 @@
           </div>
           <button class="send-btn" id="btn-send-push" onclick="sendPush()">Send Push</button>
           <div class="status-msg" id="push-status"></div>
+        </div>
+
+        <div class="comms-card">
+          <h3>🎁 Gift Credits</h3>
+          <p class="sub">Award card credits to a specific user or everyone. Recipients get an in-app notification.</p>
+          <div class="form-row">
+            <label>Target</label>
+            <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+                <input type="radio" name="gift-target" value="all" checked onchange="toggleGiftTarget()" /> All users
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem">
+                <input type="radio" name="gift-target" value="specific" onchange="toggleGiftTarget()" /> Specific user
+              </label>
+            </div>
+          </div>
+          <div class="form-row" id="gift-uid-row" style="display:none">
+            <label>User UID</label>
+            <input type="text" id="gift-uid" placeholder="Paste user UID here" />
+          </div>
+          <div class="form-row">
+            <label>Credits to award</label>
+            <input type="number" id="gift-amount" min="1" max="1000" value="5" style="max-width:120px" />
+          </div>
+          <div class="form-row">
+            <label>Message (shown in notification)</label>
+            <input type="text" id="gift-message" placeholder="e.g. Happy anniversary! Enjoy a bonus 🎉" maxlength="120" />
+          </div>
+          <button class="send-btn" id="btn-send-gift" onclick="sendCreditGift()" style="background:linear-gradient(135deg,#f0c040,#ff9800)">Send Gift</button>
+          <div class="status-msg" id="gift-status"></div>
         </div>
 
         <div class="comms-card">
@@ -887,44 +917,41 @@ function navigateTo(page) {
 //  Overview
 // ─────────────────────────────────────────────
 async function loadOverview() {
-  // Users + cards via collection group count
+  // The app stores cards at users/{uid}/cards — no user profile docs exist.
+  // Use collectionGroup to get all cards across all users.
   try {
-    const [usersSnap] = await Promise.all([
-      db.collection('users').limit(1000).get()
-    ]);
+    const snap = await db.collectionGroup('cards').limit(1000).get();
+    const isSample = snap.size === 1000;
 
-    let totalCards = 0;
+    const uids = new Set();
     let totalValue = 0;
     let flaggedCount = 0;
     const gradeCounts = {};
     const sportCounts = {};
-    const userDocs = usersSnap.docs;
 
-    // Load cards for first 50 users (overview sampling)
-    const sample = userDocs.slice(0, 50);
-    await Promise.all(sample.map(async uDoc => {
-      const cardsSnap = await db.collection('users').doc(uDoc.id).collection('cards').get();
-      totalCards += cardsSnap.size;
-      cardsSnap.docs.forEach(c => {
-        const d = c.data();
-        totalValue += (d.currentValue || 0);
-        if (d.flagged) flaggedCount++;
-        const g = d.grade || 'Ungraded';
-        gradeCounts[g] = (gradeCounts[g] || 0) + 1;
-        const s = d.sport || d.category || 'Other';
-        sportCounts[s] = (sportCounts[s] || 0) + 1;
-      });
-    }));
+    snap.docs.forEach(d => {
+      const uid = d.ref.parent.parent ? d.ref.parent.parent.id : null;
+      if (uid) uids.add(uid);
+      const data = d.data();
+      totalValue  += (data.currentValue || 0);
+      if (data.flagged) flaggedCount++;
+      const g = data.grade || 'Ungraded';
+      gradeCounts[g] = (gradeCounts[g] || 0) + 1;
+      const s = normalizeCategory(data.cardCategory || data.sport || data.category);
+      sportCounts[s] = (sportCounts[s] || 0) + 1;
+    });
 
-    document.getElementById('stat-users').textContent   = userDocs.length.toLocaleString();
-    document.getElementById('stat-cards').textContent   = totalCards.toLocaleString() + (sample.length < userDocs.length ? '+' : '');
-    document.getElementById('stat-value').textContent   = '$' + totalValue.toLocaleString(undefined, {maximumFractionDigits:0}) + (sample.length < userDocs.length ? '+' : '');
-    document.getElementById('stat-flagged').textContent = flaggedCount.toLocaleString();
+    const suffix = isSample ? '+' : '';
+    document.getElementById('stat-users').textContent   = uids.size.toLocaleString() + suffix;
+    document.getElementById('stat-cards').textContent   = snap.size.toLocaleString() + suffix;
+    document.getElementById('stat-value').textContent   = '$' + totalValue.toLocaleString(undefined, {maximumFractionDigits:0}) + suffix;
+    document.getElementById('stat-flagged').textContent = flaggedCount.toLocaleString() + suffix;
 
     renderGradeChart(gradeCounts);
     renderSportChart(sportCounts);
   } catch (e) {
     console.error('Overview load error:', e);
+    showIndexError('stat-cards', e);
   }
 }
 
@@ -949,10 +976,29 @@ function renderGradeChart(counts) {
   });
 }
 
+const CATEGORY_ORDER = ['Pokemon','MTG','Soccer','Basketball','Baseball','Football','Yu Gi Oh','Other'];
+const CATEGORY_COLORS = ['#f7d02c','#a78bfa','#3fc380','#ff6b35','#38bdf8','#6b8cff','#f0c040','#9898b4'];
+
+function normalizeCategory(raw) {
+  if (!raw) return 'Other';
+  const v = String(raw).trim();
+  if (/pok[eé]/i.test(v))                     return 'Pokemon';
+  if (/\bmtg\b|magic.*gather|gather.*magic/i.test(v)) return 'MTG';
+  if (/soccer|football.*assoc|assoc.*football/i.test(v)) return 'Soccer';
+  if (/basketball/i.test(v))                   return 'Basketball';
+  if (/baseball/i.test(v))                     return 'Baseball';
+  if (/\bfootball\b|gridiron|nfl/i.test(v))    return 'Football';
+  if (/yu.?gi.?oh/i.test(v))                   return 'Yu Gi Oh';
+  // Exact match on known categories
+  for (const cat of CATEGORY_ORDER) if (cat.toLowerCase() === v.toLowerCase()) return cat;
+  return 'Other';
+}
+
 function renderSportChart(counts) {
-  const labels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 7);
+  // Build labels in fixed order, only include categories that have data
+  const labels = CATEGORY_ORDER.filter(c => counts[c] > 0);
   const data   = labels.map(l => counts[l]);
-  const colors = ['#ff6b35','#f0c040','#3fc380','#6b8cff','#ff6b6b','#a78bfa','#38bdf8'];
+  const colors = labels.map(l => CATEGORY_COLORS[CATEGORY_ORDER.indexOf(l)]);
   const ctx    = document.getElementById('chart-sports').getContext('2d');
   if (chartSports) chartSports.destroy();
   chartSports = new Chart(ctx, {
@@ -973,45 +1019,69 @@ function renderSportChart(counts) {
 // ─────────────────────────────────────────────
 //  Users
 // ─────────────────────────────────────────────
+// The app doesn't create users/{uid} profile docs — only subcollections.
+// We derive the user list by grouping all cards by parent UID.
 async function loadUsers() {
   usersLoading = true;
   document.getElementById('users-tbody').innerHTML = skeletonRows(6, 4);
 
   try {
-    const snap = await db.collection('users').orderBy('createdAt', 'desc').limit(USERS_PAGE).get();
-    usersLastDoc = snap.docs[snap.docs.length - 1];
-    allUsers = snap.docs.map(docToUser);
+    const snap = await db.collectionGroup('cards').limit(2000).get();
+    const userMap = {};
+
+    snap.docs.forEach(d => {
+      const uid  = d.ref.parent.parent ? d.ref.parent.parent.id : null;
+      if (!uid) return;
+      const data = d.data();
+      if (!userMap[uid]) {
+        userMap[uid] = { uid, name: uid.slice(0,8) + '…', email: uid, photo: '', cardCount: 0, joined: null, suspended: false };
+      }
+      userMap[uid].cardCount++;
+      const ts = data.addedAt || data.createdAt;
+      if (ts) {
+        const date = ts.toDate ? ts.toDate() : new Date(ts);
+        if (!userMap[uid].joined || date < userMap[uid].joined) userMap[uid].joined = date;
+      }
+    });
+
+    allUsers = Object.values(userMap);
+
+    // Fetch suspension flag from users/{uid} docs (written when admin suspends)
+    await Promise.all(allUsers.map(async u => {
+      try {
+        const uDoc = await db.collection('users').doc(u.uid).get();
+        if (uDoc.exists) {
+          const d = uDoc.data();
+          u.suspended    = !!d.suspended;
+          u.cardCredits  = d.card_credits  ?? 0;
+          if (d.displayName) u.name  = d.displayName;
+          if (d.email)       u.email = d.email;
+          if (d.photoURL)    u.photo = d.photoURL;
+        }
+      } catch (_) {}
+    }));
+
+    document.getElementById('users-load-more').style.display = 'none';
     renderUsersTable(filterAndSort(allUsers));
-    document.getElementById('users-load-more').style.display = snap.size === USERS_PAGE ? 'block' : 'none';
   } catch (e) {
-    document.getElementById('users-tbody').innerHTML = `<tr><td colspan="4" style="padding:20px;color:var(--sub)">${e.message}</td></tr>`;
+    document.getElementById('users-tbody').innerHTML =
+      `<tr><td colspan="4" style="padding:20px;color:var(--red)">${escHtml(e.message)}${indexLink(e)}</td></tr>`;
   }
   usersLoading = false;
 }
 
-async function loadMoreUsers() {
-  if (!usersLastDoc || usersLoading) return;
-  usersLoading = true;
-  const snap = await db.collection('users').orderBy('createdAt', 'desc').startAfter(usersLastDoc).limit(USERS_PAGE).get();
-  usersLastDoc = snap.docs[snap.docs.length - 1];
-  const newUsers = snap.docs.map(docToUser);
-  allUsers = allUsers.concat(newUsers);
-  renderUsersTable(filterAndSort(allUsers));
-  document.getElementById('users-load-more').style.display = snap.size === USERS_PAGE ? 'block' : 'none';
-  usersLoading = false;
-}
+async function loadMoreUsers() { /* user list is fully loaded in one pass */ }
 
 function docToUser(doc) {
   const d = doc.data();
   return {
     uid:       doc.id,
-    name:      d.displayName || d.name || '—',
-    email:     d.email || '—',
+    name:      d.displayName || d.name || doc.id.slice(0,8) + '…',
+    email:     d.email || doc.id,
     photo:     d.photoURL || '',
     cardCount: d.cardCount || 0,
     joined:    d.createdAt ? d.createdAt.toDate() : null,
-    suspended: !!d.suspended,
-    raw:       d
+    suspended: !!d.suspended
   };
 }
 
@@ -1043,12 +1113,14 @@ function renderUsersTable(users) {
         <div class="expand-panel">
           <div class="info-block"><div class="lbl">UID</div><div class="val" style="font-size:.75rem;word-break:break-all">${escHtml(u.uid)}</div></div>
           <div class="info-block"><div class="lbl">Cards</div><div class="val">${u.cardCount.toLocaleString()}</div></div>
+          <div class="info-block"><div class="lbl">Card Credits</div><div class="val" id="credits-${u.uid}">${u.cardCredits ?? 0}</div></div>
           <div class="info-block"><div class="lbl">Joined</div><div class="val">${u.joined ? u.joined.toLocaleDateString() : '—'}</div></div>
           <div class="expand-actions">
             <button class="btn ${u.suspended ? 'btn-success' : 'btn-danger'}" onclick="event.stopPropagation();toggleSuspend('${u.uid}',${u.suspended})">
               ${u.suspended ? 'Unsuspend' : 'Suspend'}
             </button>
             <button class="btn btn-ghost" onclick="event.stopPropagation();viewUserCards('${u.uid}','${escAttr(u.name)}')">View Cards</button>
+            <button class="btn" style="background:rgba(240,192,64,0.12);border-color:rgba(240,192,64,0.35);color:var(--gold)" onclick="event.stopPropagation();grantCreditsToUser('${u.uid}','${escAttr(u.name)}')">🎁 Grant Credits</button>
           </div>
         </div>
       </td>
@@ -1070,7 +1142,8 @@ async function toggleSuspend(uid, currently) {
     currently ? 'Unsuspend user?' : 'Suspend user?',
     currently ? 'This will restore the user\'s access.' : 'The user will be flagged as suspended in Firestore.'
   );
-  await db.collection('users').doc(uid).update({ suspended: !currently });
+  // Use set+merge so the doc is created even if no profile doc exists yet
+  await db.collection('users').doc(uid).set({ suspended: !currently }, { merge: true });
   const u = allUsers.find(x => x.uid === uid);
   if (u) u.suspended = !currently;
   renderUsersTable(filterAndSort(allUsers));
@@ -1137,20 +1210,21 @@ async function loadAllCards() {
   const grid = document.getElementById('allcards-grid');
   grid.innerHTML = cardSkeletons(12);
   try {
-    const snap = await db.collectionGroup('cards').orderBy('createdAt', 'desc').limit(24).get();
+    // App stores cards with addedAt (not createdAt)
+    const snap = await db.collectionGroup('cards').orderBy('addedAt', 'desc').limit(24).get();
     allCards = snap.docs.map(cardDocToObj);
     allCardsLastDoc = snap.docs[snap.docs.length - 1];
     renderCardGrid(grid, allCards, false);
     document.getElementById('allcards-load-more').style.display = snap.size === 24 ? 'block' : 'none';
   } catch (e) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p style="color:var(--red)">${e.message}</p></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p style="color:var(--red)">${escHtml(e.message)}${indexLink(e)}</p></div>`;
   }
 }
 
 async function loadMoreAllCards() {
   if (!allCardsLastDoc || allCardsLoading) return;
   allCardsLoading = true;
-  const snap = await db.collectionGroup('cards').orderBy('createdAt', 'desc').startAfter(allCardsLastDoc).limit(24).get();
+  const snap = await db.collectionGroup('cards').orderBy('addedAt', 'desc').startAfter(allCardsLastDoc).limit(24).get();
   allCardsLastDoc = snap.docs[snap.docs.length - 1];
   allCards = allCards.concat(snap.docs.map(cardDocToObj));
   renderCardGrid(document.getElementById('allcards-grid'), allCards, false);
@@ -1162,12 +1236,12 @@ async function loadAllCardsForUser(uid, name) {
   const grid = document.getElementById('allcards-grid');
   grid.innerHTML = cardSkeletons(12);
   try {
-    const snap = await db.collection('users').doc(uid).collection('cards').orderBy('createdAt', 'desc').limit(48).get();
+    const snap = await db.collection('users').doc(uid).collection('cards').orderBy('addedAt', 'desc').limit(48).get();
     const cards = snap.docs.map(cardDocToObj);
     renderCardGrid(grid, cards, false);
     document.getElementById('allcards-load-more').style.display = 'none';
   } catch (e) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p style="color:var(--red)">${e.message}</p></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p style="color:var(--red)">${escHtml(e.message)}${indexLink(e)}</p></div>`;
   }
 }
 
@@ -1215,6 +1289,104 @@ async function deleteCard(uid, cardId) {
   allCards     = allCards.filter(c => !(c.uid === uid && c.id === cardId));
   renderCardGrid(document.getElementById('flagged-grid'), flaggedCards, true);
   showToast('Card deleted', 'ok');
+}
+
+// ─────────────────────────────────────────────
+//  Credit Gifts
+// ─────────────────────────────────────────────
+function toggleGiftTarget() {
+  const isSpecific = document.querySelector('input[name="gift-target"]:checked').value === 'specific';
+  document.getElementById('gift-uid-row').style.display = isSpecific ? 'block' : 'none';
+}
+
+async function grantCreditsToUser(uid, name) {
+  const amountStr = window.prompt(`How many card credits to grant to ${name}?`, '5');
+  if (amountStr === null) return; // cancelled
+  const amount = parseInt(amountStr, 10);
+  if (!amount || amount < 1 || amount > 10000) { showToast('Enter a number between 1 and 10000', 'err'); return; }
+
+  const message = window.prompt(`Notification message for ${name} (optional):`, `You've received ${amount} bonus card credits! 🎁`) || `You've received ${amount} bonus card credits! 🎁`;
+
+  try {
+    const batch = db.batch();
+    // Award credits directly on the profile doc
+    batch.set(db.collection('users').doc(uid), {
+      card_credits: firebase.firestore.FieldValue.increment(amount)
+    }, { merge: true });
+    // Write per-user notification so the app can show a toast
+    batch.set(db.collection('users').doc(uid).collection('notifications').doc(), {
+      type:      'credit_gift',
+      amount,
+      message,
+      read:      false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      grantedBy: currentAdmin.uid,
+    });
+    await batch.commit();
+
+    // Update the displayed credits inline if the row is open
+    const el = document.getElementById('credits-' + uid);
+    if (el) {
+      const u = allUsers.find(x => x.uid === uid);
+      if (u) { u.cardCredits = (u.cardCredits ?? 0) + amount; el.textContent = u.cardCredits; }
+    }
+    showToast(`Granted ${amount} credits to ${name}`, 'ok');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'err');
+  }
+}
+
+async function sendCreditGift() {
+  const target  = document.querySelector('input[name="gift-target"]:checked').value;
+  const amount  = parseInt(document.getElementById('gift-amount').value, 10);
+  const message = document.getElementById('gift-message').value.trim();
+  const uid     = document.getElementById('gift-uid')?.value.trim();
+  const btn     = document.getElementById('btn-send-gift');
+  const status  = document.getElementById('gift-status');
+
+  if (!amount || amount < 1) { status.textContent = 'Enter a valid credit amount.'; status.className = 'status-msg err'; return; }
+  if (!message) { status.textContent = 'Notification message is required.'; status.className = 'status-msg err'; return; }
+  if (target === 'specific' && !uid) { status.textContent = 'Enter a user UID.'; status.className = 'status-msg err'; return; }
+
+  btn.disabled = true; status.textContent = 'Sending…'; status.className = 'status-msg';
+
+  try {
+    if (target === 'all') {
+      // Write a single global gift doc — each app client claims their own credits on load
+      await db.collection('global_gifts').add({
+        amount,
+        message,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: currentAdmin.uid,
+      });
+      status.textContent = `Global gift of ${amount} credits queued for all users.`;
+      status.className = 'status-msg ok';
+    } else {
+      // Specific user — same as grantCreditsToUser but with the comms form
+      const batch = db.batch();
+      batch.set(db.collection('users').doc(uid), {
+        card_credits: firebase.firestore.FieldValue.increment(amount)
+      }, { merge: true });
+      batch.set(db.collection('users').doc(uid).collection('notifications').doc(), {
+        type:      'credit_gift',
+        amount,
+        message,
+        read:      false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        grantedBy: currentAdmin.uid,
+      });
+      await batch.commit();
+      status.textContent = `${amount} credits sent to ${uid}.`;
+      status.className = 'status-msg ok';
+    }
+
+    document.getElementById('gift-amount').value  = '5';
+    document.getElementById('gift-message').value = '';
+    if (document.getElementById('gift-uid')) document.getElementById('gift-uid').value = '';
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.className = 'status-msg err';
+  }
+  btn.disabled = false;
 }
 
 // ─────────────────────────────────────────────
@@ -1292,6 +1464,20 @@ async function sendLoops() {
 // ─────────────────────────────────────────────
 function escHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Extract Firestore index creation URL from error message and return an HTML link
+function indexLink(e) {
+  const url = (e.message || '').match(/https:\/\/console\.firebase\.google\.com[^\s'"]+/);
+  if (!url) return '';
+  return `<br><br><a href="${url[0]}" target="_blank" rel="noopener noreferrer" style="color:var(--orange)">→ Click here to create the required Firestore index</a>`;
+}
+
+function showIndexError(statId, e) {
+  const url = (e.message || '').match(/https:\/\/console\.firebase\.google\.com[^\s'"]+/);
+  const el = document.getElementById(statId);
+  if (el) el.textContent = 'Error';
+  if (url) showToast('Index needed — check console', 'err');
 }
 function escAttr(str) {
   return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');

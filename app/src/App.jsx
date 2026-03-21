@@ -8,8 +8,9 @@ import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
 import AdGateModal from "./AdGateModal";
-import { storage } from "./firebase";
+import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { collection, doc, query, where, orderBy, limit, onSnapshot, updateDoc, setDoc, increment } from "firebase/firestore";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
@@ -1244,6 +1245,8 @@ export default function App() {
   const [showProComingSoon, setShowProComingSoon] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
   const [referralNotification, setReferralNotification] = useState(null);
+  const [adminGiftNotification, setAdminGiftNotification] = useState(null);
+  const globalGiftClaimedRef = useRef(false);
   // adGate: null | { type: 'upload' | 'daily' | 'streak10' | 'value' }
   const [adGate, setAdGate] = useState(null);
   // Non-blocking daily / streak bonus notification (set instead of auto-opening gate)
@@ -1383,6 +1386,61 @@ export default function App() {
     }
     prevReferralCountRef.current = count;
   }, [profile?.referralCount]);
+
+  // ── Per-user credit gift notifications (admin → specific user) ──
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'users', user.uid, 'notifications'),
+      where('read', '==', false),
+      orderBy('createdAt', 'desc'),
+    );
+    return onSnapshot(q, snap => {
+      snap.docChanges()
+        .filter(c => c.type === 'added')
+        .forEach(change => {
+          const d = change.doc.data();
+          if (d.type === 'credit_gift') {
+            const msg = d.message || `You received +${d.amount} card credits! 🎁`;
+            setAdminGiftNotification(msg);
+            setTimeout(() => setAdminGiftNotification(null), 7000);
+            updateDoc(change.doc.ref, { read: true }).catch(() => {});
+          }
+        });
+    }, () => {});
+  }, [user?.uid]);
+
+  // ── Global credit gift notifications (admin → all users) ──
+  useEffect(() => {
+    if (!user?.uid || !profile) return;
+    const q = query(
+      collection(db, 'global_gifts'),
+      orderBy('createdAt', 'desc'),
+      limit(1),
+    );
+    return onSnapshot(q, snap => {
+      if (snap.empty) return;
+      const gift     = snap.docs[0].data();
+      const giftTime = gift.createdAt?.toMillis?.() ?? 0;
+      const lastTime = profile.lastGiftClaimedAt
+        ? new Date(profile.lastGiftClaimedAt).getTime()
+        : 0;
+      if (giftTime > lastTime && !globalGiftClaimedRef.current) {
+        globalGiftClaimedRef.current = true;
+        setDoc(
+          doc(db, 'users', user.uid),
+          {
+            card_credits:         increment(gift.amount),
+            last_gift_claimed_at: gift.createdAt.toDate().toISOString(),
+          },
+          { merge: true },
+        ).catch(() => {});
+        const msg = gift.message || `Everyone received +${gift.amount} card credits! 🎁`;
+        setAdminGiftNotification(msg);
+        setTimeout(() => setAdminGiftNotification(null), 7000);
+      }
+    }, () => {});
+  }, [user?.uid, profile?._uid]);
 
   const analyzeCard = useCallback(async (item) => {
     try {
@@ -1969,6 +2027,25 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           <button
             onClick={() => setReferralNotification(null)}
             style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}
+          >×</button>
+        </div>
+      )}
+
+      {adminGiftNotification && (
+        <div style={{
+          position: "fixed", bottom: referralNotification ? 148 : 80, left: "50%", transform: "translateX(-50%)",
+          zIndex: 901, maxWidth: 340, width: "calc(100% - 32px)",
+          background: "#0e0e1c", border: "1px solid rgba(240,192,64,0.45)",
+          borderRadius: 14, padding: "12px 16px",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
+          display: "flex", alignItems: "center", gap: 10,
+          animation: "fadeIn 0.25s ease",
+        }}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>🎁</span>
+          <span style={{ fontSize: 12, color: "#f0e0a0", lineHeight: 1.5 }}>{adminGiftNotification}</span>
+          <button
+            onClick={() => setAdminGiftNotification(null)}
+            style={{ background: "none", border: "none", color: "#888", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}
           >×</button>
         </div>
       )}
