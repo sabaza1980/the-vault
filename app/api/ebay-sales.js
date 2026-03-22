@@ -92,13 +92,22 @@ export default async function handler(req, res) {
     .filter(Boolean).join(' ').trim();
 
   try {
-    // Sold listings only via Finding API (Browse/active fallback paused)
     let sales = [];
-    const source = 'sold';
+    let source = 'sold';
     try {
       sales = await findSoldItems(q);
     } catch (soldErr) {
       console.error('Finding API failed:', soldErr.message);
+    }
+
+    if (sales.length === 0) {
+      // Fallback: Browse API live listings
+      try {
+        sales = await findActiveItems(q);
+        source = 'active';
+      } catch (browseErr) {
+        console.error('Browse API failed:', browseErr.message);
+      }
     }
 
     if (sales.length === 0) return res.status(200).json(null);

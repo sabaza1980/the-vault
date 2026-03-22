@@ -776,14 +776,19 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               )}
             </div>
 
-            {/* eBay Sold Listings */}
+            {/* eBay Listings */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                Recent eBay Sales
-                <span style={{
-                  fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                  background: 'rgba(76,175,80,0.12)', color: '#4caf50', border: '1px solid rgba(76,175,80,0.25)'
-                }}>sold listings</span>
+                {ebayData?.source === 'active' ? 'eBay Live Listings' : 'Recent eBay Sales'}
+                {ebayData && (
+                  <span style={{
+                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                    background: ebayData.source === 'active' ? 'rgba(33,150,243,0.12)' : 'rgba(76,175,80,0.12)',
+                    color: ebayData.source === 'active' ? '#2196f3' : '#4caf50',
+                    border: ebayData.source === 'active' ? '1px solid rgba(33,150,243,0.25)' : '1px solid rgba(76,175,80,0.25)'
+                  }}>{ebayData.source === 'active' ? 'live listings' : 'sold listings'}</span>
+                )}
+                {!ebayData && !ebayLoading && <span style={{ fontSize: 8, color: 'var(--tg)' }}>eBay</span>}
               </div>
               {ebayLoading && (
                 <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
@@ -797,7 +802,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     <span style={{ fontSize: 20, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
                       ${ebayData.avg.toFixed(2)}
                     </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ebayData.sales.length} sold</span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>{ebayData.source === 'active' ? `${ebayData.sales.length} live listings` : `avg of ${ebayData.sales.length} sold`}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {ebayData.sales.slice(0, 8).map((sale, i) => (
