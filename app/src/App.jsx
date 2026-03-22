@@ -2447,6 +2447,30 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
           </div>
         )}
 
+        {/* Collection stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+          <div style={{
+            background: "var(--surface)", border: "1px solid var(--b)", borderRadius: 14,
+            padding: "14px 16px", display: "flex", flexDirection: "column", gap: 3
+          }}>
+            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Cards</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: cards.length > 0 ? "var(--ts)" : "var(--tf)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1 }}>
+              {cards.length}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--tg)" }}>in your vault</div>
+          </div>
+          <div style={{
+            background: "var(--surface)", border: "1px solid var(--b)", borderRadius: 14,
+            padding: "14px 16px", display: "flex", flexDirection: "column", gap: 3
+          }}>
+            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Est. Value</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: totalValue > 0 ? "#4caf50" : "var(--tf)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1 }}>
+              {totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${totalValue.toFixed(0)}`}
+            </div>
+            <div style={{ fontSize: 10, color: "var(--tg)" }}>based on eBay sales</div>
+          </div>
+        </div>
+
         {/* Upload Zone */}
         <div
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
