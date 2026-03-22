@@ -61,16 +61,6 @@ async function fetchEbaySales(cardInfo) {
 }
 
 // ── SportsCardsPro pricing ──────────────────────────────────────────────────
-let lastScpCall = 0;
-async function scpRateLimit() {
-  const now = Date.now();
-  const gap = now - lastScpCall;
-  if (gap < 1100) {
-    await new Promise(res => setTimeout(res, 1100 - gap));
-  }
-  lastScpCall = Date.now();
-}
-
 const SPORTS_CATEGORIES = [
   'basketball', 'baseball', 'football', 'hockey',
   'soccer', 'racing', 'wrestling', 'ufc', 'sports'
@@ -93,56 +83,25 @@ function getPricingSource(cardInfo) {
 
 async function fetchSportsCardsPricing(cardInfo) {
   try {
-    const token = import.meta.env.VITE_SPORTSCARDSPRO_API_KEY;
-    if (!token) {
-      console.warn('VITE_SPORTSCARDSPRO_API_KEY is not set');
+    const res = await fetch(`${API_BASE}/api/sportscardspro`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playerName: cardInfo.playerName,
+        year: cardInfo.year,
+        brand: cardInfo.brand,
+        series: cardInfo.series,
+        parallel: cardInfo.parallel,
+        cardNumber: cardInfo.cardNumber,
+      })
+    });
+    if (!res.ok) {
+      console.error('[SCP] proxy error:', res.status);
       return null;
     }
-    const queryParts = [
-      cardInfo.playerName !== 'Unknown Player' ? cardInfo.playerName : '',
-      cardInfo.year || '',
-      cardInfo.brand || '',
-      cardInfo.series || '',
-      cardInfo.parallel && cardInfo.parallel !== 'Base' ? cardInfo.parallel : '',
-      cardInfo.cardNumber ? `#${cardInfo.cardNumber}` : ''
-    ].filter(Boolean).join(' ').trim();
-
-    if (!queryParts) return null;
-
-    await scpRateLimit();
-    const searchRes = await fetch(
-      `https://www.sportscardspro.com/api/products?t=${token}&q=${encodeURIComponent(queryParts)}`
-    );
-    if (!searchRes.ok) return null;
-    const searchData = await searchRes.json();
-    if (searchData.status !== 'success' || !searchData.products?.length) return null;
-
-    const bestMatch = searchData.products[0];
-    await scpRateLimit();
-    const priceRes = await fetch(
-      `https://www.sportscardspro.com/api/product?t=${token}&id=${bestMatch.id}`
-    );
-    if (!priceRes.ok) return null;
-    const priceData = await priceRes.json();
-    if (priceData.status !== 'success') return null;
-
-    const pennies = (val) => val ? (val / 100).toFixed(2) : null;
-    return {
-      matchedCard: priceData['product-name'],
-      matchedSet: priceData['console-name'],
-      raw: pennies(priceData['loose-price']),
-      grade8: pennies(priceData['new-price']),
-      grade9: pennies(priceData['graded-price']),
-      psa10: pennies(priceData['manual-only-price']),
-      bgs10: pennies(priceData['bgs-10-price']),
-      cgc10: pennies(priceData['condition-17-price']),
-      sgc10: pennies(priceData['condition-18-price']),
-      salesVolume: priceData['sales-volume'] || null,
-      releaseDate: priceData['release-date'] || null,
-      priceSource: 'SportsCardsPro'
-    };
+    return await res.json();
   } catch (e) {
-    console.error('SportsCardsPro pricing error:', e);
+    console.error('[SCP] fetch error:', e);
     return null;
   }
 }

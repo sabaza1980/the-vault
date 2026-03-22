@@ -17,7 +17,8 @@
   ],
   "functions": {
     "api/analyze.js": { "maxDuration": 60 },
-    "api/chat.js": { "maxDuration": 60 }
+    "api/chat.js": { "maxDuration": 60 },
+    "api/sportscardspro.js": { "maxDuration": 30 }
   },
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
