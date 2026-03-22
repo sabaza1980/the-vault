@@ -43,6 +43,12 @@ async function fetchCardHedgePricing(cardInfo) {
   const CARDHEDGE_API_KEY = import.meta.env.VITE_CARDHEDGE_API_KEY;
   const CARDHEDGE_BASE = 'https://api.cardhedger.com';
 
+  if (!CARDHEDGE_API_KEY) {
+    console.error('[CardHedge] ❌ VITE_CARDHEDGE_API_KEY is missing — key not baked into build');
+    return null;
+  }
+  console.log('[CardHedge] API key present, length:', CARDHEDGE_API_KEY.length);
+
   const categoryMap = {
     'Panini': 'Basketball', 'Topps': 'Baseball', 'Bowman': 'Baseball',
     'Upper Deck': 'Hockey', 'Pokemon': 'Pokemon', 'Pokémon': 'Pokemon',
@@ -82,7 +88,11 @@ async function fetchCardHedgePricing(cardInfo) {
 
     // Handle various response shapes
     const results = searchData?.results || searchData?.data || searchData?.cards || [];
-    if (!results.length) return null;
+    console.log('[CardHedge] result count:', results.length, '| full keys:', Object.keys(searchData || {}));
+    if (!results.length) {
+      console.warn('[CardHedge] ⚠ No results for query:', searchQuery, '| Full response:', JSON.stringify(searchData));
+      return null;
+    }
 
     const topCard = results[0];
     const cardId = topCard.id || topCard.card_id;
@@ -114,7 +124,11 @@ async function fetchCardHedgePricing(cardInfo) {
       priceSource: 'Card Hedge'
     };
   } catch (e) {
-    console.error('[CardHedge] fetch error:', e);
+    if (e instanceof TypeError && e.message.includes('fetch')) {
+      console.error('[CardHedge] ❌ CORS or network error — api.cardhedger.com may be blocking browser requests:', e.message);
+    } else {
+      console.error('[CardHedge] ❌ fetch error:', e);
+    }
     return null;
   }
 }
@@ -252,7 +266,10 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
       let result = await fetchCardHedgePricing(card);
       const hasPrice = result?.rawPrice != null || result?.psa9Price != null || result?.psa10Price != null;
       if (!hasPrice) {
+        console.log('[CardHedge] falling back to eBay — result was:', result, '| hasPrice:', hasPrice);
         result = await fetchEbaySales(card);
+      } else {
+        console.log('[CardHedge] ✅ using Card Hedge data — rawPrice:', result.rawPrice, 'psa9:', result.psa9Price, 'psa10:', result.psa10Price);
       }
       setPricingData(result);
       const value = result?.rawPrice ?? result?.avg ?? null;
