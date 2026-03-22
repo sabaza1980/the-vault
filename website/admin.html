@@ -1026,41 +1026,41 @@ async function loadUsers() {
   document.getElementById('users-tbody').innerHTML = skeletonRows(6, 4);
 
   try {
-    const snap = await db.collectionGroup('cards').limit(2000).get();
+    // 1. Load ALL registered users from the users collection
+    const usersSnap = await db.collection('users').limit(2000).get();
     const userMap = {};
-
-    snap.docs.forEach(d => {
-      const uid  = d.ref.parent.parent ? d.ref.parent.parent.id : null;
-      if (!uid) return;
+    usersSnap.docs.forEach(d => {
       const data = d.data();
-      if (!userMap[uid]) {
-        userMap[uid] = { uid, name: uid.slice(0,8) + '…', email: uid, photo: '', cardCount: 0, joined: null, suspended: false };
-      }
-      userMap[uid].cardCount++;
-      const ts = data.addedAt || data.createdAt;
-      if (ts) {
-        const date = ts.toDate ? ts.toDate() : new Date(ts);
-        if (!userMap[uid].joined || date < userMap[uid].joined) userMap[uid].joined = date;
+      const fullName = data.displayName || data.name || '';
+      userMap[d.id] = {
+        uid:         d.id,
+        name:        fullName || d.id.slice(0,8) + '…',
+        firstName:   fullName.split(' ')[0] || '—',
+        email:       data.email || d.id,
+        photo:       data.photoURL || '',
+        cardCount:   0,
+        cardCredits: data.card_credits ?? 0,
+        joined:      data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt)) : null,
+        suspended:   !!data.suspended,
+      };
+    });
+
+    // 2. Count cards per user from the cards subcollection
+    const cardsSnap = await db.collectionGroup('cards').limit(5000).get();
+    cardsSnap.docs.forEach(d => {
+      const uid = d.ref.parent.parent ? d.ref.parent.parent.id : null;
+      if (!uid) return;
+      if (userMap[uid]) {
+        userMap[uid].cardCount++;
+      } else {
+        // Edge case: cards exist but no user doc
+        const ts = d.data().addedAt || d.data().createdAt;
+        const joined = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
+        userMap[uid] = { uid, name: uid.slice(0,8) + '…', firstName: '—', email: uid, photo: '', cardCount: 1, cardCredits: 0, joined, suspended: false };
       }
     });
 
     allUsers = Object.values(userMap);
-
-    // Fetch suspension flag from users/{uid} docs (written when admin suspends)
-    await Promise.all(allUsers.map(async u => {
-      try {
-        const uDoc = await db.collection('users').doc(u.uid).get();
-        if (uDoc.exists) {
-          const d = uDoc.data();
-          u.suspended    = !!d.suspended;
-          u.cardCredits  = d.card_credits  ?? 0;
-          if (d.displayName) u.name  = d.displayName;
-          if (d.email)       u.email = d.email;
-          if (d.photoURL)    u.photo = d.photoURL;
-        }
-      } catch (_) {}
-    }));
-
     document.getElementById('users-load-more').style.display = 'none';
     renderUsersTable(filterAndSort(allUsers));
   } catch (e) {
@@ -1074,14 +1074,17 @@ async function loadMoreUsers() { /* user list is fully loaded in one pass */ }
 
 function docToUser(doc) {
   const d = doc.data();
+  const fullName = d.displayName || d.name || '';
   return {
-    uid:       doc.id,
-    name:      d.displayName || d.name || doc.id.slice(0,8) + '…',
-    email:     d.email || doc.id,
-    photo:     d.photoURL || '',
-    cardCount: d.cardCount || 0,
-    joined:    d.createdAt ? d.createdAt.toDate() : null,
-    suspended: !!d.suspended
+    uid:         doc.id,
+    name:        fullName || doc.id.slice(0,8) + '…',
+    firstName:   fullName.split(' ')[0] || '—',
+    email:       d.email || doc.id,
+    photo:       d.photoURL || '',
+    cardCount:   d.cardCount || 0,
+    cardCredits: d.card_credits ?? 0,
+    joined:      d.createdAt ? d.createdAt.toDate() : null,
+    suspended:   !!d.suspended
   };
 }
 
@@ -1112,6 +1115,7 @@ function renderUsersTable(users) {
       <td colspan="4">
         <div class="expand-panel">
           <div class="info-block"><div class="lbl">UID</div><div class="val" style="font-size:.75rem;word-break:break-all">${escHtml(u.uid)}</div></div>
+          <div class="info-block"><div class="lbl">First Name</div><div class="val">${escHtml(u.firstName || '—')}</div></div>
           <div class="info-block"><div class="lbl">Cards</div><div class="val">${u.cardCount.toLocaleString()}</div></div>
           <div class="info-block"><div class="lbl">Card Credits</div><div class="val" id="credits-${u.uid}">${u.cardCredits ?? 0}</div></div>
           <div class="info-block"><div class="lbl">Joined</div><div class="val">${u.joined ? u.joined.toLocaleDateString() : '—'}</div></div>
