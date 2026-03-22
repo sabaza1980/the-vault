@@ -9,6 +9,9 @@
 # Admin panel local config (contains Firebase + Loops keys — never commit)
 public/admin-config.js
 
+# Firebase Android config — contains API key; restrict key in Google Cloud Console
+google-services.json
+
 # Capacitor native projects (large; add/remove per your workflow)
 ios/
 android/
