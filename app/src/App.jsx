@@ -793,16 +793,16 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               {ebayLoading && (
                 <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{ width: 10, height: 10, border: "2px solid #4caf50", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  Fetching eBay sales...
+                  Fetching eBay listings...
                 </div>
               )}
               {!ebayLoading && ebayData && (
                 <>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
                       ${ebayData.avg.toFixed(2)}
                     </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>{ebayData.source === 'active' ? `${ebayData.sales.length} live listings` : `avg of ${ebayData.sales.length} sold`}</span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>{ebayData.source === 'active' ? `avg asking — ${ebayData.sales.length} live listings` : `avg of ${ebayData.sales.length} sold`}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {ebayData.sales.slice(0, 8).map((sale, i) => (
@@ -812,7 +812,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                         border: "1px solid var(--b)", textDecoration: "none",
                         transition: "border-color 0.15s", gap: 8
                       }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = "#4caf5040"}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = ebayData.source === 'active' ? "#2196f340" : "#4caf5040"}
                         onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
                       >
                         <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sale.title}</span>
@@ -821,7 +821,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                             {new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
                           </span>
                         )}
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "#4caf50", flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50', flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
                       </a>
                     ))}
                   </div>
