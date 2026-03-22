@@ -7,8 +7,8 @@ export default function LandingPage({ onSignUp }) {
     },
     {
       icon: "💰",
-      title: "Live eBay Pricing",
-      desc: "Every card is matched to recent eBay sales so you know exactly what it's worth.",
+      title: "Live Pricing",
+      desc: "Every card is matched to real market data via Card Hedge so you always know what it's worth.",
     },
     {
       icon: "📈",

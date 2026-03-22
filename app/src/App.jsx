@@ -39,21 +39,74 @@ function resizeImageFile(file) {
   });
 }
 
-async function fetchEbaySales(cardInfo) {
+async function fetchCardHedgePricing(cardInfo) {
+  const CARDHEDGE_API_KEY = import.meta.env.VITE_CARDHEDGE_API_KEY;
+  const CARDHEDGE_BASE = 'https://api.cardhedger.com';
+
+  const categoryMap = {
+    'Panini': 'Basketball', 'Topps': 'Baseball', 'Bowman': 'Baseball',
+    'Upper Deck': 'Hockey', 'Pokemon': 'Pokemon', 'Pokémon': 'Pokemon',
+    'Magic': 'Magic The Gathering', 'Yu-Gi-Oh': 'Yu-Gi-Oh', 'One Piece': 'One Piece'
+  };
+
+  const category = cardInfo.cardCategory || categoryMap[cardInfo.brand] || 'Basketball';
+
   try {
-    const res = await fetch(`${API_BASE}/api/ebay-sales`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const searchRes = await fetch(`${CARDHEDGE_BASE}/v1/cards/card-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': CARDHEDGE_API_KEY },
       body: JSON.stringify({
-        playerName: cardInfo.playerName,
-        fullCardName: cardInfo.fullCardName,
-        parallel: cardInfo.parallel,
-      }),
+        search: cardInfo.playerName,
+        category: category,
+        rookie: cardInfo.isRookie || false,
+        page: 1,
+        page_size: 1
+      })
+    });
+    if (!searchRes.ok) return null;
+    const searchData = await searchRes.json();
+    if (!searchData?.results?.length) return null;
+
+    const topCard = searchData.results[0];
+    const cardId = topCard.id || topCard.card_id;
+
+    const priceRes = await fetch(`${CARDHEDGE_BASE}/v1/cards/${cardId}/price-history`, {
+      headers: { 'X-API-Key': CARDHEDGE_API_KEY }
+    });
+    if (!priceRes.ok) return null;
+    const priceData = await priceRes.json();
+
+    return {
+      matchedCard: topCard.name || topCard.card_name,
+      matchedImage: topCard.image_url,
+      rawPrice: priceData.raw_price ?? priceData.prices?.raw ?? null,
+      psa9Price: priceData.psa9_price ?? priceData.prices?.psa9 ?? null,
+      psa10Price: priceData.psa10_price ?? priceData.prices?.psa10 ?? null,
+      sevenDaySales: priceData.seven_day_sales ?? priceData.sales_velocity?.seven_day ?? null,
+      thirtyDaySales: priceData.thirty_day_sales ?? priceData.sales_velocity?.thirty_day ?? null,
+      gain: priceData.weekly_gain ?? priceData.price_trend?.weekly ?? null,
+      allPrices: priceData,
+      cardId: cardId,
+      isRookie: topCard.is_rookie || topCard.rookie,
+      priceSource: 'Card Hedge'
+    };
+  } catch (e) {
+    console.error('Card Hedge fetch error:', e);
+    return null;
+  }
+}
+
+async function fetchTopMovers(category = 'Basketball') {
+  const CARDHEDGE_API_KEY = import.meta.env.VITE_CARDHEDGE_API_KEY;
+  const CARDHEDGE_BASE = 'https://api.cardhedger.com';
+  try {
+    const res = await fetch(`${CARDHEDGE_BASE}/v1/cards/top-movers?category=${encodeURIComponent(category)}`, {
+      headers: { 'X-API-Key': CARDHEDGE_API_KEY }
     });
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
-    console.error("eBay fetch error:", e);
+    console.error('Card Hedge top movers error:', e);
     return null;
   }
 }
@@ -137,9 +190,9 @@ function DetailRow({ label, value, color }) {
 function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
-  const [ebayData, setEbayData] = useState(null);
-  const [ebayLoading, setEbayLoading] = useState(false);
-  const [ebayFetched, setEbayFetched] = useState(false);
+  const [pricingData, setPricingData] = useState(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingFetched, setPricingFetched] = useState(false);
   const [localNotes, setLocalNotes] = useState(card.userNotes || "");
   const [backAnalyzing, setBackAnalyzing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -148,15 +201,15 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
   const handleExpand = useCallback(async () => {
     const next = !expanded;
     setExpanded(next);
-    if (next && !ebayFetched) {
-      setEbayLoading(true);
-      setEbayFetched(true);
-      const ebayResult = await fetchEbaySales(card);
-      setEbayData(ebayResult);
-      if (ebayResult?.avg) onUpdate(card.id, { estimatedValue: ebayResult.avg });
-      setEbayLoading(false);
+    if (next && !pricingFetched) {
+      setPricingLoading(true);
+      setPricingFetched(true);
+      const pricingResult = await fetchCardHedgePricing(card);
+      setPricingData(pricingResult);
+      if (pricingResult?.rawPrice) onUpdate(card.id, { estimatedValue: pricingResult.rawPrice });
+      setPricingLoading(false);
     }
-  }, [expanded, ebayFetched, card, onUpdate]);
+  }, [expanded, pricingFetched, card, onUpdate]);
 
   const handleBackFile = async (file) => {
     if (!file) return;
@@ -496,58 +549,70 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
             )}
 
-            {/* eBay Pricing */}
+            {/* Pricing Data */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                {ebayData?.source === 'active' ? 'Active eBay Listings' : 'Recent eBay Sales'}
+                Pricing Data
                 <span style={{
                   fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                  background: ebayData?.source === 'active' ? 'rgba(255,152,0,0.12)' : 'rgba(76,175,80,0.12)',
-                  color: ebayData?.source === 'active' ? '#ff9800' : '#4caf50',
-                  border: `1px solid ${ebayData?.source === 'active' ? 'rgba(255,152,0,0.25)' : 'rgba(76,175,80,0.25)'}`
-                }}>
-                  {ebayData?.source === 'active' ? 'no sold data — showing live listings' : 'sold listings'}
-                </span>
+                  background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)"
+                }}>Card Hedge</span>
               </div>
-              {ebayLoading && (
+              {pricingLoading && (
                 <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  Fetching eBay sales...
+                  Fetching pricing data...
                 </div>
               )}
-              {!ebayLoading && ebayData && (
+              {!pricingLoading && pricingData && (
                 <>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
-                      ${ebayData.avg.toFixed(2)}
-                    </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ebayData.sales.length} {ebayData.source === 'active' ? 'listings' : 'sold'}</span>
+                  {pricingData.matchedCard && (
+                    <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 8, fontStyle: "italic" }}>
+                      Matched: {pricingData.matchedCard}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 10 }}>
+                    {pricingData.rawPrice != null && (
+                      <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+                        <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>${pricingData.rawPrice.toFixed(2)}</div>
+                      </div>
+                    )}
+                    {pricingData.psa9Price != null && (
+                      <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+                        <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 9</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>${pricingData.psa9Price.toFixed(2)}</div>
+                      </div>
+                    )}
+                    {pricingData.psa10Price != null && (
+                      <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
+                        <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>${pricingData.psa10Price.toFixed(2)}</div>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {ebayData.sales.slice(0, 10).map((sale, i) => (
-                      <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                        padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
-                        border: "1px solid var(--b)", textDecoration: "none",
-                        transition: "border-color 0.15s", gap: 8
-                      }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = "#4caf5040"}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
-                      >
-                        <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sale.title}</span>
-                        {sale.date && (
-                          <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0, whiteSpace: "nowrap" }}>
-                            {new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
-                          </span>
-                        )}
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "#4caf50", flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
-                      </a>
-                    ))}
-                  </div>
+                  {(pricingData.sevenDaySales != null || pricingData.thirtyDaySales != null) && (
+                    <div style={{ fontSize: 11, color: "var(--tm)", marginBottom: 6 }}>
+                      {pricingData.sevenDaySales != null && <span>{pricingData.sevenDaySales} sold in 7 days</span>}
+                      {pricingData.sevenDaySales != null && pricingData.thirtyDaySales != null && <span style={{ color: "var(--tg)" }}> · </span>}
+                      {pricingData.thirtyDaySales != null && <span>{pricingData.thirtyDaySales} sold in 30 days</span>}
+                    </div>
+                  )}
+                  {pricingData.gain != null && (
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                      background: pricingData.gain >= 0 ? "rgba(76,175,80,0.12)" : "rgba(255,68,68,0.12)",
+                      color: pricingData.gain >= 0 ? "#4caf50" : "#ff4444",
+                      border: `1px solid ${pricingData.gain >= 0 ? "rgba(76,175,80,0.25)" : "rgba(255,68,68,0.25)"}`
+                    }}>
+                      {pricingData.gain >= 0 ? "+" : ""}{pricingData.gain}% this week
+                    </div>
+                  )}
                 </>
               )}
-              {!ebayLoading && !ebayData && ebayFetched && (
-                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No recent eBay sales found for this card.</div>
+              {!pricingLoading && !pricingData && pricingFetched && (
+                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No pricing data found for this card.</div>
               )}
             </div>
 
@@ -1835,7 +1900,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
               }}>The Vault</h1>
             </div>
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · eBay pricing</p>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · Live pricing</p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, minWidth: 0 }}>
             {cards.length > 0 && (
