@@ -191,6 +191,8 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
   const [pricingData, setPricingData] = useState(null);
   const [pricingLoading, setPricingLoading] = useState(false);
   const [pricingFetched, setPricingFetched] = useState(false);
+  const [ebayData, setEbayData] = useState(null);
+  const [ebayLoading, setEbayLoading] = useState(false);
   const [localNotes, setLocalNotes] = useState(card.userNotes || "");
   const [backAnalyzing, setBackAnalyzing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -201,17 +203,24 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
 
   const runPricingFetch = useCallback(async (cardData) => {
     setPricingLoading(true);
+    setEbayLoading(true);
     setPricingFetched(true);
     setPricingData(null);
-    let result = await fetchPricingProxy(cardData);
-    if (!result) {
-      console.log('[pricing] no result, falling back to eBay');
-      result = await fetchEbaySales(cardData);
-    }
-    setPricingData(result);
-    const value = result?.raw != null ? parseFloat(result.raw) : result?.avg ?? null;
-    if (value) onUpdate(cardData.id, { estimatedValue: value });
+    setEbayData(null);
+    // Fire both APIs in parallel
+    const [proxyResult, ebayResult] = await Promise.all([
+      fetchPricingProxy(cardData),
+      fetchEbaySales(cardData),
+    ]);
+    setPricingData(proxyResult);
     setPricingLoading(false);
+    setEbayData(ebayResult);
+    setEbayLoading(false);
+    // Update estimated value: prefer proxy price, fall back to eBay avg
+    const value = proxyResult?.raw != null ? parseFloat(proxyResult.raw)
+      : proxyResult?.avg != null ? proxyResult.avg
+      : ebayResult?.avg ?? null;
+    if (value) onUpdate(cardData.id, { estimatedValue: value });
   }, [onUpdate]);
 
   const handleExpand = useCallback(async () => {
@@ -725,15 +734,9 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     background: "rgba(103,58,183,0.12)", color: "#9c27b0", border: "1px solid rgba(103,58,183,0.25)"
                   }}>PriceCharting</span>
                 )}
-                {pricingData?.priceSource === 'eBay' && (
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                    background: 'rgba(76,175,80,0.12)', color: '#4caf50', border: '1px solid rgba(76,175,80,0.25)'
-                  }}>eBay sold</span>
-                )}
               </div>
               {pricingLoading && (
-                <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                   <div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                   Fetching pricing data...
                 </div>
@@ -768,16 +771,36 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   )}
                 </>
               )}
-              {!pricingLoading && pricingData?.priceSource === 'eBay' && (
+              {!pricingLoading && !pricingData && pricingFetched && (
+                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic", marginBottom: 10 }}>No pricing data found — try rescanning for better results</div>
+              )}
+            </div>
+
+            {/* eBay Sold Listings */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                Recent eBay Sales
+                <span style={{
+                  fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                  background: 'rgba(76,175,80,0.12)', color: '#4caf50', border: '1px solid rgba(76,175,80,0.25)'
+                }}>sold listings</span>
+              </div>
+              {ebayLoading && (
+                <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 10, height: 10, border: "2px solid #4caf50", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                  Fetching eBay sales...
+                </div>
+              )}
+              {!ebayLoading && ebayData && (
                 <>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 22, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
-                      ${pricingData.avg.toFixed(2)}
+                    <span style={{ fontSize: 20, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
+                      ${ebayData.avg.toFixed(2)}
                     </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {pricingData.sales.length} sold</span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {ebayData.sales.length} sold</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {pricingData.sales.slice(0, 10).map((sale, i) => (
+                    {ebayData.sales.slice(0, 8).map((sale, i) => (
                       <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
                         display: "flex", justifyContent: "space-between", alignItems: "center",
                         padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
@@ -799,8 +822,8 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   </div>
                 </>
               )}
-              {!pricingLoading && !pricingData && pricingFetched && (
-                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No pricing data found — try rescanning for better results</div>
+              {!ebayLoading && !ebayData && pricingFetched && (
+                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No recent eBay sales found</div>
               )}
             </div>
 
