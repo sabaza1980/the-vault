@@ -930,12 +930,16 @@ async function loadOverview() {
     const isUsersSample  = usersSnap.size  === 5000;
     const isCardsSample  = cardsSnap.size  === 5000;
 
+    const userDocIds = new Set(usersSnap.docs.map(d => d.id));
+    const cardUids   = new Set();
     let totalValue = 0;
     let flaggedCount = 0;
     const gradeCounts = {};
     const sportCounts = {};
 
     cardsSnap.docs.forEach(d => {
+      const uid = d.ref.parent.parent ? d.ref.parent.parent.id : null;
+      if (uid) cardUids.add(uid);
       const data = d.data();
       totalValue   += (data.currentValue || 0);
       if (data.flagged) flaggedCount++;
@@ -945,7 +949,11 @@ async function loadOverview() {
       sportCounts[s] = (sportCounts[s] || 0) + 1;
     });
 
-    document.getElementById('stat-users').textContent   = usersSnap.size.toLocaleString() + (isUsersSample ? '+' : '');
+    // Count users with cards but no user doc (old-flow accounts)
+    cardUids.forEach(uid => { if (!userDocIds.has(uid)) userDocIds.add(uid); });
+    const totalUsers = userDocIds.size;
+
+    document.getElementById('stat-users').textContent   = totalUsers.toLocaleString() + (isUsersSample ? '+' : '');
     document.getElementById('stat-cards').textContent   = cardsSnap.size.toLocaleString() + (isCardsSample ? '+' : '');
     document.getElementById('stat-value').textContent   = '$' + totalValue.toLocaleString(undefined, {maximumFractionDigits:0}) + (isCardsSample ? '+' : '');
     document.getElementById('stat-flagged').textContent = flaggedCount.toLocaleString() + (isCardsSample ? '+' : '');
