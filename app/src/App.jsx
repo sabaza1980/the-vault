@@ -81,9 +81,12 @@ function getPricingSource(cardInfo) {
   return 'sports';
 }
 
-async function fetchSportsCardsPricing(cardInfo) {
+// ── Pricing proxy (routes sports → SportsCardsPro, TCG → PriceCharting) ────
+async function fetchPricingProxy(cardInfo) {
+  const source = getPricingSource(cardInfo);
+  const endpoint = source === 'tcg' ? `${API_BASE}/api/pricecharting` : `${API_BASE}/api/sportscardspro`;
   try {
-    const res = await fetch(`${API_BASE}/api/sportscardspro`, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -96,12 +99,12 @@ async function fetchSportsCardsPricing(cardInfo) {
       })
     });
     if (!res.ok) {
-      console.error('[SCP] proxy error:', res.status);
+      console.error(`[pricing] ${endpoint} error:`, res.status);
       return null;
     }
     return await res.json();
   } catch (e) {
-    console.error('[SCP] fetch error:', e);
+    console.error('[pricing] fetch error:', e);
     return null;
   }
 }
@@ -200,16 +203,10 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     setPricingLoading(true);
     setPricingFetched(true);
     setPricingData(null);
-    let result = null;
-    const pricingSource = getPricingSource(cardData);
-    if (pricingSource === 'tcg') {
-      result = { priceSource: 'tcg_soon' };
-    } else {
-      result = await fetchSportsCardsPricing(cardData);
-      if (!result) {
-        console.log('[SCP] no result, falling back to eBay');
-        result = await fetchEbaySales(cardData);
-      }
+    let result = await fetchPricingProxy(cardData);
+    if (!result) {
+      console.log('[pricing] no result, falling back to eBay');
+      result = await fetchEbaySales(cardData);
     }
     setPricingData(result);
     const value = result?.raw != null ? parseFloat(result.raw) : result?.avg ?? null;
@@ -722,6 +719,12 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)"
                   }}>SportsCardsPro</span>
                 )}
+                {pricingData?.priceSource === 'PriceCharting' && (
+                  <span style={{
+                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                    background: "rgba(103,58,183,0.12)", color: "#9c27b0", border: "1px solid rgba(103,58,183,0.25)"
+                  }}>PriceCharting</span>
+                )}
                 {pricingData?.priceSource === 'eBay' && (
                   <span style={{
                     fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
@@ -735,7 +738,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   Fetching pricing data...
                 </div>
               )}
-              {!pricingLoading && pricingData?.priceSource === 'SportsCardsPro' && (
+              {!pricingLoading && (pricingData?.priceSource === 'SportsCardsPro' || pricingData?.priceSource === 'PriceCharting') && (
                 <>
                   {(pricingData.matchedCard || pricingData.matchedSet) && (
                     <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 8, fontStyle: "italic" }}>
@@ -795,9 +798,6 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     ))}
                   </div>
                 </>
-              )}
-              {!pricingLoading && pricingData?.priceSource === 'tcg_soon' && (
-                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>TCG pricing coming soon</div>
               )}
               {!pricingLoading && !pricingData && pricingFetched && (
                 <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No pricing data found — try rescanning for better results</div>
