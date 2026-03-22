@@ -39,34 +39,6 @@ function resizeImageFile(file) {
   });
 }
 
-async function fetchCardHedgePricing(cardInfo) {
-  try {
-    const res = await fetch(`${API_BASE}/api/cardhedge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        playerName: cardInfo.playerName,
-        year: cardInfo.year,
-        brand: cardInfo.brand,
-        series: cardInfo.series,
-        parallel: cardInfo.parallel,
-        cardCategory: cardInfo.cardCategory,
-        isRookie: cardInfo.isRookie,
-      })
-    });
-    if (!res.ok) {
-      console.error('[CardHedge] proxy error:', res.status);
-      return null;
-    }
-    const data = await res.json();
-    console.log('[CardHedge] result:', data ? `matched "${data.matchedCard}" raw=$${data.rawPrice}` : 'null', data?._debug);
-    return data;
-  } catch (e) {
-    console.error('[CardHedge] fetch error:', e);
-    return null;
-  }
-}
-
 async function fetchEbaySales(cardInfo) {
   try {
     const res = await fetch(`${API_BASE}/api/ebay-sales`, {
@@ -88,17 +60,89 @@ async function fetchEbaySales(cardInfo) {
   }
 }
 
-async function fetchTopMovers(category = 'Basketball') {
-  const CARDHEDGE_API_KEY = import.meta.env.VITE_CARDHEDGE_API_KEY;
-  const CARDHEDGE_BASE = 'https://api.cardhedger.com';
+// ── SportsCardsPro pricing ──────────────────────────────────────────────────
+let lastScpCall = 0;
+async function scpRateLimit() {
+  const now = Date.now();
+  const gap = now - lastScpCall;
+  if (gap < 1100) {
+    await new Promise(res => setTimeout(res, 1100 - gap));
+  }
+  lastScpCall = Date.now();
+}
+
+const SPORTS_CATEGORIES = [
+  'basketball', 'baseball', 'football', 'hockey',
+  'soccer', 'racing', 'wrestling', 'ufc', 'sports'
+];
+
+const TCG_CATEGORIES = [
+  'pokemon', 'magic', 'mtg', 'yu-gi-oh', 'yugioh',
+  'one piece', 'dragon ball', 'lorcana'
+];
+
+function getPricingSource(cardInfo) {
+  const text = [
+    cardInfo.brand, cardInfo.series, cardInfo.fullCardName,
+    cardInfo.cardCategory
+  ].filter(Boolean).join(' ').toLowerCase();
+  if (SPORTS_CATEGORIES.some(c => text.includes(c))) return 'sports';
+  if (TCG_CATEGORIES.some(c => text.includes(c))) return 'tcg';
+  return 'sports';
+}
+
+async function fetchSportsCardsPricing(cardInfo) {
   try {
-    const res = await fetch(`${CARDHEDGE_BASE}/v1/cards/top-movers?category=${encodeURIComponent(category)}`, {
-      headers: { 'X-API-Key': CARDHEDGE_API_KEY }
-    });
-    if (!res.ok) return null;
-    return await res.json();
+    const token = import.meta.env.VITE_SPORTSCARDSPRO_API_KEY;
+    if (!token) {
+      console.warn('VITE_SPORTSCARDSPRO_API_KEY is not set');
+      return null;
+    }
+    const queryParts = [
+      cardInfo.playerName !== 'Unknown Player' ? cardInfo.playerName : '',
+      cardInfo.year || '',
+      cardInfo.brand || '',
+      cardInfo.series || '',
+      cardInfo.parallel && cardInfo.parallel !== 'Base' ? cardInfo.parallel : '',
+      cardInfo.cardNumber ? `#${cardInfo.cardNumber}` : ''
+    ].filter(Boolean).join(' ').trim();
+
+    if (!queryParts) return null;
+
+    await scpRateLimit();
+    const searchRes = await fetch(
+      `https://www.sportscardspro.com/api/products?t=${token}&q=${encodeURIComponent(queryParts)}`
+    );
+    if (!searchRes.ok) return null;
+    const searchData = await searchRes.json();
+    if (searchData.status !== 'success' || !searchData.products?.length) return null;
+
+    const bestMatch = searchData.products[0];
+    await scpRateLimit();
+    const priceRes = await fetch(
+      `https://www.sportscardspro.com/api/product?t=${token}&id=${bestMatch.id}`
+    );
+    if (!priceRes.ok) return null;
+    const priceData = await priceRes.json();
+    if (priceData.status !== 'success') return null;
+
+    const pennies = (val) => val ? (val / 100).toFixed(2) : null;
+    return {
+      matchedCard: priceData['product-name'],
+      matchedSet: priceData['console-name'],
+      raw: pennies(priceData['loose-price']),
+      grade8: pennies(priceData['new-price']),
+      grade9: pennies(priceData['graded-price']),
+      psa10: pennies(priceData['manual-only-price']),
+      bgs10: pennies(priceData['bgs-10-price']),
+      cgc10: pennies(priceData['condition-17-price']),
+      sgc10: pennies(priceData['condition-18-price']),
+      salesVolume: priceData['sales-volume'] || null,
+      releaseDate: priceData['release-date'] || null,
+      priceSource: 'SportsCardsPro'
+    };
   } catch (e) {
-    console.error('Card Hedge top movers error:', e);
+    console.error('SportsCardsPro pricing error:', e);
     return null;
   }
 }
@@ -196,17 +240,19 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     if (next && !pricingFetched) {
       setPricingLoading(true);
       setPricingFetched(true);
-      // Try Card Hedge first, fall back to eBay
-      let result = await fetchCardHedgePricing(card);
-      const hasPrice = result?.rawPrice != null || result?.psa9Price != null || result?.psa10Price != null;
-      if (!hasPrice) {
-        console.log('[CardHedge] falling back to eBay — result was:', result, '| hasPrice:', hasPrice);
-        result = await fetchEbaySales(card);
+      const pricingSource = getPricingSource(card);
+      let result = null;
+      if (pricingSource === 'tcg') {
+        result = { priceSource: 'tcg_soon' };
       } else {
-        console.log('[CardHedge] ✅ using Card Hedge data — rawPrice:', result.rawPrice, 'psa9:', result.psa9Price, 'psa10:', result.psa10Price);
+        result = await fetchSportsCardsPricing(card);
+        if (!result) {
+          console.log('[SCP] no result, falling back to eBay');
+          result = await fetchEbaySales(card);
+        }
       }
       setPricingData(result);
-      const value = result?.rawPrice ?? result?.avg ?? null;
+      const value = result?.raw != null ? parseFloat(result.raw) : result?.avg ?? null;
       if (value) onUpdate(card.id, { estimatedValue: value });
       setPricingLoading(false);
     }
@@ -550,23 +596,22 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
             )}
 
-            {/* Pricing Data */}
+            {/* Pricing */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                {pricingData?.priceSource === 'eBay' ? (pricingData?.source === 'active' ? 'Active eBay Listings' : 'Recent eBay Sales') : 'Pricing Data'}
-                {pricingData?.priceSource === 'eBay' ? (
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                    background: pricingData?.source === 'active' ? 'rgba(255,152,0,0.12)' : 'rgba(76,175,80,0.12)',
-                    color: pricingData?.source === 'active' ? '#ff9800' : '#4caf50',
-                    border: `1px solid ${pricingData?.source === 'active' ? 'rgba(255,152,0,0.25)' : 'rgba(76,175,80,0.25)'}`
-                  }}>{pricingData?.source === 'active' ? 'live listings' : 'sold listings'}</span>
-                ) : pricingData?.priceSource === 'Card Hedge' ? (
+                Pricing
+                {pricingData?.priceSource === 'SportsCardsPro' && (
                   <span style={{
                     fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
                     background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)"
-                  }}>Card Hedge</span>
-                ) : null}
+                  }}>SportsCardsPro</span>
+                )}
+                {pricingData?.priceSource === 'eBay' && (
+                  <span style={{
+                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                    background: 'rgba(76,175,80,0.12)', color: '#4caf50', border: '1px solid rgba(76,175,80,0.25)'
+                  }}>eBay sold</span>
+                )}
               </div>
               {pricingLoading && (
                 <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
@@ -574,50 +619,33 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   Fetching pricing data...
                 </div>
               )}
-              {!pricingLoading && pricingData?.priceSource === 'Card Hedge' && (
+              {!pricingLoading && pricingData?.priceSource === 'SportsCardsPro' && (
                 <>
-                  {pricingData.matchedCard && (
+                  {(pricingData.matchedCard || pricingData.matchedSet) && (
                     <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 8, fontStyle: "italic" }}>
-                      Matched: {pricingData.matchedCard}
+                      Matched: {pricingData.matchedCard}{pricingData.matchedSet ? ` — ${pricingData.matchedSet}` : ''}
                     </div>
                   )}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 10 }}>
-                    {pricingData.rawPrice != null && (
-                      <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
-                        <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>${pricingData.rawPrice.toFixed(2)}</div>
-                      </div>
-                    )}
-                    {pricingData.psa9Price != null && (
-                      <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
-                        <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 9</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>${pricingData.psa9Price.toFixed(2)}</div>
-                      </div>
-                    )}
-                    {pricingData.psa10Price != null && (
-                      <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
-                        <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>${pricingData.psa10Price.toFixed(2)}</div>
-                      </div>
-                    )}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
+                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.raw ? `$${pricingData.raw}` : 'N/A'}</div>
+                    </div>
+                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 8</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "var(--tm)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade8 ? `$${pricingData.grade8}` : 'N/A'}</div>
+                    </div>
+                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 9</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade9 ? `$${pricingData.grade9}` : 'N/A'}</div>
+                    </div>
+                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.psa10 ? `$${pricingData.psa10}` : 'N/A'}</div>
+                    </div>
                   </div>
-                  {(pricingData.sevenDaySales != null || pricingData.thirtyDaySales != null) && (
-                    <div style={{ fontSize: 11, color: "var(--tm)", marginBottom: 6 }}>
-                      {pricingData.sevenDaySales != null && <span>{pricingData.sevenDaySales} sold in 7 days</span>}
-                      {pricingData.sevenDaySales != null && pricingData.thirtyDaySales != null && <span style={{ color: "var(--tg)" }}> · </span>}
-                      {pricingData.thirtyDaySales != null && <span>{pricingData.thirtyDaySales} sold in 30 days</span>}
-                    </div>
-                  )}
-                  {pricingData.gain != null && (
-                    <div style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "2px 8px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                      background: pricingData.gain >= 0 ? "rgba(76,175,80,0.12)" : "rgba(255,68,68,0.12)",
-                      color: pricingData.gain >= 0 ? "#4caf50" : "#ff4444",
-                      border: `1px solid ${pricingData.gain >= 0 ? "rgba(76,175,80,0.25)" : "rgba(255,68,68,0.25)"}`
-                    }}>
-                      {pricingData.gain >= 0 ? "+" : ""}{pricingData.gain}% this week
-                    </div>
+                  {pricingData.salesVolume && (
+                    <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 6 }}>{pricingData.salesVolume} sold per year</div>
                   )}
                 </>
               )}
@@ -627,7 +655,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                     <span style={{ fontSize: 22, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
                       ${pricingData.avg.toFixed(2)}
                     </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {pricingData.sales.length} {pricingData.source === 'active' ? 'listings' : 'sold'}</span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {pricingData.sales.length} sold</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {pricingData.sales.slice(0, 10).map((sale, i) => (
@@ -652,8 +680,11 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   </div>
                 </>
               )}
+              {!pricingLoading && pricingData?.priceSource === 'tcg_soon' && (
+                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>TCG pricing coming soon</div>
+              )}
               {!pricingLoading && !pricingData && pricingFetched && (
-                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No pricing data found for this card.</div>
+                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No pricing data found — try rescanning for better results</div>
               )}
             </div>
 
