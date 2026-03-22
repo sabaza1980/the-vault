@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { useAuth } from "./AuthContext";
+import LandingPage from "./LandingPage";
 import { useFirestoreSync } from "./useFirestoreSync";
 import { useRewardProfile } from "./useRewardProfile";
 import AuthModal from "./AuthModal";
@@ -796,9 +797,11 @@ const CATEGORY_IMAGES = {
   "MTG":              "/mtg.png",
   "Yu-Gi-Oh":         "/1p.png",
   "Other TCG":        "/1p.png",
+  "Stamps":           "/stamps.png",
+  "Coins":            "/coins.png",
 };
 const CATEGORY_EMOJI = {
-  "Hockey": "🏒", "Non-Sports": "🎭", "Other": "🃏", "Favourites": "★",
+  "Hockey": "🏒", "Non-Sports": "🎭", "Stamps": "📬", "Coins": "🪙", "Other": "🃏", "Favourites": "★",
 };
 
 // ── Pro — Coming Soon Modal ───────────────────────────────────────────────────
@@ -1467,46 +1470,50 @@ export default function App() {
               { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
               {
                 type: "text",
-                text: `You are an expert trading card authenticator and cataloguer with deep knowledge of every major card brand, set, and format — including Pokémon, Magic: The Gathering, Yu-Gi-Oh!, sports cards (basketball, American football, soccer, baseball, hockey), and other trading card games. Analyse this card image with extreme care.
+                text: `You are an expert collectibles authenticator and cataloguer with deep knowledge of trading cards, stamps, and coins. Your expertise covers every major card brand and format (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, sports cards), philately (postage stamps from all nations and eras), and numismatics (coins, currency, and medals from all nations and eras). Analyse this image with extreme care.
 
 STEP 1 — VISUAL SCAN (do this mentally before filling the JSON):
-- CARD CATEGORY: First, determine the card type — is it Pokémon, MTG, Yu-Gi-Oh!, a sports card (which sport?), or something else?
-- PLAYER / CHARACTER & CARD ID: Read the player name, character name, team, year, brand, and set name directly from the card front and back.
-- AUTOGRAPH CHECK: Carefully scan the ENTIRE card surface — front AND back. Look for: ink signatures (any color, often blue/black/silver), sticker autographs (glossy rectangle with ink), hard-signed on-card autographs. An autograph may be subtle on a dark background. hasAutograph = true if ANY signature is present.
-- SERIAL NUMBER CHECK: Scan all four corners, borders, and the back of the card. Serial numbers are stamped, foil-printed, or handwritten as "X/Y" (e.g. "45/99", "12/25", "1/1"). If found, record it exactly including the total (e.g. "45/99").
-- PARALLEL / FINISH: Identify the specific parallel by the border color, foil type, and finish. For sports cards: Silver Prizm, Gold Prizm, Red Wave Refractor, etc. For Pokémon: Holo, Reverse Holo, Full Art, Alt Art, Special Illustration Rare, etc. For MTG: Foil, Extended Art, Showcase, Borderless, etc. Only use "Base" if there is truly no special finish.
-- ROOKIE / FIRST EDITION INDICATOR: Look for text: "ROOKIE", "RC", "Rated Rookie", "RPA" on sports cards. For Pokémon: "1st Edition" stamp. For MTG: note if it is from a first-print-run set.
+- ITEM CATEGORY: First, determine the item type — is it a trading card (Pokémon, MTG, Yu-Gi-Oh!, sports card), a postage stamp, a coin/medal, or something else?
+- For STAMPS: Read the country, denomination, year of issue, and any visible catalogue reference (Scott, Stanley Gibbons, Michel). Note perforations, watermarks if visible, cancellation status (mint/used), and any overprints. Use "playerName" for the stamp's main subject/theme (e.g. "Queen Elizabeth II", "Apollo 11", "1d Red"). Use "series" for the stamp series or definitive set name.
+- For COINS: Read the country, denomination, year, and mint mark if visible. Note the obverse (heads) subject and reverse (tails) design. Assess strike quality and any mint errors. Use "playerName" for the coin's main obverse subject (e.g. "Queen Elizabeth II", "Abraham Lincoln", "Walking Liberty"). Use "series" for the coin series (e.g. "Morgan Dollar", "50 State Quarters", "Pre-decimal Florin").
+- For CARDS — PLAYER / CHARACTER & CARD ID: Read the player name, character name, team, year, brand, and set name directly from the card.
+- AUTOGRAPH CHECK (cards only): Carefully scan the ENTIRE surface — front AND back. Look for ink signatures, sticker autographs, hard-signed on-card autographs. hasAutograph = true if ANY signature is present.
+- SERIAL NUMBER CHECK (cards and coins): For cards, scan all four corners, borders, and back for stamps/foil as "X/Y". For coins, note any mintage-limit numbering on collector issues.
+- PARALLEL / FINISH (cards) or GRADE / STRIKE (stamps & coins): For cards, identify specific parallel by border color, foil type, finish. For stamps: Mint NH, Mint Hinged, Fine Used, CTO, etc. For coins: Uncirculated (MS), About Uncirculated (AU), Fine (F), Very Fine (VF), etc.
+- RARITY INDICATORS: For stamps — key value drivers include mint-never-hinged status, low print run, errors (inverted, missing color), high-value denominations, and classic/vintage issues. For coins — key drivers include low mintage, proof/specimen strikes, first-year issues, and error coins.
 
-STEP 2 — RARITY (assign based on the card's specific category conventions):
+STEP 2 — RARITY (assign based on the item's specific category conventions):
 Sports cards: "Common" = Base; "Uncommon" = Colored parallel; "Rare" = Refractor/Chrome/Prizm; "Very Rare" = Serial /100–/299; "Ultra Rare" = Serial /10–/99; "Legendary" = 1/1, logoman, or on-card auto + serial /10 or lower
 Pokémon: "Common" = Common/Uncommon; "Uncommon" = Reverse Holo; "Rare" = Holo Rare; "Very Rare" = Ultra Rare/Full Art/V; "Ultra Rare" = Secret Rare/Alt Art/Special Illustration Rare; "Legendary" = Trophy card/1st Ed Base Charizard/Gold Pikachu promo
 MTG: "Common" = Common; "Uncommon" = Uncommon; "Rare" = Rare; "Very Rare" = Non-foil Mythic/Extended Art; "Ultra Rare" = Foil or Borderless/Showcase Mythic; "Legendary" = Reserved List card, serialised, or Power Nine
 Yu-Gi-Oh!: "Common" = Common; "Uncommon" = Rare; "Rare" = Super/Ultra Rare; "Very Rare" = Secret Rare; "Ultra Rare" = Starlight/Ghost Rare; "Legendary" = Prize card / Championship promo
+Stamps: "Common" = Modern commemorative, high print run; "Uncommon" = Older definitive or lightly used classic; "Rare" = Pre-1950 mint, low print run modern; "Very Rare" = Pre-1900 or key scarce variety; "Ultra Rare" = Major rarity, classic inverted or error; "Legendary" = World-class rarity (e.g. Penny Black, Inverted Jenny)
+Coins: "Common" = High-mintage modern circulation; "Uncommon" = Semi-key date or low-mintage modern; "Rare" = Key date, proof issue, or pre-1900 type coin; "Very Rare" = Significant key date, low-mintage proof/specimen; "Ultra Rare" = Major rarity or error coin; "Legendary" = World-class rarity (e.g. 1804 Dollar, 1933 Double Eagle)
 
 STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text outside the JSON.
 
 {
-  "cardCategory": "Pokemon | MTG | Yu-Gi-Oh | Basketball | American Football | Soccer | Baseball | Hockey | Other TCG | Non-Sports | Other",
-  "playerName": "Exact player name as printed on card, or character name for TCG cards (e.g. 'Charizard', 'Black Lotus')",
-  "fullCardName": "Year + Brand + Series as it appears on the card, e.g. '2023-24 Panini Prizm' or '2021 Topps Chrome' or 'Scarlet & Violet: Paradox Rift'",
+  "cardCategory": "Pokemon | MTG | Yu-Gi-Oh | Basketball | American Football | Soccer | Baseball | Hockey | Other TCG | Non-Sports | Stamps | Coins | Other",
+  "playerName": "Exact player/character name for cards; main subject/theme for stamps (e.g. 'Queen Elizabeth II', 'Apollo 11'); obverse subject for coins (e.g. 'Morgan Dollar Obverse', 'Lincoln Cent')",
+  "fullCardName": "For cards: Year + Brand + Series. For stamps: Country + denomination + year e.g. 'Australia 5c 1966'. For coins: Country + denomination + year e.g. 'USA 1 Dollar 1921'",
   "pack": "Product/pack type if identifiable, or null",
-  "team": "Team name as printed, or game/format for TCG cards (e.g. 'Standard'), or 'Unknown'",
-  "year": "Year or season or set release year e.g. '2023-24' or '2024'",
-  "brand": "Panini | Topps | Upper Deck | Fleer | Bowman | Donruss | Score | Nintendo | Wizards of the Coast | Konami | other",
-  "series": "Exact set name e.g. 'Prizm' | 'Select' | 'Hoops' | 'Chrome' | 'Optic' | 'Paradox Rift' | 'Modern Horizons 3' | 'LOB'",
-  "parallel": "Exact parallel/finish name e.g. 'Silver Prizm' | 'Gold Prizm' | 'Red Wave' | 'Holo' | 'Reverse Holo' | 'Special Illustration Rare' | 'Foil' | 'Borderless' | 'Base'",
-  "cardNumber": "Card number as printed e.g. '#278' or '25/100', or null",
-  "serialNumber": "Serial stamp exactly as printed e.g. '45/99' | '1/1', or null",
+  "team": "Team name for sports cards; country of issue for stamps/coins; game/format for TCG cards; or 'Unknown'",
+  "year": "Year of issue or season e.g. '2023-24', '2024', '1921'",
+  "brand": "For cards: Panini | Topps | Upper Deck | Fleer | Bowman | Donruss | Score | Nintendo | Wizards of the Coast | Konami | other. For stamps: issuing postal authority e.g. 'Royal Mail' | 'USPS' | 'Australia Post'. For coins: mint name e.g. 'US Mint' | 'Royal Mint' | 'Perth Mint'",
+  "series": "For cards: exact set name. For stamps: definitive series or commemorative set name. For coins: coin series e.g. 'Morgan Dollar' | '50 State Quarters' | 'Florin'",
+  "parallel": "For cards: exact parallel/finish. For stamps: 'Mint NH' | 'Mint Hinged' | 'Fine Used' | 'CTO' | other. For coins: 'Proof' | 'Specimen' | 'Uncirculated' | 'Circulated' | other",
+  "cardNumber": "Card/catalogue number e.g. '#278', Scott catalogue number for stamps, or null",
+  "serialNumber": "Serial stamp as printed e.g. '45/99' | '1/1' for cards; mint error number or null for stamps/coins",
   "isRookie": false,
   "hasAutograph": false,
   "autographType": "'On-Card' | 'Sticker' | null — only if hasAutograph is true",
   "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
   "condition": "Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown",
-  "conditionDetail": "1-2 sentences: describe corners (sharp/worn/dinged), surface (clean/scratched), centering (well-centered/off). Only describe what is visible.",
-  "playerContext": "IMPORTANT: Before writing this field, use the web_search tool to search for '[playerName] basketball player career stats' (substitute the actual player/character name) to get current accurate information. Then write 2-3 sentences describing: who this player or character is today (current team, career stage — rookie/veteran/legend/college prospect/etc. — or game format for TCG cards), their most notable career achievements or current season highlights, and why this specific card is or isn't particularly collectible. Base this on current search results, not prior knowledge. If not found in search results, write what you can observe from the card itself and note that information is limited.",
+  "conditionDetail": "1-2 sentences: for cards describe corners, surface, centering; for stamps describe gum status, perforations, cancellation; for coins describe strike quality, luster, wear. Only describe what is visible.",
+  "playerContext": "IMPORTANT: Before writing this field, use the web_search tool to search for the item — e.g. '[playerName] basketball player career', '[stamp name] stamp catalogue value', '[coin name] mintage value' — to get current accurate information. Then write 2-3 sentences describing: what this item is, its significance in its collecting category, and why this specific example is or isn't particularly collectible. Base this on current search results. If not found, write what you can observe and note that information is limited.",
   "playerContextSearched": true,
   "confidenceLevel": "High | Medium | Low",
-  "notes": "Any other observations: print defects, surface damage, foil scratches, staining, etc. or null"
+  "notes": "Any other observations: print defects, surface damage, foil scratches, staining, mint errors, perforation faults, etc. or null"
 }`
               }
             ]
@@ -2066,7 +2073,11 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px" }}>
 
-        {/* Top 10 by Value Hero */}
+        {/* Non-logged-in landing page */}
+        {!user && <LandingPage onSignUp={() => setShowAuth(true)} />}
+
+        {/* Logged-in content */}
+        {user && (<>
         {top10.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
@@ -2464,6 +2475,7 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
             )}
           </div>
         )}
+        </>)}
       </div>
       {/* Floating bundle action bar */}
       {bundleMode && (

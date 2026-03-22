@@ -127,18 +127,18 @@ export function buildCollectionContext(cards) {
   const lines = [
     "=== COLLECTION CONTEXT ===",
     "",
-    `Total cards: ${total}`,
+    `Total items: ${total}`,
     totalValue > 0
-      ? `Total estimated value: $${totalValue.toFixed(2)} (eBay sold averages across ${valuedCount} of ${total} cards — estimates only, not guaranteed sale prices)`
-      : `Estimated values: not yet loaded (requires expanding cards to fetch eBay data)`,
+      ? `Total estimated value: $${totalValue.toFixed(2)} (eBay sold averages across ${valuedCount} of ${total} items — estimates only, not guaranteed sale prices)`
+      : `Estimated values: not yet loaded (requires expanding items to fetch eBay data)`,
     `Rookie cards: ${rookieCount}`,
     `Autographs: ${autoCount}${autoCount > 0 ? ` (${onCardAutoCount} on-card, ${stickerAutoCount} sticker)` : ""}`,
-    `Serial-numbered cards: ${serialCount}`,
-    `Favourited cards: ${favouriteCount}`,
+    `Serial-numbered: ${serialCount}`,
+    `Favourited: ${favouriteCount}`,
     "",
     `Rarity breakdown: ${rarityBreakdown}`,
     "",
-    `Collection categories: ${categoryBreakdown || "unknown (cards may predate category detection)"}`,
+    `Collection categories: ${categoryBreakdown || "unknown (items may predate category detection)"}`,
     "",
     `Top players by card count: ${topPlayers || "none"}`,
     "",
@@ -146,11 +146,11 @@ export function buildCollectionContext(cards) {
   ];
 
   if (topValueCards.length > 0) {
-    lines.push("", "Top cards by estimated value:");
+    lines.push("", "Top items by estimated value:");
     lines.push(topValueLines);
   }
 
-  lines.push("", "Full card index (for precise lookups):");
+  lines.push("", "Full item index (for precise lookups):");
   lines.push(cardLines);
 
   return lines.join("\n");
