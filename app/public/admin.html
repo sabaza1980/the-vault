@@ -908,7 +908,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
 function navigateTo(page) {
   document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
-  if (page === 'overview' && allUsers.length === 0) loadOverview();
+  if (page === 'overview') loadOverview();
   if (page === 'users'    && allUsers.length === 0) loadUsers();
   if (page === 'moderation') loadModeration();
 }
@@ -917,23 +917,27 @@ function navigateTo(page) {
 //  Overview
 // ─────────────────────────────────────────────
 async function loadOverview() {
-  // The app stores cards at users/{uid}/cards — no user profile docs exist.
-  // Use collectionGroup to get all cards across all users.
+  document.getElementById('stat-users').textContent = '…';
+  document.getElementById('stat-cards').textContent = '…';
+  document.getElementById('stat-value').textContent = '…';
+  document.getElementById('stat-flagged').textContent = '…';
   try {
-    const snap = await db.collectionGroup('cards').limit(1000).get();
-    const isSample = snap.size === 1000;
+    const [usersSnap, cardsSnap] = await Promise.all([
+      db.collection('users').limit(5000).get(),
+      db.collectionGroup('cards').limit(5000).get(),
+    ]);
 
-    const uids = new Set();
+    const isUsersSample  = usersSnap.size  === 5000;
+    const isCardsSample  = cardsSnap.size  === 5000;
+
     let totalValue = 0;
     let flaggedCount = 0;
     const gradeCounts = {};
     const sportCounts = {};
 
-    snap.docs.forEach(d => {
-      const uid = d.ref.parent.parent ? d.ref.parent.parent.id : null;
-      if (uid) uids.add(uid);
+    cardsSnap.docs.forEach(d => {
       const data = d.data();
-      totalValue  += (data.currentValue || 0);
+      totalValue   += (data.currentValue || 0);
       if (data.flagged) flaggedCount++;
       const g = data.grade || 'Ungraded';
       gradeCounts[g] = (gradeCounts[g] || 0) + 1;
@@ -941,11 +945,10 @@ async function loadOverview() {
       sportCounts[s] = (sportCounts[s] || 0) + 1;
     });
 
-    const suffix = isSample ? '+' : '';
-    document.getElementById('stat-users').textContent   = uids.size.toLocaleString() + suffix;
-    document.getElementById('stat-cards').textContent   = snap.size.toLocaleString() + suffix;
-    document.getElementById('stat-value').textContent   = '$' + totalValue.toLocaleString(undefined, {maximumFractionDigits:0}) + suffix;
-    document.getElementById('stat-flagged').textContent = flaggedCount.toLocaleString() + suffix;
+    document.getElementById('stat-users').textContent   = usersSnap.size.toLocaleString() + (isUsersSample ? '+' : '');
+    document.getElementById('stat-cards').textContent   = cardsSnap.size.toLocaleString() + (isCardsSample ? '+' : '');
+    document.getElementById('stat-value').textContent   = '$' + totalValue.toLocaleString(undefined, {maximumFractionDigits:0}) + (isCardsSample ? '+' : '');
+    document.getElementById('stat-flagged').textContent = flaggedCount.toLocaleString() + (isCardsSample ? '+' : '');
 
     renderGradeChart(gradeCounts);
     renderSportChart(sportCounts);
