@@ -191,31 +191,125 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
   const [localNotes, setLocalNotes] = useState(card.userNotes || "");
   const [backAnalyzing, setBackAnalyzing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editDraft, setEditDraft] = useState({});
+  const [rescanning, setRescanning] = useState(false);
   const backFileRef = useRef();
+
+  const runPricingFetch = useCallback(async (cardData) => {
+    setPricingLoading(true);
+    setPricingFetched(true);
+    setPricingData(null);
+    let result = null;
+    const pricingSource = getPricingSource(cardData);
+    if (pricingSource === 'tcg') {
+      result = { priceSource: 'tcg_soon' };
+    } else {
+      result = await fetchSportsCardsPricing(cardData);
+      if (!result) {
+        console.log('[SCP] no result, falling back to eBay');
+        result = await fetchEbaySales(cardData);
+      }
+    }
+    setPricingData(result);
+    const value = result?.raw != null ? parseFloat(result.raw) : result?.avg ?? null;
+    if (value) onUpdate(cardData.id, { estimatedValue: value });
+    setPricingLoading(false);
+  }, [onUpdate]);
 
   const handleExpand = useCallback(async () => {
     const next = !expanded;
     setExpanded(next);
     if (next && !pricingFetched) {
-      setPricingLoading(true);
-      setPricingFetched(true);
-      const pricingSource = getPricingSource(card);
-      let result = null;
-      if (pricingSource === 'tcg') {
-        result = { priceSource: 'tcg_soon' };
-      } else {
-        result = await fetchSportsCardsPricing(card);
-        if (!result) {
-          console.log('[SCP] no result, falling back to eBay');
-          result = await fetchEbaySales(card);
-        }
-      }
-      setPricingData(result);
-      const value = result?.raw != null ? parseFloat(result.raw) : result?.avg ?? null;
-      if (value) onUpdate(card.id, { estimatedValue: value });
-      setPricingLoading(false);
+      await runPricingFetch(card);
     }
-  }, [expanded, pricingFetched, card, onUpdate]);
+  }, [expanded, pricingFetched, card, runPricingFetch]);
+
+  const handleSaveCorrections = useCallback(async () => {
+    onUpdate(card.id, editDraft);
+    setEditMode(false);
+    const merged = { ...card, ...editDraft };
+    await runPricingFetch(merged);
+  }, [card, editDraft, onUpdate, runPricingFetch]);
+
+  const handleRescan = useCallback(async () => {
+    setRescanning(true);
+    // Save corrections immediately
+    onUpdate(card.id, editDraft);
+    setEditMode(false);
+    const merged = { ...card, ...editDraft };
+    try {
+      // Load front image as base64
+      const resp = await fetch(card.imageUrl);
+      const blob = await resp.blob();
+      const frontBase64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(blob);
+      });
+
+      const correctionLines = Object.entries(editDraft)
+        .filter(([, v]) => v !== null && v !== undefined && v !== '')
+        .map(([k, v]) => `  ${k}: ${v}`)
+        .join('\n');
+
+      const correctionsPreamble = `IMPORTANT — USER CORRECTIONS (treat as ground truth, do not change these fields):
+${correctionLines}
+
+Use the above confirmed values exactly as provided. Update all other fields (fullCardName, playerContext, rarity, etc.) to be consistent with them.\n\n`;
+
+      const systemPromptStart = `You are an expert collectibles authenticator and cataloguer with deep knowledge of trading cards, stamps, and coins.`;
+      // Re-use the full original prompt but prepend corrections
+      const response = await fetch(`${API_BASE}/api/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: ANTHROPIC_MODEL,
+          max_tokens: 3000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          tool_choice: { type: 'auto' },
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: blob.type || 'image/jpeg', data: frontBase64 } },
+              {
+                type: 'text',
+                text: correctionsPreamble + `${systemPromptStart} Your expertise covers every major card brand and format (Pokémon, Magic: The Gathering, Yu-Gi-Oh!, sports cards), philately, and numismatics. Re-analyse this image with the user corrections above as ground truth.\n\nOutput ONLY a single valid JSON object with all card fields (same schema as original scan). No markdown, no backticks, no text outside the JSON.`
+              }
+            ]
+          }]
+        })
+      });
+
+      if (!response.ok) throw new Error(`API ${response.status}`);
+      const data = await response.json();
+      const rawText = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+      const start = rawText.indexOf('{');
+      const end = rawText.lastIndexOf('}');
+      if (start !== -1 && end !== -1) {
+        let updated = JSON.parse(rawText.slice(start, end + 1));
+        // Strip cite tags
+        for (const key of Object.keys(updated)) {
+          if (typeof updated[key] === 'string') {
+            updated[key] = updated[key].replace(/<cite[^>]*>|<\/cite>/g, '').replace(/\s{2,}/g, ' ').trim();
+          }
+        }
+        // Enforce user corrections — never let the AI override what the user confirmed
+        updated = { ...updated, ...editDraft };
+        onUpdate(card.id, updated);
+        await runPricingFetch({ ...merged, ...updated });
+      } else {
+        // AI returned no JSON — just re-price with corrections
+        await runPricingFetch(merged);
+      }
+    } catch (e) {
+      console.error('[Rescan] error:', e);
+      await runPricingFetch(merged);
+    } finally {
+      setRescanning(false);
+    }
+  }, [card, editDraft, onUpdate, runPricingFetch]);
 
   const handleBackFile = async (file) => {
     if (!file) return;
@@ -554,6 +648,69 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {card.notes && (
               <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
             )}
+
+            {/* Correct Card Info */}
+            <div style={{ marginBottom: 14 }}>
+              {!editMode ? (
+                <button
+                  onClick={() => { setEditDraft({ playerName: card.playerName || '', year: card.year || '', brand: card.brand || '', series: card.series || '', parallel: card.parallel || '', cardNumber: card.cardNumber || '', serialNumber: card.serialNumber || '', cardCategory: card.cardCategory || '' }); setEditMode(true); }}
+                  style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tm)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}
+                >✏️ Correct card info</button>
+              ) : (
+                <div style={{ background: "var(--deep)", border: "1px solid var(--bf)", borderRadius: 12, padding: 12 }}>
+                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 10 }}>Correct Card Info</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                    {[
+                      { label: "Player / Subject", key: "playerName" },
+                      { label: "Year", key: "year" },
+                      { label: "Brand", key: "brand" },
+                      { label: "Series / Set", key: "series" },
+                      { label: "Parallel", key: "parallel" },
+                      { label: "Card #", key: "cardNumber" },
+                      { label: "Serial # (e.g. 45/99)", key: "serialNumber" },
+                      { label: "Category", key: "cardCategory" },
+                    ].map(({ label, key }) => (
+                      <div key={key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                        <label style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600 }}>{label}</label>
+                        <input
+                          value={editDraft[key] || ''}
+                          onChange={e => setEditDraft(d => ({ ...d, [key]: e.target.value }))}
+                          style={{
+                            background: "var(--card)", border: "1px solid var(--bs)", color: "var(--ts)",
+                            borderRadius: 6, padding: "5px 8px", fontSize: 12, outline: "none",
+                            fontFamily: "inherit"
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 10, fontStyle: "italic" }}>
+                    "Save &amp; Re-price" updates the search immediately. "Re-scan" re-runs AI with your corrections as ground truth.
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      onClick={handleSaveCorrections}
+                      disabled={rescanning}
+                      style={{ background: "rgba(76,175,80,0.12)", border: "1px solid rgba(76,175,80,0.3)", color: "#4caf50", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+                    >✓ Save &amp; Re-price</button>
+                    <button
+                      onClick={handleRescan}
+                      disabled={rescanning}
+                      style={{ background: "rgba(255,107,53,0.12)", border: "1px solid rgba(255,107,53,0.3)", color: "#ff6b35", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      {rescanning
+                        ? <><div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />Re-scanning…</>
+                        : "🔄 Confirm & Re-scan"}
+                    </button>
+                    <button
+                      onClick={() => setEditMode(false)}
+                      disabled={rescanning}
+                      style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tg)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12 }}
+                    >Cancel</button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Pricing */}
             <div style={{ marginBottom: 14 }}>
