@@ -40,95 +40,29 @@ function resizeImageFile(file) {
 }
 
 async function fetchCardHedgePricing(cardInfo) {
-  const CARDHEDGE_API_KEY = import.meta.env.VITE_CARDHEDGE_API_KEY;
-  const CARDHEDGE_BASE = 'https://api.cardhedger.com';
-
-  if (!CARDHEDGE_API_KEY) {
-    console.error('[CardHedge] ❌ VITE_CARDHEDGE_API_KEY is missing — key not baked into build');
-    return null;
-  }
-  console.log('[CardHedge] API key present, length:', CARDHEDGE_API_KEY.length);
-
-  const categoryMap = {
-    'Panini': 'Basketball', 'Topps': 'Baseball', 'Bowman': 'Baseball',
-    'Upper Deck': 'Hockey', 'Pokemon': 'Pokemon', 'Pokémon': 'Pokemon',
-    'Magic': 'Magic The Gathering', 'Yu-Gi-Oh': 'Yu-Gi-Oh', 'One Piece': 'One Piece'
-  };
-
-  const category = cardInfo.cardCategory || categoryMap[cardInfo.brand] || 'Basketball';
-
-  // Build a rich search query: full card name + player name
-  const searchQuery = [
-    cardInfo.playerName,
-    cardInfo.year,
-    cardInfo.brand,
-    cardInfo.series,
-    cardInfo.parallel && cardInfo.parallel !== 'Base' ? cardInfo.parallel : null
-  ].filter(Boolean).join(' ');
-
   try {
-    const searchRes = await fetch(`${CARDHEDGE_BASE}/v1/cards/card-search`, {
+    const res = await fetch(`${API_BASE}/api/cardhedge`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': CARDHEDGE_API_KEY },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        search: searchQuery,
-        category: category,
-        rookie: cardInfo.isRookie || false,
-        page: 1,
-        page_size: 5
+        playerName: cardInfo.playerName,
+        year: cardInfo.year,
+        brand: cardInfo.brand,
+        series: cardInfo.series,
+        parallel: cardInfo.parallel,
+        cardCategory: cardInfo.cardCategory,
+        isRookie: cardInfo.isRookie,
       })
     });
-    console.log('[CardHedge] search status:', searchRes.status, 'query:', searchQuery, 'category:', category);
-    if (!searchRes.ok) {
-      console.error('[CardHedge] search failed:', await searchRes.text());
+    if (!res.ok) {
+      console.error('[CardHedge] proxy error:', res.status);
       return null;
     }
-    const searchData = await searchRes.json();
-    console.log('[CardHedge] search response:', JSON.stringify(searchData).slice(0, 500));
-
-    // Handle various response shapes
-    const results = searchData?.results || searchData?.data || searchData?.cards || [];
-    console.log('[CardHedge] result count:', results.length, '| full keys:', Object.keys(searchData || {}));
-    if (!results.length) {
-      console.warn('[CardHedge] ⚠ No results for query:', searchQuery, '| Full response:', JSON.stringify(searchData));
-      return null;
-    }
-
-    const topCard = results[0];
-    const cardId = topCard.id || topCard.card_id;
-    console.log('[CardHedge] matched card:', topCard, 'cardId:', cardId);
-
-    const priceRes = await fetch(`${CARDHEDGE_BASE}/v1/cards/${cardId}/price-history`, {
-      headers: { 'X-API-Key': CARDHEDGE_API_KEY }
-    });
-    console.log('[CardHedge] price status:', priceRes.status);
-    if (!priceRes.ok) {
-      console.error('[CardHedge] price failed:', await priceRes.text());
-      return null;
-    }
-    const priceData = await priceRes.json();
-    console.log('[CardHedge] price response:', JSON.stringify(priceData).slice(0, 500));
-
-    return {
-      matchedCard: topCard.name || topCard.card_name || topCard.title,
-      matchedImage: topCard.image_url || topCard.image,
-      rawPrice: priceData.raw_price ?? priceData.prices?.raw ?? priceData.ungraded ?? null,
-      psa9Price: priceData.psa9_price ?? priceData.prices?.psa9 ?? priceData.psa_9 ?? null,
-      psa10Price: priceData.psa10_price ?? priceData.prices?.psa10 ?? priceData.psa_10 ?? null,
-      sevenDaySales: priceData.seven_day_sales ?? priceData.sales_velocity?.seven_day ?? priceData.sales_7d ?? null,
-      thirtyDaySales: priceData.thirty_day_sales ?? priceData.sales_velocity?.thirty_day ?? priceData.sales_30d ?? null,
-      gain: priceData.weekly_gain ?? priceData.price_trend?.weekly ?? priceData.gain_7d ?? null,
-      allPrices: priceData,
-      cardId: cardId,
-      isRookie: topCard.is_rookie || topCard.rookie,
-      priceSource: 'Card Hedge'
-    };
+    const data = await res.json();
+    console.log('[CardHedge] result:', data ? `matched "${data.matchedCard}" raw=$${data.rawPrice}` : 'null', data?._debug);
+    return data;
   } catch (e) {
-    if (e instanceof TypeError && e.message.includes('fetch')) {
-      console.error('[CardHedge] ❌ CORS or network error — api.cardhedger.com may be blocking browser requests:', e.message);
-    } else {
-      console.error('[CardHedge] ❌ fetch error:', e);
-    }
+    console.error('[CardHedge] fetch error:', e);
     return null;
   }
 }
