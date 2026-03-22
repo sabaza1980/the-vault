@@ -92,19 +92,13 @@ export default async function handler(req, res) {
     .filter(Boolean).join(' ').trim();
 
   try {
-    // Try sold listings first — isolate errors so a Finding API failure doesn't block the fallback
+    // Sold listings only via Finding API (Browse/active fallback paused)
     let sales = [];
-    let source = 'sold';
+    const source = 'sold';
     try {
       sales = await findSoldItems(q);
     } catch (soldErr) {
-      console.error('Finding API failed, will fall back to Browse:', soldErr.message);
-    }
-
-    // If no sold data (or sold lookup failed), fall back to active listings
-    if (sales.length === 0) {
-      sales = await findActiveItems(q);
-      source = 'active';
+      console.error('Finding API failed:', soldErr.message);
     }
 
     if (sales.length === 0) return res.status(200).json(null);
