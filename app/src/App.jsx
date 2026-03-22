@@ -216,10 +216,21 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     setPricingLoading(false);
     setEbayData(ebayResult);
     setEbayLoading(false);
-    // Update estimated value: prefer proxy price, fall back to eBay avg
-    const value = proxyResult?.raw != null ? parseFloat(proxyResult.raw)
-      : proxyResult?.avg != null ? proxyResult.avg
-      : ebayResult?.avg ?? null;
+    // Update estimated value: if graded, use grade-appropriate price tier
+    let value = null;
+    if (proxyResult && cardData.isGraded && cardData.grade) {
+      const g = parseFloat(cardData.grade);
+      if (g >= 10) value = parseFloat(proxyResult.psa10) || parseFloat(proxyResult.bgs10) || null;
+      else if (g >= 9) value = parseFloat(proxyResult.grade9) || null;
+      else if (g >= 8) value = parseFloat(proxyResult.grade8) || null;
+      else value = parseFloat(proxyResult.raw) || null;
+      if (isNaN(value)) value = null;
+    }
+    if (!value) {
+      value = proxyResult?.raw != null ? parseFloat(proxyResult.raw)
+        : proxyResult?.avg != null ? proxyResult.avg
+        : ebayResult?.avg ?? null;
+    }
     if (value) onUpdate(cardData.id, { estimatedValue: value });
   }, [onUpdate]);
 
@@ -379,6 +390,10 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
   "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
   "condition": "Mint | Near Mint | Excellent | Good | Fair | Poor | Unknown",
   "conditionDetail": "1-2 sentences on what this side of the card shows about condition, or null",
+  "isGraded": true or false,
+  "gradingCompany": "PSA | BGS | Beckett | SGC | WCG | CGC | GAI | null",
+  "grade": "Numeric grade from slab e.g. '9', '9.5', '10', or null",
+  "certNumber": "Cert/barcode number from slab, or null",
   "confidenceLevel": "High | Medium | Low",
   "notes": "any additional observations from the back, or null"
 }`
@@ -396,7 +411,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
       try { newInfo = JSON.parse(rawText.replace(/```json|```/g, "").trim()); } catch { /* keep existing data */ }
 
       // Only apply card-authentication fields — never overwrite player identity/context
-      const CARD_FIELDS = ["cardCategory", "serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes"];
+      const CARD_FIELDS = ["cardCategory", "serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes", "isGraded", "gradingCompany", "grade", "certNumber"];
       const filtered = Object.fromEntries(
         Object.entries(newInfo).filter(([k, v]) => CARD_FIELDS.includes(k) && v !== null && v !== undefined)
       );
@@ -624,6 +639,33 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               </div>
             )}
 
+            {/* Grading badge */}
+            {card.isGraded && card.gradingCompany && card.grade && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>Professional Grade</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{
+                    fontSize: 15, padding: "5px 14px", borderRadius: 8, fontWeight: 800,
+                    fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2,
+                    background: card.gradingCompany === 'PSA' ? 'rgba(0,86,179,0.18)'
+                      : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? 'rgba(212,175,55,0.15)'
+                      : card.gradingCompany === 'SGC' ? 'rgba(200,200,200,0.12)'
+                      : 'rgba(128,128,128,0.12)',
+                    color: card.gradingCompany === 'PSA' ? '#5aabff'
+                      : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? '#d4af37'
+                      : card.gradingCompany === 'SGC' ? '#ccc'
+                      : '#aaa',
+                    border: `1px solid ${card.gradingCompany === 'PSA' ? 'rgba(90,171,255,0.4)'
+                      : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? 'rgba(212,175,55,0.4)'
+                      : 'rgba(128,128,128,0.3)'}`,
+                  }}>
+                    {card.gradingCompany} {card.grade}
+                  </span>
+                  {card.certNumber && <span style={{ fontSize: 10, color: "var(--tg)" }}>Cert #{card.certNumber}</span>}
+                </div>
+              </div>
+            )}
+
             {/* Condition detail */}
             {card.conditionDetail && (
               <div style={{ marginBottom: 14 }}>
@@ -748,24 +790,32 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                       Matched: {pricingData.matchedCard}{pricingData.matchedSet ? ` — ${pricingData.matchedSet}` : ''}
                     </div>
                   )}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
-                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.raw ? `$${pricingData.raw}` : 'N/A'}</div>
-                    </div>
-                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 8</div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "var(--tm)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade8 ? `$${pricingData.grade8}` : 'N/A'}</div>
-                    </div>
-                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 9</div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade9 ? `$${pricingData.grade9}` : 'N/A'}</div>
-                    </div>
-                    <div style={{ background: "var(--deep)", border: "1px solid var(--b)", borderRadius: 10, padding: "10px 6px", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.psa10 ? `$${pricingData.psa10}` : 'N/A'}</div>
-                    </div>
-                  </div>
+                  {(() => {
+                    const g = card.isGraded && card.grade ? parseFloat(card.grade) : null;
+                    const activeCol = g !== null ? (g >= 10 ? 'psa10' : g >= 9 ? 'gr9' : g >= 8 ? 'gr8' : 'raw') : null;
+                    const active = { background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.5)', borderRadius: 10, padding: '10px 6px', textAlign: 'center' };
+                    const normal = { background: 'var(--deep)', border: '1px solid var(--b)', borderRadius: 10, padding: '10px 6px', textAlign: 'center' };
+                    return (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
+                        <div style={activeCol === 'raw' ? active : normal}>
+                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.raw ? `$${pricingData.raw}` : 'N/A'}</div>
+                        </div>
+                        <div style={activeCol === 'gr8' ? active : normal}>
+                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 8</div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "var(--tm)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade8 ? `$${pricingData.grade8}` : 'N/A'}</div>
+                        </div>
+                        <div style={activeCol === 'gr9' ? active : normal}>
+                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 9</div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade9 ? `$${pricingData.grade9}` : 'N/A'}</div>
+                        </div>
+                        <div style={activeCol === 'psa10' ? active : normal}>
+                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.psa10 ? `$${pricingData.psa10}` : 'N/A'}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {pricingData.salesVolume && (
                     <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 6 }}>{pricingData.salesVolume} sold per year</div>
                   )}
@@ -1761,6 +1811,7 @@ STEP 1 — VISUAL SCAN (do this mentally before filling the JSON):
 - AUTOGRAPH CHECK (cards only): Carefully scan the ENTIRE surface — front AND back. Look for ink signatures, sticker autographs, hard-signed on-card autographs. hasAutograph = true if ANY signature is present.
 - SERIAL NUMBER CHECK (cards and coins): For cards, scan all four corners, borders, and back for stamps/foil as "X/Y". For coins, note any mintage-limit numbering on collector issues.
 - PARALLEL / FINISH (cards) or GRADE / STRIKE (stamps & coins): For cards, identify specific parallel by border color, foil type, finish. For stamps: Mint NH, Mint Hinged, Fine Used, CTO, etc. For coins: Uncirculated (MS), About Uncirculated (AU), Fine (F), Very Fine (VF), etc.
+- GRADED SLAB CHECK (CRITICAL — examine every image for this): Determine whether the item is sealed inside a professional third-party grading slab — a hard plastic/acrylic enclosure with a printed label band. Slabs are produced by: PSA (red and blue label, "PSA" logo prominently printed), BGS/Beckett (black and gold label, "BECKETT" or "BGS" logo), SGC (black and silver label, "SGC" logo), WCG (blue and yellow label), CGC (dark blue label, "CGC" logo), GAI (blue label). If a slab is detected: (1) set isGraded = true; (2) read the EXACT grading company name; (3) read the numeric grade (e.g. 9, 9.5, 10) and grade descriptor (e.g. Mint, Gem Mint, Pristine, Authentic) directly from the label; (4) read the cert/barcode number if visible. Grade-to-condition mapping: grade 10 → "Mint"; grade 9–9.5 → "Mint"; grade 8–8.5 → "Near Mint"; grade 7 → "Excellent"; grade 6 or below → "Good". IMPORTANT: A graded card has significantly higher value than a raw/ungraded copy. PSA 9 typically sells for 3–5× the raw price; PSA 10 for 10–20× raw. Accuracy here directly affects the collection value shown to the user.
 - RARITY INDICATORS: For stamps — key value drivers include mint-never-hinged status, low print run, errors (inverted, missing color), high-value denominations, and classic/vintage issues. For coins — key drivers include low mintage, proof/specimen strikes, first-year issues, and error coins.
 
 STEP 2 — RARITY (assign based on the item's specific category conventions):
@@ -1785,6 +1836,10 @@ STEP 3 — OUTPUT a single valid JSON object. No markdown, no backticks, no text
   "parallel": "For cards: exact parallel/finish. For stamps: 'Mint NH' | 'Mint Hinged' | 'Fine Used' | 'CTO' | other. For coins: 'Proof' | 'Specimen' | 'Uncirculated' | 'Circulated' | other",
   "cardNumber": "Card/catalogue number e.g. '#278', Scott catalogue number for stamps, or null",
   "serialNumber": "Serial stamp as printed e.g. '45/99' | '1/1' for cards; mint error number or null for stamps/coins",
+  "isGraded": false,
+  "gradingCompany": "PSA | BGS | Beckett | SGC | WCG | CGC | GAI | null — only populate if item is inside a grading slab",
+  "grade": "Numeric grade as printed on slab e.g. '9', '9.5', '10', 'Authentic', or null if not graded",
+  "certNumber": "Cert/barcode/registration number from the slab label, or null",
   "isRookie": false,
   "hasAutograph": false,
   "autographType": "'On-Card' | 'Sticker' | null — only if hasAutograph is true",
