@@ -941,7 +941,7 @@ async function loadOverview() {
       const uid = d.ref.parent.parent ? d.ref.parent.parent.id : null;
       if (uid) cardUids.add(uid);
       const data = d.data();
-      totalValue   += (data.currentValue || 0);
+      totalValue   += (data.estimatedValue || data.currentValue || 0);
       if (data.flagged) flaggedCount++;
       const g = data.grade || 'Ungraded';
       gradeCounts[g] = (gradeCounts[g] || 0) + 1;
