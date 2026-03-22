@@ -119,6 +119,27 @@ async function fetchCardHedgePricing(cardInfo) {
   }
 }
 
+async function fetchEbaySales(cardInfo) {
+  try {
+    const res = await fetch(`${API_BASE}/api/ebay-sales`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playerName: cardInfo.playerName,
+        fullCardName: cardInfo.fullCardName,
+        parallel: cardInfo.parallel,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.avg) return null;
+    return { ...data, priceSource: 'eBay' };
+  } catch (e) {
+    console.error('eBay fetch error:', e);
+    return null;
+  }
+}
+
 async function fetchTopMovers(category = 'Basketball') {
   const CARDHEDGE_API_KEY = import.meta.env.VITE_CARDHEDGE_API_KEY;
   const CARDHEDGE_BASE = 'https://api.cardhedger.com';
@@ -227,9 +248,15 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     if (next && !pricingFetched) {
       setPricingLoading(true);
       setPricingFetched(true);
-      const pricingResult = await fetchCardHedgePricing(card);
-      setPricingData(pricingResult);
-      if (pricingResult?.rawPrice) onUpdate(card.id, { estimatedValue: pricingResult.rawPrice });
+      // Try Card Hedge first, fall back to eBay
+      let result = await fetchCardHedgePricing(card);
+      const hasPrice = result?.rawPrice != null || result?.psa9Price != null || result?.psa10Price != null;
+      if (!hasPrice) {
+        result = await fetchEbaySales(card);
+      }
+      setPricingData(result);
+      const value = result?.rawPrice ?? result?.avg ?? null;
+      if (value) onUpdate(card.id, { estimatedValue: value });
       setPricingLoading(false);
     }
   }, [expanded, pricingFetched, card, onUpdate]);
@@ -575,11 +602,20 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {/* Pricing Data */}
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                Pricing Data
-                <span style={{
-                  fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                  background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)"
-                }}>Card Hedge</span>
+                {pricingData?.priceSource === 'eBay' ? (pricingData?.source === 'active' ? 'Active eBay Listings' : 'Recent eBay Sales') : 'Pricing Data'}
+                {pricingData?.priceSource === 'eBay' ? (
+                  <span style={{
+                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                    background: pricingData?.source === 'active' ? 'rgba(255,152,0,0.12)' : 'rgba(76,175,80,0.12)',
+                    color: pricingData?.source === 'active' ? '#ff9800' : '#4caf50',
+                    border: `1px solid ${pricingData?.source === 'active' ? 'rgba(255,152,0,0.25)' : 'rgba(76,175,80,0.25)'}`
+                  }}>{pricingData?.source === 'active' ? 'live listings' : 'sold listings'}</span>
+                ) : pricingData?.priceSource === 'Card Hedge' ? (
+                  <span style={{
+                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                    background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)"
+                  }}>Card Hedge</span>
+                ) : null}
               </div>
               {pricingLoading && (
                 <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
@@ -587,7 +623,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   Fetching pricing data...
                 </div>
               )}
-              {!pricingLoading && pricingData && (
+              {!pricingLoading && pricingData?.priceSource === 'Card Hedge' && (
                 <>
                   {pricingData.matchedCard && (
                     <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 8, fontStyle: "italic" }}>
@@ -632,6 +668,37 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                       {pricingData.gain >= 0 ? "+" : ""}{pricingData.gain}% this week
                     </div>
                   )}
+                </>
+              )}
+              {!pricingLoading && pricingData?.priceSource === 'eBay' && (
+                <>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
+                      ${pricingData.avg.toFixed(2)}
+                    </span>
+                    <span style={{ fontSize: 10, color: "var(--tm)" }}>avg of {pricingData.sales.length} {pricingData.source === 'active' ? 'listings' : 'sold'}</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {pricingData.sales.slice(0, 10).map((sale, i) => (
+                      <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                        padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
+                        border: "1px solid var(--b)", textDecoration: "none",
+                        transition: "border-color 0.15s", gap: 8
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = "#4caf5040"}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
+                      >
+                        <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sale.title}</span>
+                        {sale.date && (
+                          <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                            {new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#4caf50", flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
+                      </a>
+                    ))}
+                  </div>
                 </>
               )}
               {!pricingLoading && !pricingData && pricingFetched && (
