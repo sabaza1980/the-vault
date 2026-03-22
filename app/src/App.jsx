@@ -51,47 +51,70 @@ async function fetchCardHedgePricing(cardInfo) {
 
   const category = cardInfo.cardCategory || categoryMap[cardInfo.brand] || 'Basketball';
 
+  // Build a rich search query: full card name + player name
+  const searchQuery = [
+    cardInfo.playerName,
+    cardInfo.year,
+    cardInfo.brand,
+    cardInfo.series,
+    cardInfo.parallel && cardInfo.parallel !== 'Base' ? cardInfo.parallel : null
+  ].filter(Boolean).join(' ');
+
   try {
     const searchRes = await fetch(`${CARDHEDGE_BASE}/v1/cards/card-search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Key': CARDHEDGE_API_KEY },
       body: JSON.stringify({
-        search: cardInfo.playerName,
+        search: searchQuery,
         category: category,
         rookie: cardInfo.isRookie || false,
         page: 1,
-        page_size: 1
+        page_size: 5
       })
     });
-    if (!searchRes.ok) return null;
+    console.log('[CardHedge] search status:', searchRes.status, 'query:', searchQuery, 'category:', category);
+    if (!searchRes.ok) {
+      console.error('[CardHedge] search failed:', await searchRes.text());
+      return null;
+    }
     const searchData = await searchRes.json();
-    if (!searchData?.results?.length) return null;
+    console.log('[CardHedge] search response:', JSON.stringify(searchData).slice(0, 500));
 
-    const topCard = searchData.results[0];
+    // Handle various response shapes
+    const results = searchData?.results || searchData?.data || searchData?.cards || [];
+    if (!results.length) return null;
+
+    const topCard = results[0];
     const cardId = topCard.id || topCard.card_id;
+    console.log('[CardHedge] matched card:', topCard, 'cardId:', cardId);
 
     const priceRes = await fetch(`${CARDHEDGE_BASE}/v1/cards/${cardId}/price-history`, {
       headers: { 'X-API-Key': CARDHEDGE_API_KEY }
     });
-    if (!priceRes.ok) return null;
+    console.log('[CardHedge] price status:', priceRes.status);
+    if (!priceRes.ok) {
+      console.error('[CardHedge] price failed:', await priceRes.text());
+      return null;
+    }
     const priceData = await priceRes.json();
+    console.log('[CardHedge] price response:', JSON.stringify(priceData).slice(0, 500));
 
     return {
-      matchedCard: topCard.name || topCard.card_name,
-      matchedImage: topCard.image_url,
-      rawPrice: priceData.raw_price ?? priceData.prices?.raw ?? null,
-      psa9Price: priceData.psa9_price ?? priceData.prices?.psa9 ?? null,
-      psa10Price: priceData.psa10_price ?? priceData.prices?.psa10 ?? null,
-      sevenDaySales: priceData.seven_day_sales ?? priceData.sales_velocity?.seven_day ?? null,
-      thirtyDaySales: priceData.thirty_day_sales ?? priceData.sales_velocity?.thirty_day ?? null,
-      gain: priceData.weekly_gain ?? priceData.price_trend?.weekly ?? null,
+      matchedCard: topCard.name || topCard.card_name || topCard.title,
+      matchedImage: topCard.image_url || topCard.image,
+      rawPrice: priceData.raw_price ?? priceData.prices?.raw ?? priceData.ungraded ?? null,
+      psa9Price: priceData.psa9_price ?? priceData.prices?.psa9 ?? priceData.psa_9 ?? null,
+      psa10Price: priceData.psa10_price ?? priceData.prices?.psa10 ?? priceData.psa_10 ?? null,
+      sevenDaySales: priceData.seven_day_sales ?? priceData.sales_velocity?.seven_day ?? priceData.sales_7d ?? null,
+      thirtyDaySales: priceData.thirty_day_sales ?? priceData.sales_velocity?.thirty_day ?? priceData.sales_30d ?? null,
+      gain: priceData.weekly_gain ?? priceData.price_trend?.weekly ?? priceData.gain_7d ?? null,
       allPrices: priceData,
       cardId: cardId,
       isRookie: topCard.is_rookie || topCard.rookie,
       priceSource: 'Card Hedge'
     };
   } catch (e) {
-    console.error('Card Hedge fetch error:', e);
+    console.error('[CardHedge] fetch error:', e);
     return null;
   }
 }
