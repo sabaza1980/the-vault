@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Card Collecting Blog — Pokémon, MTG, Sports Cards & More | The Vault</title>
   <meta name="description" content="Expert articles on Pokémon cards, Magic: The Gathering, sports cards (basketball, football, soccer, baseball), card grading, eBay pricing and collection tips." />
-  <link rel="canonical" href="https://www.myvaults.io/blog.html" />
+  <link rel="canonical" href="https://www.myvaults.io/blog" />
   <meta name="keywords" content="Pokémon card collecting, MTG investing, sports card grading, PSA grading guide, eBay card prices, basketball card values, football card collector, soccer card market, card collection tips, The Vault app" />
   <meta name="robots" content="index, follow" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.myvaults.io/blog.html" />
+  <meta property="og:url" content="https://www.myvaults.io/blog" />
   <meta property="og:title" content="Card Collecting Blog — The Vault" />
   <meta property="og:description" content="Expert articles on Pokémon cards, MTG, sports cards and collecting — market analysis, guides, reviews, news and more." />
   <meta property="og:image" content="https://www.myvaults.io/og-image.jpg" />
@@ -247,6 +247,9 @@
       background: linear-gradient(135deg, var(--orange), var(--gold));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
+    .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    .footer-links a { font-size: 12px; color: #555; text-decoration: none; }
+    .footer-links a:hover { color: var(--orange); }
     .footer-copy { font-size: 12px; color: #2a2a3a; }
 
     @media (max-width: 768px) {
@@ -265,7 +268,7 @@
       <li><a href="/#app-section">Try It</a></li>
       <li><a href="/#collections">Collections</a></li>
       <li><a href="/#features">Features</a></li>
-      <li><a href="/blog.html" style="color:#f0f0f0;">Blog</a></li>
+      <li><a href="/blog" style="color:#f0f0f0;">Blog</a></li>
       <li><a href="/#waitlist" class="nav-cta">Join Waitlist</a></li>
     </ul>
   </nav>
@@ -306,14 +309,19 @@
   </main>
 
   <footer>
-    <div class="footer-logo">The Vault</div>
-    <div class="footer-copy">© 2025 The Vault. All rights reserved.</div>
+    <div class="footer-logo">🏀 The Vault</div>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/privacy-policy">Privacy Policy</a>
+      <a href="/terms">Terms &amp; Conditions</a>
+    </div>
+    <div class="footer-copy">© 2026 Abaza Business Services. All rights reserved.</div>
   </footer>
 
   <script>
     // ── Config ──────────────────────────────────────────────────────────────
     // The app API URL — update this to your actual Vercel app deployment URL.
-    const APP_API_BASE = "https://app-five-xi-40.vercel.app";
+    const APP_API_BASE = "https://app.myvaults.io";
 
     // ── State ───────────────────────────────────────────────────────────────
     let allArticles = [];

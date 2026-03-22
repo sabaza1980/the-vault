@@ -538,7 +538,7 @@
       <li><a href="#app-section">Try It</a></li>
       <li><a href="#collections">Collections</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="/blog.html">Blog</a></li>
+      <li><a href="/blog">Blog</a></li>
       <li><a href="#waitlist" class="nav-cta">Join Waitlist</a></li>
     </ul>
   </nav>
@@ -813,21 +813,21 @@
       <div class="section-label">The Vault Blog</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:48px;">
         <h2 class="section-title" style="margin:0;">Collector <br/><span style="color:var(--orange)">insights.</span></h2>
-        <a href="/blog.html" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);text-decoration:none;opacity:0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">All Articles →</a>
+        <a href="/blog" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--orange);text-decoration:none;opacity:0.8;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">All Articles →</a>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;" id="blog-preview-cards">
         <!-- Populated by the article system; static fallbacks shown below -->
-        <a href="/blog.html" class="blog-preview-card">
+        <a href="/blog" class="blog-preview-card">
           <div class="blog-card-tag">Pokémon</div>
           <div class="blog-card-title">The 10 Most Valuable Scarlet & Violet Cards Right Now</div>
           <div class="blog-card-meta">Market Analysis · The Vault</div>
         </a>
-        <a href="/blog.html" class="blog-preview-card">
+        <a href="/blog" class="blog-preview-card">
           <div class="blog-card-tag">MTG</div>
           <div class="blog-card-title">Why Modern Horizons 3 Is the Best Investment Set of 2025</div>
           <div class="blog-card-meta">Opinion · The Vault</div>
         </a>
-        <a href="/blog.html" class="blog-preview-card">
+        <a href="/blog" class="blog-preview-card">
           <div class="blog-card-tag">Sports Cards</div>
           <div class="blog-card-title">PSA vs BGS vs SGC: Which Grading Service Is Right for Your Cards?</div>
           <div class="blog-card-meta">Guide · The Vault</div>
@@ -979,7 +979,7 @@ for (var i = 0; i < formContainers.length; i++) {
     });
 
     // ── Blog Teaser — fetch latest 3 articles from API ──────────────────────
-    const _BLOG_API = "https://app-five-xi-40.vercel.app";
+    const _BLOG_API = "https://app.myvaults.io";
     const _TYPE_LABELS = { "market-analysis": "Market Analysis", "guide": "Guide", "opinion": "Opinion", "news": "News" };
 
     (async function loadBlogPreview() {
@@ -992,7 +992,7 @@ for (var i = 0; i < formContainers.length; i++) {
 
         const grid = document.getElementById("blog-preview-cards");
         grid.innerHTML = articles.map(a => `
-          <a href="/blog.html?article=${encodeURIComponent(a.slug || a.id)}" class="blog-preview-card">
+          <a href="/blog?article=${encodeURIComponent(a.slug || a.id)}" class="blog-preview-card">
             <div class="blog-card-tag">${a.category || ""}</div>
             <div class="blog-card-title">${a.title || ""}</div>
             <div class="blog-card-meta">${_TYPE_LABELS[a.articleType] || a.articleType || ""} · The Vault</div>
