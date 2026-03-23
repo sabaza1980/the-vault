@@ -373,7 +373,7 @@
       const tagsHtml = (article.tags || []).slice(0, 4).map(t => `<span class="article-tag">${t}</span>`).join("");
       const slugOrId = article.slug || article.id;
       return `
-        <a class="article-card" href="?article=${encodeURIComponent(slugOrId)}" onclick="event.preventDefault();openArticle('${slugOrId.replace(/'/g, "\\'")}')">
+        <a class="article-card" href="/blog/${encodeURIComponent(slugOrId)}" onclick="event.preventDefault();openArticle('${slugOrId.replace(/'/g, "\\'")}')">
           <div class="article-type">${typeLabel}</div>
           <div class="article-title">${article.title}</div>
           <div class="article-excerpt">${article.excerpt || ""}</div>
@@ -473,7 +473,7 @@
     function updateArticleMeta(article) {
       const title = `${article.title} | The Vault Blog`;
       const desc = article.excerpt || article.title;
-      const url = `https://www.myvaults.io/blog?article=${encodeURIComponent(article.slug || article.id)}`;
+      const url = `https://www.myvaults.io/blog/${encodeURIComponent(article.slug || article.id)}`;
       document.title = title;
       document.querySelector('meta[name="description"]')?.setAttribute('content', desc);
       document.querySelector('link[rel="canonical"]')?.setAttribute('href', url);
@@ -518,7 +518,7 @@
       const content = document.getElementById("article-content");
 
       // Update the URL so this article is shareable / bookmarkable
-      const newUrl = slugOrId ? `${location.pathname}?article=${encodeURIComponent(slugOrId)}` : location.pathname;
+      const newUrl = slugOrId ? `/blog/${encodeURIComponent(slugOrId)}` : "/blog";
       history.pushState({ article: slugOrId }, "", newUrl);
 
       // First try to find in already-fetched list
@@ -558,7 +558,7 @@
     function closeArticle() {
       document.getElementById("article-panel").style.display = "none";
       document.body.style.overflow = "";
-      history.pushState({}, "", location.pathname);
+      history.pushState({}, "", "/blog");
       resetBlogMeta();
     }
 
