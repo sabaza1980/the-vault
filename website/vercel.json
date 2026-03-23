@@ -1,12 +1,10 @@
 {
-  "rewrites": [
-    { "source": "/blog.html", "destination": "/blog.html" },
-    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
-    { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/delete-account", "destination": "/delete-account.html" },
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/admin.html", "destination": "/admin.html" }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/privacy-policy", "dest": "/privacy-policy.html" },
+    { "src": "/terms", "dest": "/terms.html" },
+    { "src": "/delete-account", "dest": "/delete-account.html" },
+    { "src": "/admin", "dest": "/admin.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
