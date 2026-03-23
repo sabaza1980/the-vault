@@ -22,12 +22,14 @@
   <meta name="twitter:description" content="Expert articles on Pokémon, MTG and sports cards — market analysis, guides, news and more." />
 
   <!-- JSON-LD Blog structured data -->
+  <meta name="twitter:image" content="https://www.myvaults.io/og-image.jpg" />
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Blog",
     "name": "The Vault Card Collecting Blog",
-    "url": "https://www.myvaults.io/blog.html",
+    "url": "https://www.myvaults.io/blog",
     "description": "Expert articles on Pokémon cards, Magic: The Gathering, sports cards and all card collecting categories.",
     "publisher": {
       "@type": "Organization",
@@ -467,6 +469,49 @@
       renderArticles(allArticles, cat);
     }
 
+    // ── SEO: Dynamic meta helpers ────────────────────────────────────────────
+    function updateArticleMeta(article) {
+      const title = `${article.title} | The Vault Blog`;
+      const desc = article.excerpt || article.title;
+      const url = `https://www.myvaults.io/blog?article=${encodeURIComponent(article.slug || article.id)}`;
+      document.title = title;
+      document.querySelector('meta[name="description"]')?.setAttribute('content', desc);
+      document.querySelector('link[rel="canonical"]')?.setAttribute('href', url);
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', title);
+      document.querySelector('meta[property="og:description"]')?.setAttribute('content', desc);
+      document.querySelector('meta[property="og:url"]')?.setAttribute('content', url);
+      document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', title);
+      document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', desc);
+      // Inject BlogPosting structured data
+      document.getElementById('article-jsonld')?.remove();
+      const s = document.createElement('script');
+      s.id = 'article-jsonld';
+      s.type = 'application/ld+json';
+      s.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": article.title,
+        "description": article.excerpt || "",
+        "url": url,
+        "datePublished": article.publishedAt || "",
+        "author": { "@type": "Organization", "name": "The Vault" },
+        "publisher": { "@type": "Organization", "name": "The Vault", "url": "https://www.myvaults.io" }
+      });
+      document.head.appendChild(s);
+    }
+
+    function resetBlogMeta() {
+      document.title = 'Card Collecting Blog — Pokémon, MTG, Sports Cards & More | The Vault';
+      document.querySelector('meta[name="description"]')?.setAttribute('content', 'Expert articles on Pokémon cards, Magic: The Gathering, sports cards (basketball, football, soccer, baseball), card grading, eBay pricing and collection tips.');
+      document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://www.myvaults.io/blog');
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Card Collecting Blog — The Vault');
+      document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Expert articles on Pokémon cards, MTG, sports cards and collecting — market analysis, guides, reviews, news and more.');
+      document.querySelector('meta[property="og:url"]')?.setAttribute('content', 'https://www.myvaults.io/blog');
+      document.querySelector('meta[name="twitter:title"]')?.setAttribute('content', 'Card Collecting Blog — The Vault');
+      document.querySelector('meta[name="twitter:description"]')?.setAttribute('content', 'Expert articles on Pokémon, MTG and sports cards — market analysis, guides, news and more.');
+      document.getElementById('article-jsonld')?.remove();
+    }
+
     // ── Article reader ───────────────────────────────────────────────────────
     async function openArticle(slugOrId) {
       const panel = document.getElementById("article-panel");
@@ -490,6 +535,7 @@
       if (!found || !found.htmlContent) {
         // Static fallback — show a teaser message
         const fallback = allArticles.find(a => a.id === slugOrId);
+        if (fallback) updateArticleMeta(fallback);
         content.innerHTML = `
           <h1 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);letter-spacing:2px;line-height:0.95;margin-bottom:24px;">
             ${fallback?.title || "Article"}
@@ -499,6 +545,7 @@
             Full article content is generated daily by The Vault's AI. Check back soon — or <a href="/#waitlist" style="color:var(--orange)">join the waitlist</a> to get articles in your inbox.
           </p>`;
       } else {
+        updateArticleMeta(found);
         content.innerHTML = `
           <div class="article-body">${found.htmlContent}</div>`;
       }
@@ -512,6 +559,7 @@
       document.getElementById("article-panel").style.display = "none";
       document.body.style.overflow = "";
       history.pushState({}, "", location.pathname);
+      resetBlogMeta();
     }
 
     // Handle browser back/forward while article panel is open
