@@ -350,7 +350,7 @@ Use the above confirmed values exactly as provided. Update all other fields (ful
       const content = [];
       let hasFrontImage = false;
       try {
-        const resp = await fetch(card.imageUrl);
+        const resp = await fetch(`${API_BASE}/api/image-proxy?url=${encodeURIComponent(card.imageUrl)}`);
         const blob = await resp.blob();
         const frontBase64 = await new Promise((res, rej) => {
           const reader = new FileReader();
