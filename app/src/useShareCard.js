@@ -512,6 +512,25 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
       return result;
     }
 
+    // ── Instagram — image only, no URL/text so IG shows a clean post/story ─
+    if (destination === 'instagram') {
+      const igFile = new File([imageBlob], 'vault-share.jpg', { type: 'image/jpeg' });
+      const igData = { files: [igFile] }; // no text/url — keeps IG post clean
+      let canShare = false;
+      try { canShare = !!(navigator.share && navigator.canShare?.(igData)); } catch {}
+      if (canShare) {
+        try {
+          await navigator.share(igData);
+          return 'shared';
+        } catch (err) {
+          if (err.name === 'AbortError') return 'cancelled';
+        }
+      }
+      // Desktop fallback: just download the image
+      triggerDownload();
+      return 'saved';
+    }
+
     // ── Social buttons ────────────────────────────────────────────────────
     // Mobile: Web Share API passes the image FILE to the OS sheet. The user
     // picks the target app and the image + text (with link) are pre-attached.

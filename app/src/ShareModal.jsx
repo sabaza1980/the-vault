@@ -159,6 +159,25 @@ function RedditIcon() {
     </svg>
   );
 }
+function InstagramIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+      <defs>
+        <radialGradient id="ig-grad" cx="30%" cy="107%" r="120%">
+          <stop offset="0%" stopColor="#fdf497" />
+          <stop offset="5%" stopColor="#fdf497" />
+          <stop offset="45%" stopColor="#fd5949" />
+          <stop offset="60%" stopColor="#d6249f" />
+          <stop offset="90%" stopColor="#285AEB" />
+        </radialGradient>
+      </defs>
+      <rect width="32" height="32" rx="8" fill="url(#ig-grad)" />
+      <rect x="7" y="7" width="18" height="18" rx="5" stroke="#fff" strokeWidth="2" fill="none" />
+      <circle cx="16" cy="16" r="4.5" stroke="#fff" strokeWidth="2" fill="none" />
+      <circle cx="22" cy="10" r="1.25" fill="#fff" />
+    </svg>
+  );
+}
 function MoreIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -452,6 +471,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           {/* Share buttons */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
             <ShareButton label="Save" onClick={() => handleShare('download')} bg="#1a1a28" border="rgba(255,107,53,0.15)" icon={<DownloadIcon />} />
+            <ShareButton label="Instagram" onClick={() => handleShare('instagram')} bg="#1a1420" border="rgba(214,36,159,0.25)" icon={<InstagramIcon />} />
             <ShareButton label="WhatsApp" onClick={() => handleShare('whatsapp')} bg="#1a2a1a" border="rgba(37,211,102,0.2)" icon={<WhatsAppIcon />} />
             <ShareButton label="Facebook" onClick={() => handleShare('facebook')} bg="#1a1a2a" border="rgba(24,119,242,0.2)" icon={<FacebookIcon />} />
             <ShareButton label="Reddit" onClick={() => handleShare('reddit')} bg="#1a1a1a" border="rgba(255,69,0,0.2)" icon={<RedditIcon />} />
