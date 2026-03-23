@@ -462,6 +462,23 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     }
 
     if (destination === 'download') {
+      // On native iOS/Android the <a download> trick is sandboxed and never
+      // reaches the Photos gallery.  Use the native share sheet instead —
+      // the user can "Save Image" or forward straight to WhatsApp / IG.
+      if (Capacitor.isNativePlatform()) {
+        const file = new File([imageBlob], 'vault-share.jpg', { type: 'image/jpeg' });
+        const shareData = { files: [file], title: shareTitle, text: shareText };
+        let canShare = false;
+        try { canShare = !!(navigator.share && navigator.canShare?.(shareData)); } catch {}
+        if (canShare) {
+          try {
+            await navigator.share(shareData);
+            return 'shared';
+          } catch (err) {
+            if (err.name === 'AbortError') return 'cancelled';
+          }
+        }
+      }
       triggerDownload();
       return 'saved';
     }
