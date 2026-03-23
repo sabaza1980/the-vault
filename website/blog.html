@@ -371,11 +371,9 @@
       const typeLabel = ARTICLE_TYPE_LABELS[article.articleType] || article.articleType || "";
       const catEmoji = CATEGORY_EMOJIS[article.category] || "🃏";
       const tagsHtml = (article.tags || []).slice(0, 4).map(t => `<span class="article-tag">${t}</span>`).join("");
-      const heroImg = getHeroImage(article);
       const slugOrId = article.slug || article.id;
       return `
         <a class="article-card" href="?article=${encodeURIComponent(slugOrId)}" onclick="event.preventDefault();openArticle('${slugOrId.replace(/'/g, "\\'")}')">
-          <img src="${heroImg}" alt="${article.title}" class="article-thumb" loading="lazy" onerror="this.style.display='none'" />
           <div class="article-type">${typeLabel}</div>
           <div class="article-title">${article.title}</div>
           <div class="article-excerpt">${article.excerpt || ""}</div>
@@ -494,9 +492,7 @@
       if (!found || !found.htmlContent) {
         // Static fallback — show a teaser message
         const fallback = allArticles.find(a => a.id === slugOrId);
-        const heroImg = fallback ? getHeroImage(fallback) : null;
         content.innerHTML = `
-          ${heroImg ? `<img src="${heroImg}" alt="" class="article-hero" />` : ""}
           <h1 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);letter-spacing:2px;line-height:0.95;margin-bottom:24px;">
             ${fallback?.title || "Article"}
           </h1>
@@ -505,9 +501,7 @@
             Full article content is generated daily by The Vault's AI. Check back soon — or <a href="/#waitlist" style="color:var(--orange)">join the waitlist</a> to get articles in your inbox.
           </p>`;
       } else {
-        const heroImg = getHeroImage(found);
         content.innerHTML = `
-          ${heroImg ? `<img src="${heroImg}" alt="${found.title}" class="article-hero" />` : ""}
           <div class="article-body">${found.htmlContent}</div>`;
       }
 
