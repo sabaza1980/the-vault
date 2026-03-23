@@ -1,6 +1,9 @@
 {
   "rewrites": [
     { "source": "/",                "destination": "/website/index.html" },
+    { "source": "/sitemap.xml",     "destination": "/website/sitemap.xml" },
+    { "source": "/robots.txt",      "destination": "/website/robots.txt" },
+    { "source": "/ads.txt",         "destination": "/website/ads.txt" },
     { "source": "/privacy-policy",  "destination": "/website/privacy-policy.html" },
     { "source": "/terms",           "destination": "/website/terms.html" },
     { "source": "/blog",            "destination": "/website/blog.html" },
