@@ -220,11 +220,15 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
     let value = null;
     if (proxyResult && cardData.isGraded && cardData.grade) {
       const g = parseFloat(cardData.grade);
-      if (g >= 10) value = parseFloat(proxyResult.psa10) || parseFloat(proxyResult.bgs10) || null;
-      else if (g >= 9) value = parseFloat(proxyResult.grade9) || null;
-      else if (g >= 8) value = parseFloat(proxyResult.grade8) || null;
-      else value = parseFloat(proxyResult.raw) || null;
-      if (isNaN(value)) value = null;
+      const company = (cardData.gradingCompany || '').toUpperCase();
+      const isPremiumGrader = company === 'PSA' || company === 'BGS' || company === 'BECKETT';
+      const multiplier = isPremiumGrader ? 1.0 : 0.70;
+      let gradedBase = null;
+      if (g >= 10) gradedBase = parseFloat(proxyResult.psa10) || parseFloat(proxyResult.bgs10) || null;
+      else if (g >= 9) gradedBase = parseFloat(proxyResult.grade9) || null;
+      else if (g >= 8) gradedBase = parseFloat(proxyResult.grade8) || null;
+      else gradedBase = parseFloat(proxyResult.raw) || null;
+      if (gradedBase && !isNaN(gradedBase)) value = Math.round(gradedBase * multiplier * 100) / 100;
     }
     if (!value) {
       value = proxyResult?.raw != null ? parseFloat(proxyResult.raw)
@@ -640,7 +644,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             )}
 
             {/* Grading badge */}
-            {card.isGraded && card.gradingCompany && card.grade && (
+            {card.isGraded && card.gradingCompany && card.grade ? (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>Professional Grade</div>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -664,7 +668,11 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                   {card.certNumber && <span style={{ fontSize: 10, color: "var(--tg)" }}>Cert #{card.certNumber}</span>}
                 </div>
               </div>
-            )}
+            ) : !card.isGraded ? (
+              <div style={{ marginBottom: 14 }}>
+                <span style={{ fontSize: 9, color: '#666', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>Ungraded</span>
+              </div>
+            ) : null}
 
             {/* Condition detail */}
             {card.conditionDetail && (
