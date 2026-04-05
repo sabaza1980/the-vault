@@ -288,6 +288,7 @@ Use the above confirmed values exactly as provided. Update all other fields (ful
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
           max_tokens: 3000,
+          temperature: 0.1,
           tools: [{ type: 'web_search_20250305', name: 'web_search' }],
           tool_choice: { type: 'auto' },
           messages: [{
@@ -406,7 +407,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
       const response = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 600, messages: [{ role: "user", content }] })
+        body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 600, temperature: 0.1, messages: [{ role: "user", content }] })
       });
       if (!response.ok) throw new Error(`API ${response.status}`);
       const data = await response.json();
@@ -1845,6 +1846,7 @@ export default function App() {
         body: JSON.stringify({
           model: ANTHROPIC_MODEL,
           max_tokens: 3000,
+          temperature: 0.1,
           tools: [{ type: "web_search_20250305", name: "web_search" }],
           tool_choice: { type: "auto" },
           messages: [{

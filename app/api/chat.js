@@ -60,6 +60,7 @@ export default async function handler(req, res) {
     body: JSON.stringify({
       model: resolvedModel,
       max_tokens: resolvedTokens,
+      temperature: 0.2,
       system,
       messages: cleanMessages,
     }),
