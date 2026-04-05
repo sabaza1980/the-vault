@@ -11,8 +11,8 @@ export const config = {
 };
 
 const ALLOWED_MODELS = ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"];
-const DEFAULT_MAX_TOKENS = 800;
-const MAX_TOKENS_CEILING = 1200;
+const DEFAULT_MAX_TOKENS = 2000;
+const MAX_TOKENS_CEILING = 2500;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

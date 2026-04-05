@@ -574,407 +574,451 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
 
         {/* Expanded panel */}
         {expanded && (
-          <div style={{ borderTop: "1px solid var(--bf)", padding: "14px 14px 14px" }}>
+          <div style={{ borderTop: "1px solid var(--bf)" }}>
 
-            {/* Back of Card */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                Back of Card
-                {backAnalyzing && (
-                  <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#ff6b35", fontSize: 8, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
-                    <div style={{ width: 8, height: 8, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                    Re-analyzing…
-                  </span>
-                )}
-              </div>
-              <input ref={backFileRef} type="file" accept="image/*" style={{ display: "none" }}
-                onChange={e => { handleBackFile(e.target.files[0]); e.target.value = ""; }} />
-              {card.backImageUrl ? (
-                <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <div
-                    onClick={() => setLightboxSrc(card.backImageUrl)}
-                    title="Click to zoom"
-                    style={{ width: 90, height: 124, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid var(--bs)", cursor: "zoom-in" }}
-                  >
-                    <img src={card.backImageUrl} alt="back" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
-                    <span style={{ fontSize: 11, color: "#4caf50" }}>✓ Analysis updated with back</span>
-                    <button
-                      onClick={() => backFileRef.current?.click()}
-                      disabled={backAnalyzing}
-                      style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tm)", borderRadius: 8, padding: "4px 12px", cursor: "pointer", fontSize: 11 }}
-                    >Replace</button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => backFileRef.current?.click()}
-                  disabled={backAnalyzing}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 7, width: "100%",
-                    background: "var(--deep)", border: "1px dashed var(--bs)",
-                    color: backAnalyzing ? "var(--tf)" : "var(--tm)", borderRadius: 10,
-                    padding: "10px 16px", cursor: backAnalyzing ? "not-allowed" : "pointer",
-                    fontSize: 12, fontWeight: 500
-                  }}
-                >
-                  <span style={{ fontSize: 16 }}>📷</span>
-                  Upload back of card — AI will re-analyze with both sides
-                </button>
-              )}
-            </div>
-
-            {/* Player context */}
-            {card.playerContext && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>About This Card</div>
-                  {card.playerContextSearched && (
-                    <span style={{
-                      fontSize: 9, padding: "2px 7px", borderRadius: 6, fontWeight: 700,
-                      background: "rgba(76,175,80,0.1)", color: "#4caf50",
-                      border: "1px solid rgba(76,175,80,0.25)",
-                      fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5
-                    }}>🔍 Live data</span>
-                  )}
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.playerContext}</p>
-              </div>
-            )}
-
-            {/* Grading badge */}
-            {card.isGraded && card.gradingCompany && card.grade ? (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>Professional Grade</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{
-                    fontSize: 15, padding: "5px 14px", borderRadius: 8, fontWeight: 800,
-                    fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2,
-                    background: card.gradingCompany === 'PSA' ? 'rgba(0,86,179,0.18)'
-                      : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? 'rgba(212,175,55,0.15)'
-                      : card.gradingCompany === 'SGC' ? 'rgba(200,200,200,0.12)'
-                      : 'rgba(128,128,128,0.12)',
-                    color: card.gradingCompany === 'PSA' ? '#5aabff'
-                      : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? '#d4af37'
-                      : card.gradingCompany === 'SGC' ? '#ccc'
-                      : '#aaa',
-                    border: `1px solid ${card.gradingCompany === 'PSA' ? 'rgba(90,171,255,0.4)'
-                      : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? 'rgba(212,175,55,0.4)'
-                      : 'rgba(128,128,128,0.3)'}`,
-                  }}>
-                    {card.gradingCompany} {card.grade}
-                  </span>
-                  {card.certNumber && <span style={{ fontSize: 10, color: "var(--tg)" }}>Cert #{card.certNumber}</span>}
-                </div>
-              </div>
-            ) : !card.isGraded ? (
-              <div style={{ marginBottom: 14 }}>
-                <span style={{ fontSize: 9, color: '#666', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>Ungraded</span>
-              </div>
-            ) : null}
-
-            {/* Condition detail */}
-            {card.conditionDetail && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Condition Assessment</div>
-                  {card.condition && (
-                    <span style={{
-                      fontSize: 9, padding: "2px 7px", borderRadius: 6, fontWeight: 700,
-                      background: card.condition === "Mint" ? "#4caf5020" : card.condition === "Near Mint" ? "#8bc34a20" : card.condition === "Excellent" ? "#ff980020" : "#88888820",
-                      color: card.condition === "Mint" ? "#4caf50" : card.condition === "Near Mint" ? "#8bc34a" : card.condition === "Excellent" ? "#ff9800" : "#888",
-                      border: `1px solid ${card.condition === "Mint" ? "#4caf5040" : card.condition === "Near Mint" ? "#8bc34a40" : card.condition === "Excellent" ? "#ff980040" : "#88888840"}`
-                    }}>{card.condition}</span>
-                  )}
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.conditionDetail}</p>
-              </div>
-            )}
-
-            {/* Meta grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px 16px", marginBottom: 12 }}>
-              {card.parallel && <DetailRow label="Parallel" value={card.parallel} />}
-              {card.cardNumber && <DetailRow label="Card #" value={card.cardNumber} />}
-              {card.confidenceLevel && <DetailRow label="AI Confidence" value={card.confidenceLevel} color={
-                card.confidenceLevel === "High" ? "#4caf50" : card.confidenceLevel === "Medium" ? "#ff9800" : "#ff4444"
-              } />}
-            </div>
-
-            {card.notes && (
-              <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
-            )}
-
-            {/* Correct Card Info */}
-            <div style={{ marginBottom: 14 }}>
-              {!editMode ? (
-                <button
-                  onClick={() => { setEditDraft({ playerName: card.playerName || '', year: card.year || '', brand: card.brand || '', series: card.series || '', parallel: card.parallel || '', cardNumber: card.cardNumber || '', serialNumber: card.serialNumber || '', cardCategory: card.cardCategory || '' }); setEditMode(true); }}
-                  style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tm)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}
-                >✏️ Correct card info</button>
-              ) : (
-                <div style={{ background: "var(--deep)", border: "1px solid var(--bf)", borderRadius: 12, padding: 12 }}>
-                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 10 }}>Correct Card Info</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
-                    {[
-                      { label: "Player / Subject", key: "playerName" },
-                      { label: "Year", key: "year" },
-                      { label: "Brand", key: "brand" },
-                      { label: "Series / Set", key: "series" },
-                      { label: "Parallel", key: "parallel" },
-                      { label: "Card #", key: "cardNumber" },
-                      { label: "Serial # (e.g. 45/99)", key: "serialNumber" },
-                      { label: "Category", key: "cardCategory" },
-                    ].map(({ label, key }) => (
-                      <div key={key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                        <label style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600 }}>{label}</label>
-                        <input
-                          value={editDraft[key] || ''}
-                          onChange={e => setEditDraft(d => ({ ...d, [key]: e.target.value }))}
-                          style={{
-                            background: "var(--card)", border: "1px solid var(--bs)", color: "var(--ts)",
-                            borderRadius: 6, padding: "5px 8px", fontSize: 12, outline: "none",
-                            fontFamily: "inherit"
-                          }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 10, fontStyle: "italic" }}>
-                    "Save &amp; Re-price" updates the search immediately. "Re-scan" re-runs AI with your corrections as ground truth.
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      onClick={handleSaveCorrections}
-                      disabled={rescanning}
-                      style={{ background: "rgba(76,175,80,0.12)", border: "1px solid rgba(76,175,80,0.3)", color: "#4caf50", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
-                    >✓ Save &amp; Re-price</button>
-                    <button
-                      onClick={handleRescan}
-                      disabled={rescanning}
-                      style={{ background: "rgba(255,107,53,0.12)", border: "1px solid rgba(255,107,53,0.3)", color: "#ff6b35", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}
-                    >
-                      {rescanning
-                        ? <><div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />Re-scanning…</>
-                        : "🔄 Confirm & Re-scan"}
-                    </button>
-                    <button
-                      onClick={() => setEditMode(false)}
-                      disabled={rescanning}
-                      style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tg)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12 }}
-                    >Cancel</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Pricing */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                Pricing
-                {pricingData?.priceSource === 'SportsCardsPro' && (
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                    background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)"
-                  }}>SportsCardsPro</span>
-                )}
-                {pricingData?.priceSource === 'PriceCharting' && (
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                    background: "rgba(103,58,183,0.12)", color: "#9c27b0", border: "1px solid rgba(103,58,183,0.25)"
-                  }}>PriceCharting</span>
-                )}
-              </div>
-              {pricingLoading && (
-                <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                  <div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  Fetching pricing data...
-                </div>
-              )}
-              {!pricingLoading && (pricingData?.priceSource === 'SportsCardsPro' || pricingData?.priceSource === 'PriceCharting') && (
-                <>
-                  {(pricingData.matchedCard || pricingData.matchedSet) && (
-                    <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 8, fontStyle: "italic" }}>
-                      Matched: {pricingData.matchedCard}{pricingData.matchedSet ? ` — ${pricingData.matchedSet}` : ''}
-                    </div>
-                  )}
-                  {(() => {
-                    const g = card.isGraded && card.grade ? parseFloat(card.grade) : null;
-                    const activeCol = g !== null ? (g >= 10 ? 'psa10' : g >= 9 ? 'gr9' : g >= 8 ? 'gr8' : 'raw') : null;
-                    const active = { background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.5)', borderRadius: 10, padding: '10px 6px', textAlign: 'center' };
-                    const normal = { background: 'var(--deep)', border: '1px solid var(--b)', borderRadius: 10, padding: '10px 6px', textAlign: 'center' };
-                    return (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 10 }}>
-                        <div style={activeCol === 'raw' ? active : normal}>
-                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.raw ? `$${pricingData.raw}` : 'N/A'}</div>
-                        </div>
-                        <div style={activeCol === 'gr8' ? active : normal}>
-                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 8</div>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: "var(--tm)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade8 ? `$${pricingData.grade8}` : 'N/A'}</div>
-                        </div>
-                        <div style={activeCol === 'gr9' ? active : normal}>
-                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 9</div>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade9 ? `$${pricingData.grade9}` : 'N/A'}</div>
-                        </div>
-                        <div style={activeCol === 'psa10' ? active : normal}>
-                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.psa10 ? `$${pricingData.psa10}` : 'N/A'}</div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  {pricingData.salesVolume && (
-                    <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 6 }}>{pricingData.salesVolume} sold per year</div>
-                  )}
-                </>
-              )}
-              {!pricingLoading && !pricingData && pricingFetched && (
-                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic", marginBottom: 10 }}>No pricing data found — try rescanning for better results</div>
-              )}
-            </div>
-
-            {/* eBay Listings */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
-                {ebayData?.source === 'active' ? 'eBay Live Listings' : 'Recent eBay Sales'}
-                {ebayData && (
-                  <span style={{
-                    fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
-                    background: ebayData.source === 'active' ? 'rgba(33,150,243,0.12)' : 'rgba(76,175,80,0.12)',
-                    color: ebayData.source === 'active' ? '#2196f3' : '#4caf50',
-                    border: ebayData.source === 'active' ? '1px solid rgba(33,150,243,0.25)' : '1px solid rgba(76,175,80,0.25)'
-                  }}>{ebayData.source === 'active' ? 'live listings' : 'sold listings'}</span>
-                )}
-                {!ebayData && !ebayLoading && <span style={{ fontSize: 8, color: 'var(--tg)' }}>eBay</span>}
-              </div>
-              {ebayLoading && (
-                <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 10, height: 10, border: "2px solid #4caf50", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  Fetching eBay listings...
-                </div>
-              )}
-              {!ebayLoading && ebayData && (
-                <>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
-                      ${ebayData.avg.toFixed(2)}
-                    </span>
-                    <span style={{ fontSize: 10, color: "var(--tm)" }}>{ebayData.source === 'active' ? `avg asking — ${ebayData.sales.length} live listings` : `avg of ${ebayData.sales.length} sold`}</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {ebayData.sales.slice(0, 8).map((sale, i) => (
-                      <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                        padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
-                        border: "1px solid var(--b)", textDecoration: "none",
-                        transition: "border-color 0.15s", gap: 8
-                      }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = ebayData.source === 'active' ? "#2196f340" : "#4caf5040"}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
-                      >
-                        <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sale.title}</span>
-                        {sale.date && (
-                          <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0, whiteSpace: "nowrap" }}>
-                            {new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
-                          </span>
-                        )}
-                        <span style={{ fontSize: 12, fontWeight: 700, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50', flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
-                      </a>
-                    ))}
-                  </div>
-                </>
-              )}
-              {!ebayLoading && !ebayData && pricingFetched && (
-                <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No recent eBay sales found</div>
-              )}
-            </div>
-
-
-            {/* My Notes */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>My Notes</div>
-              <textarea
-                value={localNotes}
-                onChange={e => setLocalNotes(e.target.value)}
-                onBlur={() => { if (localNotes !== (card.userNotes || "")) onUpdate(card.id, { userNotes: localNotes }); }}
-                placeholder="Add your own notes about this card…"
-                rows={3}
+            {/* ── Card image hero ── */}
+            <div style={{
+              background: `linear-gradient(180deg, ${rColor}20 0%, transparent 100%)`,
+              padding: "20px 14px 16px",
+              display: "flex", justifyContent: "center"
+            }}>
+              <div
+                onClick={() => setLightboxSrc(card.imageUrl)}
+                title="Click to zoom"
                 style={{
-                  width: "100%", background: "var(--deep)", border: "1px solid var(--b)",
-                  borderRadius: 8, color: "var(--ts)", fontSize: 12, padding: "8px 10px",
-                  resize: "vertical", outline: "none", fontFamily: "inherit", lineHeight: 1.6
-                }}
-              />
-            </div>
-
-            {/* Sell */}
-            {!bundleMode && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Sell</div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  <button
-                    onClick={() => onSell(card)}
-                    style={{
-                      background: "#e53935", border: "none", color: "#fff",
-                      borderRadius: 8, padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 700
-                    }}
-                  >{card.ebayListingUrl ? "Re-list on eBay" : "Sell on eBay"}</button>
-                  {card.ebayListingUrl && (
-                    <a href={card.ebayListingUrl} target="_blank" rel="noopener noreferrer" style={{
-                      fontSize: 11, color: "#e53935", textDecoration: "none", fontWeight: 600
-                    }}>↗ View listing</a>
-                  )}
-
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <button
-                onClick={() => onShare?.(card)}
-                style={{
-                  background: "rgba(255,107,53,0.1)", border: "1px solid rgba(255,107,53,0.25)",
-                  color: "#ff6b35", borderRadius: 8, padding: "5px 14px",
-                  cursor: "pointer", fontSize: 11, fontWeight: 600,
-                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
-                  display: "flex", alignItems: "center", gap: 5
+                  width: 160, height: 220, borderRadius: 14, overflow: "hidden", flexShrink: 0,
+                  border: `2px solid ${rColor}55`,
+                  boxShadow: `0 10px 40px ${rColor}30, 0 0 0 1px rgba(255,255,255,0.04)`,
+                  cursor: "zoom-in"
                 }}
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
-                </svg>
-                Share
-              </button>
-              {confirmingDelete ? (
-                <>
-                  <span style={{ fontSize: 11, color: "#ff6b6b" }}>Remove this card?</span>
-                  <button
-                    onClick={() => onDelete(card.id)}
-                    style={{
-                      background: "#ff444420", border: "1px solid #ff444460", color: "#ff4444",
-                      borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700
-                    }}
-                  >Yes, remove</button>
-                  <button
-                    onClick={() => setConfirmingDelete(false)}
-                    style={{
-                      background: "transparent", border: "1px solid #ffffff20", color: "var(--ts)",
-                      borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600
-                    }}
-                  >Cancel</button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setConfirmingDelete(true)}
-                  style={{
-                    background: "transparent", border: "1px solid #ff444428", color: "#ff444488",
-                    borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600
-                  }}
-                >Remove</button>
+                <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              </div>
+            </div>
+
+            <div style={{ padding: "0 14px 14px" }}>
+
+              {/* ── Value Hero ── */}
+              <div style={{ marginBottom: 16 }}>
+                {(() => {
+                  const ebayVal = ebayData?.avg ?? null;
+                  const vaultVal = card.estimatedValue > 0 ? card.estimatedValue : null;
+                  const primaryVal = ebayVal
+                    ? { amount: ebayVal, label: `avg of ${ebayData.sales?.length || 0} eBay ${ebayData.source === 'active' ? 'listings' : 'sold'}`, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50' }
+                    : vaultVal
+                    ? { amount: vaultVal, label: 'last estimated value', color: '#4caf50' }
+                    : null;
+
+                  return (
+                    <>
+                      {(pricingLoading || ebayLoading) && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, color: "var(--tg)", fontSize: 12 }}>
+                          <div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                          Fetching pricing…
+                        </div>
+                      )}
+                      {primaryVal && (
+                        <div style={{ marginBottom: 14 }}>
+                          <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 5 }}>Estimated Value</div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                            <span style={{ fontSize: 40, fontWeight: 900, color: primaryVal.color, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, lineHeight: 1 }}>
+                              ${primaryVal.amount.toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: 10, color: "var(--tg)" }}>{primaryVal.label}</span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+
+                {/* Price guide grid */}
+                {(pricingData?.priceSource === 'SportsCardsPro' || pricingData?.priceSource === 'PriceCharting') && (
+                  <>
+                    <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
+                      Price Guide
+                      {pricingData?.priceSource === 'SportsCardsPro' && (
+                        <span style={{ fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4, background: "rgba(255,107,53,0.12)", color: "#ff6b35", border: "1px solid rgba(255,107,53,0.25)" }}>SportsCardsPro</span>
+                      )}
+                      {pricingData?.priceSource === 'PriceCharting' && (
+                        <span style={{ fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4, background: "rgba(103,58,183,0.12)", color: "#9c27b0", border: "1px solid rgba(103,58,183,0.25)" }}>PriceCharting</span>
+                      )}
+                    </div>
+                    {(pricingData.matchedCard || pricingData.matchedSet) && (
+                      <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 6, fontStyle: "italic" }}>
+                        Matched: {pricingData.matchedCard}{pricingData.matchedSet ? ` — ${pricingData.matchedSet}` : ''}
+                      </div>
+                    )}
+                    {(() => {
+                      const g = card.isGraded && card.grade ? parseFloat(card.grade) : null;
+                      const activeCol = g !== null ? (g >= 10 ? 'psa10' : g >= 9 ? 'gr9' : g >= 8 ? 'gr8' : 'raw') : null;
+                      const active = { background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.5)', borderRadius: 10, padding: '10px 6px', textAlign: 'center' };
+                      const normal = { background: 'var(--deep)', border: '1px solid var(--b)', borderRadius: 10, padding: '10px 6px', textAlign: 'center' };
+                      return (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6, marginBottom: 6 }}>
+                          <div style={activeCol === 'raw' ? active : normal}>
+                            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Raw</div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.raw ? `$${pricingData.raw}` : 'N/A'}</div>
+                          </div>
+                          <div style={activeCol === 'gr8' ? active : normal}>
+                            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 8</div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--tm)", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade8 ? `$${pricingData.grade8}` : 'N/A'}</div>
+                          </div>
+                          <div style={activeCol === 'gr9' ? active : normal}>
+                            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>Gr 9</div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.grade9 ? `$${pricingData.grade9}` : 'N/A'}</div>
+                          </div>
+                          <div style={activeCol === 'psa10' ? active : normal}>
+                            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600, marginBottom: 4 }}>PSA 10</div>
+                            <div style={{ fontSize: 15, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>{pricingData.psa10 ? `$${pricingData.psa10}` : 'N/A'}</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {pricingData.salesVolume && (
+                      <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 6 }}>{pricingData.salesVolume} sold per year</div>
+                    )}
+                  </>
+                )}
+                {!pricingLoading && !pricingData && pricingFetched && (
+                  <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic", marginBottom: 10 }}>No pricing data found — try rescanning for better results</div>
+                )}
+              </div>
+
+              {/* ── eBay Listings ── */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                  {ebayData?.source === 'active' ? 'eBay Live Listings' : 'Recent eBay Sales'}
+                  {ebayData && (
+                    <span style={{
+                      fontSize: 8, fontWeight: 700, textTransform: "none", letterSpacing: 0, padding: "1px 5px", borderRadius: 4,
+                      background: ebayData.source === 'active' ? 'rgba(33,150,243,0.12)' : 'rgba(76,175,80,0.12)',
+                      color: ebayData.source === 'active' ? '#2196f3' : '#4caf50',
+                      border: ebayData.source === 'active' ? '1px solid rgba(33,150,243,0.25)' : '1px solid rgba(76,175,80,0.25)'
+                    }}>{ebayData.source === 'active' ? 'live listings' : 'sold listings'}</span>
+                  )}
+                  {!ebayData && !ebayLoading && <span style={{ fontSize: 8, color: 'var(--tg)' }}>eBay</span>}
+                </div>
+                {ebayLoading && (
+                  <div style={{ fontSize: 12, color: "var(--tg)", display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 10, height: 10, border: "2px solid #4caf50", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    Fetching eBay listings...
+                  </div>
+                )}
+                {!ebayLoading && ebayData && (
+                  <>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1 }}>
+                        ${ebayData.avg.toFixed(2)}
+                      </span>
+                      <span style={{ fontSize: 10, color: "var(--tm)" }}>{ebayData.source === 'active' ? `avg asking — ${ebayData.sales.length} live listings` : `avg of ${ebayData.sales.length} sold`}</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {ebayData.sales.slice(0, 8).map((sale, i) => (
+                        <a key={i} href={sale.url} target="_blank" rel="noopener noreferrer" style={{
+                          display: "flex", justifyContent: "space-between", alignItems: "center",
+                          padding: "6px 10px", borderRadius: 8, background: "var(--deep)",
+                          border: "1px solid var(--b)", textDecoration: "none",
+                          transition: "border-color 0.15s", gap: 8
+                        }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = ebayData.source === 'active' ? "#2196f340" : "#4caf5040"}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
+                        >
+                          <span style={{ fontSize: 11, color: "var(--ts)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sale.title}</span>
+                          {sale.date && (
+                            <span style={{ fontSize: 10, color: "var(--tf)", flexShrink: 0, whiteSpace: "nowrap" }}>
+                              {new Date(sale.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                            </span>
+                          )}
+                          <span style={{ fontSize: 12, fontWeight: 700, color: ebayData.source === 'active' ? '#2196f3' : '#4caf50', flexShrink: 0 }}>${sale.price.toFixed(2)}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {!ebayLoading && !ebayData && pricingFetched && (
+                  <div style={{ fontSize: 12, color: "var(--tg)", fontStyle: "italic" }}>No recent eBay sales found</div>
+                )}
+              </div>
+
+              {/* ── Card details ── */}
+
+              {/* Grading badge */}
+              {card.isGraded && card.gradingCompany && card.grade ? (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>Professional Grade</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{
+                      fontSize: 15, padding: "5px 14px", borderRadius: 8, fontWeight: 800,
+                      fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2,
+                      background: card.gradingCompany === 'PSA' ? 'rgba(0,86,179,0.18)'
+                        : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? 'rgba(212,175,55,0.15)'
+                        : card.gradingCompany === 'SGC' ? 'rgba(200,200,200,0.12)'
+                        : 'rgba(128,128,128,0.12)',
+                      color: card.gradingCompany === 'PSA' ? '#5aabff'
+                        : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? '#d4af37'
+                        : card.gradingCompany === 'SGC' ? '#ccc'
+                        : '#aaa',
+                      border: `1px solid ${card.gradingCompany === 'PSA' ? 'rgba(90,171,255,0.4)'
+                        : (card.gradingCompany === 'BGS' || card.gradingCompany === 'Beckett') ? 'rgba(212,175,55,0.4)'
+                        : 'rgba(128,128,128,0.3)'}`,
+                    }}>
+                      {card.gradingCompany} {card.grade}
+                    </span>
+                    {card.certNumber && <span style={{ fontSize: 10, color: "var(--tg)" }}>Cert #{card.certNumber}</span>}
+                  </div>
+                </div>
+              ) : !card.isGraded ? (
+                <div style={{ marginBottom: 14 }}>
+                  <span style={{ fontSize: 9, color: '#666', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>Ungraded</span>
+                </div>
+              ) : null}
+
+              {/* Condition detail */}
+              {card.conditionDetail && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>Condition Assessment</div>
+                    {card.condition && (
+                      <span style={{
+                        fontSize: 9, padding: "2px 7px", borderRadius: 6, fontWeight: 700,
+                        background: card.condition === "Mint" ? "#4caf5020" : card.condition === "Near Mint" ? "#8bc34a20" : card.condition === "Excellent" ? "#ff980020" : "#88888820",
+                        color: card.condition === "Mint" ? "#4caf50" : card.condition === "Near Mint" ? "#8bc34a" : card.condition === "Excellent" ? "#ff9800" : "#888",
+                        border: `1px solid ${card.condition === "Mint" ? "#4caf5040" : card.condition === "Near Mint" ? "#8bc34a40" : card.condition === "Excellent" ? "#ff980040" : "#88888840"}`
+                      }}>{card.condition}</span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.conditionDetail}</p>
+                </div>
               )}
+
+              {/* Meta grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px 16px", marginBottom: 12 }}>
+                {card.parallel && <DetailRow label="Parallel" value={card.parallel} />}
+                {card.cardNumber && <DetailRow label="Card #" value={card.cardNumber} />}
+                {card.confidenceLevel && <DetailRow label="AI Confidence" value={card.confidenceLevel} color={
+                  card.confidenceLevel === "High" ? "#4caf50" : card.confidenceLevel === "Medium" ? "#ff9800" : "#ff4444"
+                } />}
+              </div>
+
+              {card.notes && (
+                <p style={{ margin: "0 0 12px", fontSize: 11, color: "var(--tg)", lineHeight: 1.6, fontStyle: "italic" }}>{card.notes}</p>
+              )}
+
+              {/* About This Card */}
+              {card.playerContext && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+                    <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600 }}>About This Card</div>
+                    {card.playerContextSearched && (
+                      <span style={{
+                        fontSize: 9, padding: "2px 7px", borderRadius: 6, fontWeight: 700,
+                        background: "rgba(76,175,80,0.1)", color: "#4caf50",
+                        border: "1px solid rgba(76,175,80,0.25)",
+                        fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5
+                      }}>🔍 Live data</span>
+                    )}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: "var(--ts)", lineHeight: 1.7 }}>{card.playerContext}</p>
+                </div>
+              )}
+
+              {/* Back of Card */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                  Back of Card
+                  {backAnalyzing && (
+                    <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#ff6b35", fontSize: 8, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
+                      <div style={{ width: 8, height: 8, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                      Re-analyzing…
+                    </span>
+                  )}
+                </div>
+                <input ref={backFileRef} type="file" accept="image/*" style={{ display: "none" }}
+                  onChange={e => { handleBackFile(e.target.files[0]); e.target.value = ""; }} />
+                {card.backImageUrl ? (
+                  <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                    <div
+                      onClick={() => setLightboxSrc(card.backImageUrl)}
+                      title="Click to zoom"
+                      style={{ width: 90, height: 124, borderRadius: 9, overflow: "hidden", flexShrink: 0, border: "1px solid var(--bs)", cursor: "zoom-in" }}
+                    >
+                      <img src={card.backImageUrl} alt="back" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 2 }}>
+                      <span style={{ fontSize: 11, color: "#4caf50" }}>✓ Analysis updated with back</span>
+                      <button
+                        onClick={() => backFileRef.current?.click()}
+                        disabled={backAnalyzing}
+                        style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tm)", borderRadius: 8, padding: "4px 12px", cursor: "pointer", fontSize: 11 }}
+                      >Replace</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => backFileRef.current?.click()}
+                    disabled={backAnalyzing}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 7, width: "100%",
+                      background: "var(--deep)", border: "1px dashed var(--bs)",
+                      color: backAnalyzing ? "var(--tf)" : "var(--tm)", borderRadius: 10,
+                      padding: "10px 16px", cursor: backAnalyzing ? "not-allowed" : "pointer",
+                      fontSize: 12, fontWeight: 500
+                    }}
+                  >
+                    <span style={{ fontSize: 16 }}>📷</span>
+                    Upload back of card — AI will re-analyze with both sides
+                  </button>
+                )}
+              </div>
+
+              {/* Correct Card Info */}
+              <div style={{ marginBottom: 14 }}>
+                {!editMode ? (
+                  <button
+                    onClick={() => { setEditDraft({ playerName: card.playerName || '', year: card.year || '', brand: card.brand || '', series: card.series || '', parallel: card.parallel || '', cardNumber: card.cardNumber || '', serialNumber: card.serialNumber || '', cardCategory: card.cardCategory || '' }); setEditMode(true); }}
+                    style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tm)", borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}
+                  >✏️ Correct card info</button>
+                ) : (
+                  <div style={{ background: "var(--deep)", border: "1px solid var(--bf)", borderRadius: 12, padding: 12 }}>
+                    <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 10 }}>Correct Card Info</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                      {[
+                        { label: "Player / Subject", key: "playerName" },
+                        { label: "Year", key: "year" },
+                        { label: "Brand", key: "brand" },
+                        { label: "Series / Set", key: "series" },
+                        { label: "Parallel", key: "parallel" },
+                        { label: "Card #", key: "cardNumber" },
+                        { label: "Serial # (e.g. 45/99)", key: "serialNumber" },
+                        { label: "Category", key: "cardCategory" },
+                      ].map(({ label, key }) => (
+                        <div key={key} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          <label style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 600 }}>{label}</label>
+                          <input
+                            value={editDraft[key] || ''}
+                            onChange={e => setEditDraft(d => ({ ...d, [key]: e.target.value }))}
+                            style={{
+                              background: "var(--card)", border: "1px solid var(--bs)", color: "var(--ts)",
+                              borderRadius: 6, padding: "5px 8px", fontSize: 12, outline: "none",
+                              fontFamily: "inherit"
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--tg)", marginBottom: 10, fontStyle: "italic" }}>
+                      "Save &amp; Re-price" updates the search immediately. "Re-scan" re-runs AI with your corrections as ground truth.
+                    </div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        onClick={handleSaveCorrections}
+                        disabled={rescanning}
+                        style={{ background: "rgba(76,175,80,0.12)", border: "1px solid rgba(76,175,80,0.3)", color: "#4caf50", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+                      >✓ Save &amp; Re-price</button>
+                      <button
+                        onClick={handleRescan}
+                        disabled={rescanning}
+                        style={{ background: "rgba(255,107,53,0.12)", border: "1px solid rgba(255,107,53,0.3)", color: "#ff6b35", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}
+                      >
+                        {rescanning
+                          ? <><div style={{ width: 10, height: 10, border: "2px solid #ff6b35", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />Re-scanning…</>
+                          : "🔄 Confirm & Re-scan"}
+                      </button>
+                      <button
+                        onClick={() => setEditMode(false)}
+                        disabled={rescanning}
+                        style={{ background: "transparent", border: "1px solid var(--bs)", color: "var(--tg)", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12 }}
+                      >Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* My Notes */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 6 }}>My Notes</div>
+                <textarea
+                  value={localNotes}
+                  onChange={e => setLocalNotes(e.target.value)}
+                  onBlur={() => { if (localNotes !== (card.userNotes || "")) onUpdate(card.id, { userNotes: localNotes }); }}
+                  placeholder="Add your own notes about this card…"
+                  rows={3}
+                  style={{
+                    width: "100%", background: "var(--deep)", border: "1px solid var(--b)",
+                    borderRadius: 8, color: "var(--ts)", fontSize: 12, padding: "8px 10px",
+                    resize: "vertical", outline: "none", fontFamily: "inherit", lineHeight: 1.6
+                  }}
+                />
+              </div>
+
+              {/* Sell */}
+              {!bundleMode && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Sell</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <button
+                      onClick={() => onSell(card)}
+                      style={{
+                        background: "#e53935", border: "none", color: "#fff",
+                        borderRadius: 8, padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 700
+                      }}
+                    >{card.ebayListingUrl ? "Re-list on eBay" : "Sell on eBay"}</button>
+                    {card.ebayListingUrl && (
+                      <a href={card.ebayListingUrl} target="_blank" rel="noopener noreferrer" style={{
+                        fontSize: 11, color: "#e53935", textDecoration: "none", fontWeight: 600
+                      }}>↗ View listing</a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => onShare?.(card)}
+                  style={{
+                    background: "rgba(255,107,53,0.1)", border: "1px solid rgba(255,107,53,0.25)",
+                    color: "#ff6b35", borderRadius: 8, padding: "5px 14px",
+                    cursor: "pointer", fontSize: 11, fontWeight: 600,
+                    fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5,
+                    display: "flex", alignItems: "center", gap: 5
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                  Share
+                </button>
+                {confirmingDelete ? (
+                  <>
+                    <span style={{ fontSize: 11, color: "#ff6b6b" }}>Remove this card?</span>
+                    <button
+                      onClick={() => onDelete(card.id)}
+                      style={{
+                        background: "#ff444420", border: "1px solid #ff444460", color: "#ff4444",
+                        borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 700
+                      }}
+                    >Yes, remove</button>
+                    <button
+                      onClick={() => setConfirmingDelete(false)}
+                      style={{
+                        background: "transparent", border: "1px solid #ffffff20", color: "var(--ts)",
+                        borderRadius: 8, padding: "5px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                      }}
+                    >Cancel</button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setConfirmingDelete(true)}
+                    style={{
+                      background: "transparent", border: "1px solid #ff444428", color: "#ff444488",
+                      borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: 11, fontWeight: 600
+                    }}
+                  >Remove</button>
+                )}
+              </div>
             </div>
           </div>
         )}

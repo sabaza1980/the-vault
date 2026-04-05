@@ -280,7 +280,7 @@ export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessi
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: CHAT_MODEL,
-            max_tokens: 800,
+            max_tokens: 2000,
             system: systemPromptRef.current,
             messages: conversationMessages,
           }),
