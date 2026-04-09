@@ -1,7 +1,7 @@
 {
   "name": "app",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
     "cap:sync": "npm run build && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
     "cap:android": "npm run cap:sync && npx cap open android",
-    "postinstall": "node -e \"const fs=require('fs'),p='node_modules/@capacitor-community/admob/android/build.gradle';fs.writeFileSync(p,fs.readFileSync(p,'utf8').replace(/getDefaultProguardFile\\('proguard-android\\.txt'\\)/g,\"getDefaultProguardFile('proguard-android-optimize.txt')\"));\""
+    "postinstall": "node scripts/fix-admob-gradle.cjs"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",
