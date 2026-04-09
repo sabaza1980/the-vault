@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
+import { AdMob } from "@capacitor-community/admob";
 import { useAuth } from "./AuthContext";
 import LandingPage from "./LandingPage";
 import { useFirestoreSync } from "./useFirestoreSync";
@@ -1670,6 +1671,12 @@ export default function App() {
     if (refCode) localStorage.setItem('vault-ref-code', refCode);
   }, []);
 
+  // Initialize AdMob on native platforms
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    AdMob.initialize({ initializeForTesting: false }).catch(() => {});
+  }, []);
+
   // Detect share URL params — show public view without requiring auth
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1840,22 +1847,29 @@ export default function App() {
       const mediaType = item.mediaType;
       const imageUrl = `data:${mediaType};base64,${base64}`;
 
-      const response = await fetch(`${API_BASE}/api/analyze`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: ANTHROPIC_MODEL,
-          max_tokens: 3000,
-          temperature: 0.1,
-          tools: [{ type: "web_search_20250305", name: "web_search" }],
-          tool_choice: { type: "any" },
-          messages: [{
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-              {
-                type: "text",
-                text: `You are an expert collectibles authenticator. Analyse this image using this exact 3-step process:
+      // Retry up to 3 times on 429 rate-limit errors with exponential backoff
+      let response;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          // Wait 20s on first retry, 40s on second
+          await new Promise(r => setTimeout(r, 20000 * attempt));
+        }
+        response = await fetch(`${API_BASE}/api/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: ANTHROPIC_MODEL,
+            max_tokens: 3000,
+            temperature: 0.1,
+            tools: [{ type: "web_search_20250305", name: "web_search" }],
+            tool_choice: { type: "any" },
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+                {
+                  type: "text",
+                  text: `You are an expert collectibles authenticator. Analyse this image using this exact 3-step process:
 
 ━━━ STEP 1: VISUAL EXTRACTION ━━━
 Read EVERY piece of text and number visible on the card/item. Write down mentally:
@@ -1935,6 +1949,9 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           }]
         })
       });
+        if (response.status !== 429) break;
+        // 429: loop will retry after backoff (unless this was the last attempt)
+      }
 
       if (!response.ok) {
         const errBody = await response.text().catch(() => '');
@@ -1987,10 +2004,21 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
   const runQueue = useCallback(async () => {
     if (isProcessing.current) return;
     isProcessing.current = true;
+    let first = true;
     while (pendingQueue.current.length > 0) {
+      // Space requests apart to avoid Claude's 30K token/minute rate limit
+      if (!first) await new Promise(r => setTimeout(r, 5000));
+      first = false;
       const item = pendingQueue.current.shift();
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "processing" } : q));
-      await analyzeCard(item);
+      try {
+        await analyzeCard(item);
+      } catch (err) {
+        // Safety net: analyzeCard handles its own errors, but this prevents
+        // an unexpected rejection from permanently locking isProcessing
+        setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "error", errorMsg: err?.message } : q));
+        console.error("runQueue caught unexpected error:", err);
+      }
     }
     isProcessing.current = false;
     setTimeout(() => setQueue([]), 2500);

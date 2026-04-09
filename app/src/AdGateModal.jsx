@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
 
-const AD_DURATION = 5; // seconds for simulated ad (replace with real AdMob call)
+const REWARDED_AD_UNIT_ID = 'ca-app-pub-8412353811123862/5612474852';
 
 /**
  * Full-screen ad gate modal — shown before any rewarded action.
@@ -25,22 +27,39 @@ export default function AdGateModal({
   onUpgrade,
   onDismiss,
 }) {
-  const [phase, setPhase] = useState('idle'); // 'idle' | 'loading' | 'watching'
-  const [countdown, setCountdown] = useState(AD_DURATION);
+  const [phase, setPhase] = useState('idle'); // 'idle' | 'loading' | 'watching' | 'error'
+  const [countdown, setCountdown] = useState(0);
 
-  const handleWatch = () => {
+  const handleWatch = async () => {
     setPhase('loading');
-    // TODO: Replace with real AdMob rewarded video call:
-    //   const result = await AdMob.showRewardVideoAd({ adId: REWARDED_AD_UNIT_ID });
-    //   if (result.type === AdMobRewardItem) onWatched();
-    setTimeout(() => {
-      setPhase('watching');
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        // Listen for reward before showing
+        const rewardListener = await AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
+          rewardListener.remove();
+          onWatched();
+        });
+
+        // Prepare and show the rewarded ad
+        await AdMob.prepareRewardVideoAd({ adId: REWARDED_AD_UNIT_ID });
+        setPhase('watching');
+        await AdMob.showRewardVideoAd();
+        setPhase('idle');
+      } catch {
+        setPhase('error');
+        setTimeout(() => setPhase('idle'), 3000);
+      }
+    } else {
+      // Web fallback: simulated 5-second countdown
+      const AD_DURATION = 5;
       setCountdown(AD_DURATION);
-    }, 800);
+      setPhase('watching');
+    }
   };
 
   useEffect(() => {
-    if (phase !== 'watching') return;
+    if (phase !== 'watching' || Capacitor.isNativePlatform()) return;
     if (countdown <= 0) {
       onWatched();
       return;
@@ -121,7 +140,7 @@ export default function AdGateModal({
           )}
         </div>
 
-        {/* Ad placeholder panel — shown during loading/watching */}
+        {/* Ad placeholder panel — shown during loading/watching on web */}
         {phase !== 'idle' && (
           <div style={{
             background: '#090915',
@@ -134,7 +153,7 @@ export default function AdGateModal({
             justifyContent: 'center',
             gap: 8,
           }}>
-            {phase === 'loading' ? (
+            {phase === 'loading' && (
               <>
                 <div style={{
                   width: 20, height: 20,
@@ -143,7 +162,8 @@ export default function AdGateModal({
                 }} />
                 <div style={{ fontSize: 10, color: '#333', textTransform: 'uppercase', letterSpacing: 1 }}>Loading ad…</div>
               </>
-            ) : (
+            )}
+            {phase === 'watching' && !Capacitor.isNativePlatform() && (
               <>
                 <div style={{ fontSize: 10, color: '#333', textTransform: 'uppercase', letterSpacing: 1.5 }}>Advertisement</div>
                 <div style={{
@@ -154,6 +174,21 @@ export default function AdGateModal({
                 </div>
                 <div style={{ fontSize: 10, color: '#2a2a3a', textTransform: 'uppercase', letterSpacing: 1 }}>Ad completing…</div>
               </>
+            )}
+            {phase === 'watching' && Capacitor.isNativePlatform() && (
+              <>
+                <div style={{
+                  width: 20, height: 20,
+                  border: '2px solid #222', borderTopColor: '#ff6b35',
+                  borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+                }} />
+                <div style={{ fontSize: 10, color: '#333', textTransform: 'uppercase', letterSpacing: 1 }}>Opening ad…</div>
+              </>
+            )}
+            {phase === 'error' && (
+              <div style={{ fontSize: 12, color: '#666', textAlign: 'center', padding: '0 16px' }}>
+                Ad unavailable. Please try again.
+              </div>
             )}
           </div>
         )}
@@ -174,13 +209,15 @@ export default function AdGateModal({
             </button>
           )}
 
-          {phase === 'watching' && (
+          {(phase === 'watching' || phase === 'loading') && (
             <div style={{
               background: '#1a1a2e', border: '1px solid #222',
               borderRadius: 13, padding: '13px 20px',
               fontSize: 13, color: '#444', textAlign: 'center',
             }}>
-              Watching… reward in {countdown}s
+              {phase === 'watching' && !Capacitor.isNativePlatform()
+                ? `Watching… reward in ${countdown}s`
+                : 'Ad loading…'}
             </div>
           )}
 
