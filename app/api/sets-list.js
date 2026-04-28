@@ -20,9 +20,14 @@ export default async function handler(req, res) {
       try {
         const data = JSON.parse(readFileSync(join(DATA_DIR, filename), 'utf8'));
         const setMeta = data.set || {};
-        const totalCards = (data.subsets || []).reduce((s, sub) => s + sub.cards.length, 0);
+        const totalCards = (data.subsets || []).reduce((s, sub) => s + (sub.cards || []).length, 0);
         const totalVariants = (data.subsets || []).reduce((s, sub) => {
-          return s + sub.cards.length * (1 + (sub.parallels || []).length);
+          const cards = (sub.cards || []).length;
+          if (sub.versions && sub.versions.length > 0) {
+            // Version subsets: 1 variant per version per card, no parallels
+            return s + cards * sub.versions.length;
+          }
+          return s + cards * (1 + (sub.parallels || []).length);
         }, 0);
         return {
           id: setId,
@@ -30,6 +35,8 @@ export default async function handler(req, res) {
           year: setMeta.year || '',
           sport: setMeta.sport || '',
           brand: setMeta.brand || '',
+          releaseDate: setMeta.releaseDate || '',
+          configurations: setMeta.configurations || ['Hobby'],
           subsetCount: (data.subsets || []).length,
           totalCards,
           totalVariants,
@@ -37,6 +44,10 @@ export default async function handler(req, res) {
       } catch {
         return { id: setId, name: setId };
       }
+    }).sort((a, b) => {
+      // Most recent release first
+      if (a.releaseDate && b.releaseDate) return b.releaseDate.localeCompare(a.releaseDate);
+      return a.name.localeCompare(b.name);
     });
 
     return res.status(200).json({ sets });

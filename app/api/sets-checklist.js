@@ -29,7 +29,10 @@ function processChecklist(data) {
 
   for (const subset of subsets) {
     const parallelCount = (subset.parallels || []).length;
-    const variantsPerCard = 1 + parallelCount; // base + each parallel
+    // Version subsets (e.g. Planetary Pursuit) track one variant per version, not parallels
+    const variantsPerCard = subset.versions && subset.versions.length > 0
+      ? subset.versions.length
+      : 1 + parallelCount;
 
     for (const card of subset.cards) {
       // Handle dual autos: "Player A / Player B"
@@ -118,6 +121,9 @@ export default async function handler(req, res) {
       league: s.league || 'NBA',
       exclusive: s.exclusive || null,
       parallels: s.parallels || [],
+      versions: s.versions || null,
+      rarity: s.rarity || null,
+      note: s.note || null,
     }));
 
     return res.status(200).json({

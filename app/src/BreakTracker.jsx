@@ -3,11 +3,7 @@ import html2canvas from 'html2canvas';
 import { useTrackerState } from './useTrackerState.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
-const ACTIVE_SET_ID = '2025-26-bowman-basketball';
 
-const COLLECTIONS = [
-  { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
-];
 const BREAK_TYPES = ['PYT', 'PYP', 'Random Team'];
 const PLATFORMS = ['Whatnot', 'Fanatics'];
 
@@ -19,7 +15,8 @@ function defaultBreakInfo() {
     date: now.toISOString().slice(0, 10),
     time: now.toTimeString().slice(0, 5),
     platform: 'Whatnot',
-    collection: '2025-26-bowman-basketball',
+    collection: '2025-26-topps-cosmic-chrome-basketball',
+    config: 'Hobby',
   };
 }
 
@@ -136,8 +133,8 @@ function BreakInfoForm({ info, onChange }) {
           {/* Collection */}
           <div>
             <label style={labelStyle}>Collection</label>
-            <select value={info.collection} onChange={e => onChange('collection', e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-              {COLLECTIONS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            <select value={info.collection} onChange={e => { onChange('collection', e.target.value); onChange('config', 'Hobby'); }} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+              {(collections || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
         </div>
@@ -269,7 +266,7 @@ function TeamSelectRow({ team, players, isTargeted, onToggle, onTargetAll, onUnt
 }
 
 // ── SELECT PHASE ──────────────────────────────────────────────────────────────
-function SelectPhase({ checklist, tracker, onStartBreak, onClose, breakInfo, onBreakInfoChange }) {
+function SelectPhase({ checklist, tracker, onStartBreak, onClose, breakInfo, onBreakInfoChange, collections }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 200);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('vault.tracker.prefs.view') || 'player');
@@ -372,7 +369,7 @@ function SelectPhase({ checklist, tracker, onStartBreak, onClose, breakInfo, onB
 
       {/* List */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        <BreakInfoForm info={breakInfo} onChange={onBreakInfoChange} />
+        <BreakInfoForm info={breakInfo} onChange={onBreakInfoChange} collections={collections} />
         {viewMode === 'player' && filteredPlayers.map(p => (
           <PlayerSelectRow key={p.slug} player={p} isTargeted={isTargeted(p.slug)} onToggle={toggleTarget} />
         ))}
@@ -423,7 +420,7 @@ function SelectPhase({ checklist, tracker, onStartBreak, onClose, breakInfo, onB
 }
 
 // ── Hit Picker Dropdown ───────────────────────────────────────────────────────
-function HitPickerDropdown({ variants, onSelect, onClose, anchorRect }) {
+function HitPickerDropdown({ variants, onSelect, onClose, anchorRect, config }) {
   const ref = useRef();
   useEffect(() => {
     const handler = e => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
@@ -452,35 +449,43 @@ function HitPickerDropdown({ variants, onSelect, onClose, anchorRect }) {
       <div style={{ fontSize: 10, color: 'var(--tg)', padding: '4px 8px 6px', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
         Which variant?
       </div>
-      {variants.map(v => (
-        <button
-          key={v.id || 'base'}
-          onClick={() => { onSelect(v); onClose(); }}
-          style={{
-            width: '100%', textAlign: 'left', background: 'none', border: 'none',
-            borderRadius: 7, padding: '7px 10px', cursor: 'pointer', fontSize: 12,
-            color: 'var(--t)', display: 'flex', alignItems: 'center', gap: 6,
-            transition: 'background 0.1s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,53,0.08)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          <span style={{ flex: 1, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, letterSpacing: 0.3 }}>
-            {v.isBase ? 'Base' : v.name}
-          </span>
+      {variants.map(v => {
+        const isFdiOnly = v.exclusive === 'FDI';
+        const notAvail = isFdiOnly && config === 'Hobby';
+        return (
+          <button
+            key={v.id || 'base'}
+            onClick={() => { if (!notAvail) { onSelect(v); onClose(); } }}
+            disabled={notAvail}
+            style={{
+              width: '100%', textAlign: 'left', background: 'none', border: 'none',
+              borderRadius: 7, padding: '7px 10px', cursor: notAvail ? 'default' : 'pointer', fontSize: 12,
+              color: notAvail ? 'var(--tg)' : 'var(--t)', display: 'flex', alignItems: 'center', gap: 6,
+              opacity: notAvail ? 0.45 : 1,
+              transition: 'background 0.1s',
+            }}
+            onMouseEnter={e => { if (!notAvail) e.currentTarget.style.background = 'rgba(255,107,53,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ flex: 1, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, letterSpacing: 0.3 }}>
+              {v.isBase ? 'Base' : v.name}
+              {notAvail && <span style={{ fontSize: 9, marginLeft: 4, color: 'var(--tg)' }}>Not in Hobby</span>}
+            </span>
           {v.printRun && <span style={{ fontSize: 10, color: 'var(--tg)', fontWeight: 600 }}>/{v.printRun}</span>}
-          {v.exclusive && (
+          {v.exclusive && !notAvail && (
             <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: 'rgba(156,39,176,0.12)', color: '#ce93d8', border: '1px solid rgba(156,39,176,0.25)', fontWeight: 700 }}>{v.exclusive}</span>
           )}
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 // ── Card Slot ─────────────────────────────────────────────────────────────────
-function CardSlot({ appearance, player, tracker }) {
+function CardSlot({ appearance, player, tracker, config }) {
   const { subset, card, variants } = appearance;
+  const isVersionSubset = subset.isVersionSubset || (variants.length > 0 && variants[0].isVersion);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [anchorRect, setAnchorRect] = useState(null);
   const btnRef = useRef();
@@ -503,6 +508,69 @@ function CardSlot({ appearance, player, tracker }) {
     });
   }, [tracker, player.slug, subset.id, card.number]);
 
+  const handleVersionHit = useCallback((version) => {
+    const alreadyHit = slotHits.find(h => h.parallelId === version.id);
+    if (alreadyHit) {
+      tracker.removeHit(alreadyHit.id);
+    } else {
+      tracker.addHit({
+        playerSlug: player.slug,
+        subsetId: subset.id,
+        cardNumber: card.number,
+        parallelId: version.id,
+        variantName: version.name,
+      });
+    }
+  }, [tracker, player.slug, subset.id, card.number, slotHits]);
+
+  // ── Version-based subset rendering (Planetary Pursuit) ───────────────────
+  if (isVersionSubset) {
+    return (
+      <div style={{
+        minWidth: 220, flexShrink: 0,
+        background: slotHits.length > 0 ? 'rgba(76,175,80,0.07)' : 'rgba(255,255,255,0.03)',
+        border: `1px solid ${slotHits.length > 0 ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.07)'}`,
+        borderRadius: 10, padding: '8px 10px',
+      }}>
+        <div style={{ marginBottom: 7 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--tm)', textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: "'Barlow Condensed', sans-serif" }}>
+              {subset.name}
+            </span>
+            {subset.rarity === 'SSP' && (
+              <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(255,235,59,0.1)', color: '#fdd835', border: '1px solid rgba(255,235,59,0.3)', fontWeight: 700 }}>SSP</span>
+            )}
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--tg)' }}>#{card.number}{card.printedNumber ? ` · Printed as #${card.printedNumber}` : ''}</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+          {variants.map(v => {
+            const hit = slotHits.find(h => h.parallelId === v.id);
+            return (
+              <button
+                key={v.id}
+                onClick={() => handleVersionHit(v)}
+                title={hit ? `Remove ${v.name} hit` : `Record ${v.name}`}
+                style={{
+                  padding: '4px 6px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                  background: hit ? 'rgba(76,175,80,0.2)' : 'rgba(255,255,255,0.05)',
+                  color: hit ? '#4caf50' : 'rgba(255,255,255,0.55)',
+                  fontSize: 10, fontWeight: 600, textAlign: 'left',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2,
+                  transition: 'all 0.12s',
+                  outline: hit ? '1px solid rgba(76,175,80,0.4)' : 'none',
+                }}
+              >
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.3 }}>{v.name}</span>
+                {hit && <span style={{ fontSize: 9 }}>✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       minWidth: 148, maxWidth: 190, flexShrink: 0,
@@ -520,8 +588,16 @@ function CardSlot({ appearance, player, tracker }) {
           {card.isRC && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(255,107,53,0.12)', color: '#ff6b35', border: '1px solid rgba(255,107,53,0.3)', fontWeight: 700 }}>RC</span>}
           {card.isDualAuto && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(100,181,246,0.1)', color: '#64b5f6', border: '1px solid rgba(100,181,246,0.25)', fontWeight: 700 }}>DUAL</span>}
           {subset.isAuto && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(240,192,64,0.1)', color: '#f0c040', border: '1px solid rgba(240,192,64,0.25)', fontWeight: 700 }}>AUTO</span>}
+          {subset.rarity === 'SSP' && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(255,235,59,0.1)', color: '#fdd835', border: '1px solid rgba(255,235,59,0.3)', fontWeight: 700 }}>SSP</span>}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--tg)' }}>#{card.number} · {variants.length} var{variants.length !== 1 ? 's' : ''}</div>
+        <div style={{ fontSize: 10, color: 'var(--tg)' }}>
+          #{card.number} · {variants.length} var{variants.length !== 1 ? 's' : ''}
+        </div>
+        {card.printedNumber && (
+          <div title={card.note || ''} style={{ fontSize: 9, color: '#64b5f6', marginTop: 2, cursor: card.note ? 'help' : 'default' }}>
+            Printed as #{card.printedNumber}
+          </div>
+        )}
       </div>
 
       {/* Recorded hits */}
@@ -567,6 +643,7 @@ function CardSlot({ appearance, player, tracker }) {
           onSelect={handleSelect}
           onClose={() => setPickerOpen(false)}
           anchorRect={anchorRect}
+          config={config}
         />
       )}
     </div>
@@ -574,7 +651,7 @@ function CardSlot({ appearance, player, tracker }) {
 }
 
 // ── Player Live Card ──────────────────────────────────────────────────────────
-function PlayerLiveCard({ player, appearances, loading, tracker }) {
+function PlayerLiveCard({ player, appearances, loading, tracker, config }) {
   const playerHits = tracker.getHitsForPlayer(player.slug);
   const hitCount = playerHits.length;
 
@@ -613,6 +690,7 @@ function PlayerLiveCard({ player, appearances, loading, tracker }) {
               appearance={app}
               player={player}
               tracker={tracker}
+              config={config}
             />
           ))
         ) : (
@@ -859,13 +937,17 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
 }
 
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, onBreakInfoChange }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [checklist.players, targetedSlugs.join(',')]
   );
+
+  // Configuration switcher (Hobby / FDI / etc.)
+  const availableConfigs = checklist?.set?.configurations || ['Hobby'];
+  const currentConfig = breakInfo.config || availableConfigs[0];
 
   const [playerDetails, setPlayerDetails] = useState({});
   const [loadingSet, setLoadingSet] = useState(() => new Set(targetedSlugs));
@@ -876,7 +958,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
     if (targetedSlugs.length === 0) return;
     Promise.allSettled(
       targetedSlugs.map(slug =>
-        fetch(`${API_BASE}/api/sets-player?setId=${ACTIVE_SET_ID}&player=${encodeURIComponent(slug)}`)
+        fetch(`${API_BASE}/api/sets-player?setId=${checklist.set.id}&player=${encodeURIComponent(slug)}`)
           .then(r => r.ok ? r.json() : null)
           .then(data => ({ slug, data }))
       )
@@ -897,7 +979,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
         <BreakSummaryModal
           hits={tracker.hits}
           targetedPlayers={targetedPlayers}
-          setName={checklist?.set?.name || '2025-26 Bowman Basketball'}
+          setName={checklist?.set?.name || 'Break'}
           breakInfo={breakInfo}
           onClose={() => setShowSummary(false)}
           onNewBreak={onNewBreak}
@@ -913,13 +995,31 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', color: 'var(--tg)', fontSize: 16, flexShrink: 0 }}>←</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 18, fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, lineHeight: 1 }}>
-            {checklist?.set?.name || '2025-26 Bowman Basketball'}
+            {checklist?.set?.name || 'Break'}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 10, color: 'var(--tg)', letterSpacing: 0.5 }}>Break is live · {targetedPlayers.length} player{targetedPlayers.length !== 1 ? 's' : ''}</span>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4caf50', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
           </div>
         </div>
+        {/* Config switcher — only shown for sets with multiple configurations */}
+        {availableConfigs.length > 1 && (
+          <div style={{ display: 'flex', background: 'var(--deep)', border: '1px solid var(--b)', borderRadius: 8, overflow: 'hidden', flexShrink: 0 }}>
+            {availableConfigs.map(cfg => (
+              <button
+                key={cfg}
+                onClick={() => onBreakInfoChange('config', cfg)}
+                style={{
+                  padding: '4px 8px', border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 700,
+                  background: currentConfig === cfg ? 'rgba(255,107,53,0.15)' : 'transparent',
+                  color: currentConfig === cfg ? '#ff6b35' : 'var(--tg)',
+                  borderRight: cfg !== availableConfigs[availableConfigs.length - 1] ? '1px solid var(--b)' : 'none',
+                  transition: 'all 0.12s', whiteSpace: 'nowrap',
+                }}
+              >{cfg}</button>
+            ))}
+          </div>
+        )}
         {totalHits > 0 && (
           <div style={{ background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.35)', borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: '#4caf50' }}>
             🏆 {totalHits}
@@ -953,6 +1053,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
             appearances={playerDetails[player.slug]?.appearances}
             loading={loadingSet.has(player.slug)}
             tracker={tracker}
+            config={currentConfig}
           />
         ))}
         <div style={{ height: 40 }} />
@@ -967,20 +1068,30 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
   const [loadingChecklist, setLoadingChecklist] = useState(true);
   const [checklistError, setChecklistError] = useState(null);
   const [phase, setPhase] = useState('select');
+  const [collections, setCollections] = useState([]);
 
-  const tracker = useTrackerState(ACTIVE_SET_ID);
   const [breakInfo, updateBreakInfo] = useBreakInfo();
+  const activeSetId = breakInfo.collection || '2025-26-topps-cosmic-chrome-basketball';
+  const tracker = useTrackerState(activeSetId);
 
   const fetchChecklist = useCallback(() => {
     setLoadingChecklist(true);
     setChecklistError(null);
-    fetch(`${API_BASE}/api/sets-checklist?setId=${ACTIVE_SET_ID}`)
+    fetch(`${API_BASE}/api/sets-checklist?setId=${activeSetId}`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => { setChecklist(data); setLoadingChecklist(false); })
       .catch(e => { setChecklistError(e.message); setLoadingChecklist(false); });
-  }, []);
+  }, [activeSetId]);
 
   useEffect(() => { fetchChecklist(); }, [fetchChecklist]);
+
+  // Load sets list for collection dropdown
+  useEffect(() => {
+    fetch(`${API_BASE}/api/sets-list`)
+      .then(r => r.ok ? r.json() : { sets: [] })
+      .then(data => { if (data.sets?.length) setCollections(data.sets.map(s => ({ id: s.id, name: s.name }))); })
+      .catch(() => {});
+  }, []);
 
   return (
     <div style={{
@@ -1012,13 +1123,14 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
 
       {!loadingChecklist && !checklistError && checklist && (
         phase === 'select'
-          ? <SelectPhase checklist={checklist} tracker={tracker} onStartBreak={() => setPhase('live')} onClose={onClose} breakInfo={breakInfo} onBreakInfoChange={updateBreakInfo} />
+          ? <SelectPhase checklist={checklist} tracker={tracker} onStartBreak={() => setPhase('live')} onClose={onClose} breakInfo={breakInfo} onBreakInfoChange={updateBreakInfo} collections={collections} />
           : <LivePhase
               checklist={checklist}
               tracker={tracker}
               onBack={() => setPhase('select')}
               onNewBreak={() => { tracker.clearAll(); setPhase('select'); }}
               breakInfo={breakInfo}
+              onBreakInfoChange={updateBreakInfo}
             />
       )}
     </div>
