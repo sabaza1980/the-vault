@@ -5,6 +5,44 @@ import { useTrackerState } from './useTrackerState.js';
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 const ACTIVE_SET_ID = '2025-26-bowman-basketball';
 
+const COLLECTIONS = [
+  { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
+];
+const BREAK_TYPES = ['PYT', 'PYP', 'Random Team'];
+const PLATFORMS = ['Whatnot', 'Fanatics'];
+
+function defaultBreakInfo() {
+  const now = new Date();
+  return {
+    breakerName: '',
+    breakType: 'PYT',
+    date: now.toISOString().slice(0, 10),
+    time: now.toTimeString().slice(0, 5),
+    platform: 'Whatnot',
+    collection: '2025-26-bowman-basketball',
+  };
+}
+
+const BREAK_INFO_KEY = 'vault.tracker.breakInfo';
+
+function useBreakInfo() {
+  const [info, setInfo] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(BREAK_INFO_KEY)) || defaultBreakInfo();
+    } catch {
+      return defaultBreakInfo();
+    }
+  });
+  const update = useCallback((field, value) => {
+    setInfo(prev => {
+      const next = { ...prev, [field]: value };
+      localStorage.setItem(BREAK_INFO_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  return [info, update];
+}
+
 function useDebounce(value, delay) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -12,6 +50,100 @@ function useDebounce(value, delay) {
     return () => clearTimeout(t);
   }, [value, delay]);
   return debounced;
+}
+
+// ── Break Info Form ──────────────────────────────────────────────────────────
+function BreakInfoForm({ info, onChange }) {
+  const [collapsed, setCollapsed] = useState(() => !!info.breakerName);
+
+  const inputStyle = {
+    width: '100%', background: 'var(--input)', border: '1px solid var(--b)',
+    borderRadius: 9, padding: '7px 10px', color: 'var(--t)', fontSize: 12,
+    outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box',
+  };
+  const labelStyle = { fontSize: 10, color: 'var(--tg)', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4, display: 'block' };
+
+  const collapsedSummary = [
+    info.breakerName || 'Unnamed Breaker',
+    info.breakType,
+    info.platform,
+    info.date,
+  ].join(' · ');
+
+  return (
+    <div style={{ margin: '0 0 0 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Toggle row */}
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        style={{
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 14px', textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: 11, color: '#ff6b35', fontWeight: 700, letterSpacing: 0.8, textTransform: 'uppercase', flexShrink: 0 }}>Break Info</span>
+        {collapsed && (
+          <span style={{ fontSize: 11, color: 'var(--tg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+            {collapsedSummary}
+          </span>
+        )}
+        <span style={{ marginLeft: 'auto', color: 'var(--tg)', fontSize: 12, flexShrink: 0, transition: 'transform 0.2s', transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)' }}>▾</span>
+      </button>
+
+      {/* Fields */}
+      {!collapsed && (
+        <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Breaker's Name */}
+          <div>
+            <label style={labelStyle}>Breaker's Name</label>
+            <input
+              type="text"
+              value={info.breakerName}
+              onChange={e => onChange('breakerName', e.target.value)}
+              placeholder="e.g. SabazBreaks"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Break Type + Platform */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div>
+              <label style={labelStyle}>Break Type</label>
+              <select value={info.breakType} onChange={e => onChange('breakType', e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                {BREAK_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Platform</label>
+              <select value={info.platform} onChange={e => onChange('platform', e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+                {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Date + Time */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div>
+              <label style={labelStyle}>Date</label>
+              <input type="date" value={info.date} onChange={e => onChange('date', e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Time</label>
+              <input type="time" value={info.time} onChange={e => onChange('time', e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+
+          {/* Collection */}
+          <div>
+            <label style={labelStyle}>Collection</label>
+            <select value={info.collection} onChange={e => onChange('collection', e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
+              {COLLECTIONS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Target Toggle ─────────────────────────────────────────────────────────────
@@ -137,7 +269,7 @@ function TeamSelectRow({ team, players, isTargeted, onToggle, onTargetAll, onUnt
 }
 
 // ── SELECT PHASE ──────────────────────────────────────────────────────────────
-function SelectPhase({ checklist, tracker, onStartBreak, onClose }) {
+function SelectPhase({ checklist, tracker, onStartBreak, onClose, breakInfo, onBreakInfoChange }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 200);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('vault.tracker.prefs.view') || 'player');
@@ -240,6 +372,7 @@ function SelectPhase({ checklist, tracker, onStartBreak, onClose }) {
 
       {/* List */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
+        <BreakInfoForm info={breakInfo} onChange={onBreakInfoChange} />
         {viewMode === 'player' && filteredPlayers.map(p => (
           <PlayerSelectRow key={p.slug} player={p} isTargeted={isTargeted(p.slug)} onToggle={toggleTarget} />
         ))}
@@ -491,7 +624,7 @@ function PlayerLiveCard({ player, appearances, loading, tracker }) {
 }
 
 // ── Break Summary Modal ───────────────────────────────────────────────────────
-function BreakSummaryModal({ hits, targetedPlayers, setName, onClose, onNewBreak }) {
+function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose, onNewBreak }) {
   const cardRef = useRef();
   const [screenshotting, setScreenshotting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
@@ -514,9 +647,15 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, onClose, onNewBreak
 
   // ── CSV export ──────────────────────────────────────────────────────────────
   const downloadCSV = useCallback(() => {
+    const bi = breakInfo || {};
     const rows = [
-      ['Set', 'Player', 'Team', 'Subset', 'Card #', 'Variant', 'Time'],
+      ['Breaker', 'Break Type', 'Platform', 'Date', 'Time', 'Set', 'Player', 'Team', 'Subset', 'Card #', 'Variant', 'Recorded At'],
       ...hits.map(h => [
+        bi.breakerName || '',
+        bi.breakType || '',
+        bi.platform || '',
+        bi.date || '',
+        bi.time || '',
         setName,
         playerName(h.playerSlug),
         playerTeam(h.playerSlug),
@@ -536,7 +675,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, onClose, onNewBreak
     URL.revokeObjectURL(url);
     setExportMsg('CSV downloaded!');
     setTimeout(() => setExportMsg(''), 2500);
-  }, [hits, setName]);
+  }, [hits, setName, breakInfo]);
 
   // ── Screenshot export ────────────────────────────────────────────────────────
   const downloadScreenshot = useCallback(async () => {
@@ -586,8 +725,24 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, onClose, onNewBreak
         }}>
           <div style={{ fontSize: 11, color: '#ff6b35', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>Break Summary</div>
           <div style={{ fontSize: 22, fontWeight: 400, color: '#fff', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>{setName}</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
-            {new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
+          {breakInfo?.breakerName && (
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.9)', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5, marginTop: 4 }}>
+              {breakInfo.breakerName}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+            {breakInfo?.breakType && (
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,107,53,0.12)', color: '#ff6b35', border: '1px solid rgba(255,107,53,0.25)', fontWeight: 700, letterSpacing: 0.5 }}>{breakInfo.breakType}</span>
+            )}
+            {breakInfo?.platform && (
+              <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(100,181,246,0.1)', color: '#64b5f6', border: '1px solid rgba(100,181,246,0.2)', fontWeight: 700, letterSpacing: 0.5 }}>{breakInfo.platform}</span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 6 }}>
+            {breakInfo?.date
+              ? new Date(breakInfo.date + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })
+              : new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {breakInfo?.time && <>&nbsp;·&nbsp;{breakInfo.time}</>}
             &nbsp;·&nbsp;{hits.length} hit{hits.length !== 1 ? 's' : ''} across {grouped.length} player{grouped.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -704,7 +859,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, onClose, onNewBreak
 }
 
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack, onNewBreak }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
@@ -743,6 +898,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak }) {
           hits={tracker.hits}
           targetedPlayers={targetedPlayers}
           setName={checklist?.set?.name || '2025-26 Bowman Basketball'}
+          breakInfo={breakInfo}
           onClose={() => setShowSummary(false)}
           onNewBreak={onNewBreak}
         />
@@ -813,6 +969,7 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
   const [phase, setPhase] = useState('select');
 
   const tracker = useTrackerState(ACTIVE_SET_ID);
+  const [breakInfo, updateBreakInfo] = useBreakInfo();
 
   const fetchChecklist = useCallback(() => {
     setLoadingChecklist(true);
@@ -855,12 +1012,13 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
 
       {!loadingChecklist && !checklistError && checklist && (
         phase === 'select'
-          ? <SelectPhase checklist={checklist} tracker={tracker} onStartBreak={() => setPhase('live')} onClose={onClose} />
+          ? <SelectPhase checklist={checklist} tracker={tracker} onStartBreak={() => setPhase('live')} onClose={onClose} breakInfo={breakInfo} onBreakInfoChange={updateBreakInfo} />
           : <LivePhase
               checklist={checklist}
               tracker={tracker}
               onBack={() => setPhase('select')}
               onNewBreak={() => { tracker.clearAll(); setPhase('select'); }}
+              breakInfo={breakInfo}
             />
       )}
     </div>
