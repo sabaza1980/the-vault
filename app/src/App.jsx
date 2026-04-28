@@ -12,6 +12,7 @@ import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
 import AdGateModal from "./AdGateModal";
+import BreakTracker from "./BreakTracker";
 import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, increment } from "firebase/firestore";
@@ -1761,6 +1762,7 @@ export default function App() {
   const [showValueBreakdown, setShowValueBreakdown] = useState(false);
   const [showProComingSoon, setShowProComingSoon] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
+  const [showBreakTracker, setShowBreakTracker] = useState(false);
   const [collections, setCollections] = useState([]);
   const [showCollections, setShowCollections] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null); // collection being viewed
@@ -2495,6 +2497,20 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 <span style={{ fontSize: 13 }}>📚</span> Collections
               </button>
             )}
+            <button
+              onClick={() => setShowBreakTracker(true)}
+              title="Break Hit Tracker"
+              style={{
+                background: showBreakTracker ? "#ff6b3518" : "var(--gbg)",
+                border: `1px solid ${showBreakTracker ? "#ff6b3550" : "var(--gb)"}`,
+                borderRadius: 20, padding: "5px 12px",
+                color: showBreakTracker ? "#ff6b35" : "var(--gc)",
+                fontSize: 11, fontWeight: 700, cursor: "pointer",
+                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+              }}
+            >
+              <span style={{ fontSize: 13 }}>🎯</span> Breaks
+            </button>
             {cards.length > 0 && (
               <button
                 onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
@@ -2679,6 +2695,15 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           cards={cards}
           totalValue={totalValue}
           onClose={() => setShowValueBreakdown(false)}
+        />
+      )}
+
+      {/* Break Tracker overlay */}
+      {showBreakTracker && (
+        <BreakTracker
+          user={user}
+          onClose={() => setShowBreakTracker(false)}
+          onSignUpPrompt={() => setShowAuth(true)}
         />
       )}
 

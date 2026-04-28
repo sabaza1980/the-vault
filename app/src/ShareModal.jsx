@@ -298,6 +298,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           background: 'rgba(0,0,0,0.93)',
           backdropFilter: 'blur(16px)',
           display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          overflow: 'hidden',
           animation: 'fadeIn 0.2s ease',
         }}
       >
@@ -309,6 +310,9 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
             borderRadius: '20px 20px 0 0',
             padding: '20px 20px 36px',
             width: '100%', maxWidth: 480,
+            maxHeight: '92vh', overflowY: 'auto',
+            zoom: 0.6,
+            transformOrigin: 'bottom center',
             animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
           }}
         >
@@ -324,7 +328,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
             {capturing ? (
               <div style={{
-                width: 200, height: 200, borderRadius: 12,
+                width: 280, height: 280, borderRadius: 12,
                 background: '#07070f', border: '1px solid rgba(255,107,53,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexDirection: 'column', gap: 10,
@@ -341,7 +345,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
               </div>
             ) : generateError ? (
               <div style={{
-                width: 200, height: 200, borderRadius: 12,
+                width: 280, height: 280, borderRadius: 12,
                 background: '#07070f', border: '1px solid rgba(244,67,54,0.35)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexDirection: 'column', gap: 12, padding: '12px',
@@ -366,13 +370,13 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
                 src={previewUrl}
                 alt="Share preview"
                 style={{
-                  width: 200, height: 200, objectFit: 'cover',
+                  width: 280, height: 280, objectFit: 'cover',
                   borderRadius: 12, border: '1px solid rgba(255,107,53,0.2)',
                 }}
               />
             ) : (
               <div style={{
-                width: 200, height: 200, borderRadius: 12,
+                width: 280, height: 280, borderRadius: 12,
                 background: '#07070f', border: '1px solid rgba(255,107,53,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexDirection: 'column', gap: 10,
