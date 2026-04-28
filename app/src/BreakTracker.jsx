@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import html2canvas from 'html2canvas';
 import { useTrackerState } from './useTrackerState.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
@@ -489,8 +490,221 @@ function PlayerLiveCard({ player, appearances, loading, tracker }) {
   );
 }
 
+// ── Break Summary Modal ───────────────────────────────────────────────────────
+function BreakSummaryModal({ hits, targetedPlayers, setName, onClose, onNewBreak }) {
+  const cardRef = useRef();
+  const [screenshotting, setScreenshotting] = useState(false);
+  const [exportMsg, setExportMsg] = useState('');
+
+  // Group hits by player
+  const grouped = useMemo(() => {
+    const map = {};
+    for (const hit of hits) {
+      if (!map[hit.playerSlug]) map[hit.playerSlug] = [];
+      map[hit.playerSlug].push(hit);
+    }
+    // Sort players by hit count desc
+    return Object.entries(map).sort((a, b) => b[1].length - a[1].length);
+  }, [hits]);
+
+  const playerName = slug =>
+    targetedPlayers.find(p => p.slug === slug)?.name || slug;
+  const playerTeam = slug =>
+    targetedPlayers.find(p => p.slug === slug)?.team || '';
+
+  // ── CSV export ──────────────────────────────────────────────────────────────
+  const downloadCSV = useCallback(() => {
+    const rows = [
+      ['Set', 'Player', 'Team', 'Subset', 'Card #', 'Variant', 'Time'],
+      ...hits.map(h => [
+        setName,
+        playerName(h.playerSlug),
+        playerTeam(h.playerSlug),
+        h.subsetId,
+        h.cardNumber,
+        h.variantName,
+        new Date(h.timestamp).toLocaleString(),
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `break-hits-${setName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExportMsg('CSV downloaded!');
+    setTimeout(() => setExportMsg(''), 2500);
+  }, [hits, setName]);
+
+  // ── Screenshot export ────────────────────────────────────────────────────────
+  const downloadScreenshot = useCallback(async () => {
+    if (!cardRef.current) return;
+    setScreenshotting(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#07070f',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `break-summary-${new Date().toISOString().slice(0, 10)}.png`;
+      a.click();
+      setExportMsg('Screenshot saved!');
+      setTimeout(() => setExportMsg(''), 2500);
+    } catch {
+      setExportMsg('Screenshot failed — try CSV instead.');
+      setTimeout(() => setExportMsg(''), 3000);
+    } finally {
+      setScreenshotting(false);
+    }
+  }, []);
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 600,
+      background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      overflowY: 'auto', padding: '24px 16px 40px',
+    }}>
+      {/* Screenshottable card */}
+      <div ref={cardRef} style={{
+        width: '100%', maxWidth: 480,
+        background: '#07070f',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: 16, overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(255,107,53,0.18), rgba(255,107,53,0.06))',
+          borderBottom: '1px solid rgba(255,107,53,0.2)',
+          padding: '16px 20px',
+        }}>
+          <div style={{ fontSize: 11, color: '#ff6b35', fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 2 }}>Break Summary</div>
+          <div style={{ fontSize: 22, fontWeight: 400, color: '#fff', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>{setName}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 4 }}>
+            {new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
+            &nbsp;·&nbsp;{hits.length} hit{hits.length !== 1 ? 's' : ''} across {grouped.length} player{grouped.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+
+        {/* Hits grouped by player */}
+        <div style={{ padding: '8px 0' }}>
+          {hits.length === 0 ? (
+            <div style={{ padding: '24px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
+              No hits recorded this break.
+            </div>
+          ) : (
+            grouped.map(([slug, playerHits]) => (
+              <div key={slug} style={{ padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                {/* Player header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5 }}>
+                      {playerName(slug)}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{playerTeam(slug)}</div>
+                  </div>
+                  <div style={{
+                    background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.3)',
+                    borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 700, color: '#4caf50',
+                  }}>
+                    🏆 {playerHits.length}
+                  </div>
+                </div>
+                {/* Hit chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {playerHits.map(hit => (
+                    <div key={hit.id} style={{
+                      background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.25)',
+                      borderRadius: 8, padding: '4px 8px',
+                      fontSize: 11, color: '#a5d6a7',
+                      fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600,
+                      display: 'flex', alignItems: 'center', gap: 5,
+                    }}>
+                      <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>#{hit.cardNumber}</span>
+                      <span>{hit.variantName}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer brand */}
+        <div style={{ padding: '10px 20px 14px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: "'Bebas Neue', sans-serif" }}>
+            myvaults.io · Break Hit Tracker
+          </div>
+        </div>
+      </div>
+
+      {/* Export buttons */}
+      <div style={{ width: '100%', maxWidth: 480, marginTop: 14, display: 'flex', gap: 8 }}>
+        <button
+          onClick={downloadScreenshot}
+          disabled={screenshotting}
+          style={{
+            flex: 1, padding: '12px 0', borderRadius: 12,
+            background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.3)',
+            color: '#ff6b35', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            opacity: screenshotting ? 0.6 : 1,
+          }}
+        >
+          {screenshotting ? '…' : '📸 Save Image'}
+        </button>
+        <button
+          onClick={downloadCSV}
+          style={{
+            flex: 1, padding: '12px 0', borderRadius: 12,
+            background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.3)',
+            color: '#4caf50', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+          }}
+        >
+          📋 Download CSV
+        </button>
+      </div>
+
+      {exportMsg && (
+        <div style={{ marginTop: 8, fontSize: 12, color: '#4caf50', fontWeight: 600 }}>{exportMsg}</div>
+      )}
+
+      {/* Action buttons */}
+      <div style={{ width: '100%', maxWidth: 480, marginTop: 14, display: 'flex', gap: 8 }}>
+        <button
+          onClick={onNewBreak}
+          style={{
+            flex: 1, padding: '13px 0', borderRadius: 12,
+            background: 'linear-gradient(135deg, #ff6b35, #e84d1e)',
+            border: 'none', color: '#fff', fontSize: 14, fontWeight: 700,
+            cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1.5,
+            boxShadow: '0 4px 16px rgba(255,107,53,0.35)',
+          }}
+        >
+          START NEW BREAK
+        </button>
+        <button
+          onClick={onClose}
+          style={{
+            padding: '13px 18px', borderRadius: 12,
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.55)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
@@ -500,6 +714,7 @@ function LivePhase({ checklist, tracker, onBack }) {
 
   const [playerDetails, setPlayerDetails] = useState({});
   const [loadingSet, setLoadingSet] = useState(() => new Set(targetedSlugs));
+  const [showSummary, setShowSummary] = useState(false);
   const totalHits = tracker.hits.length;
 
   useEffect(() => {
@@ -523,6 +738,16 @@ function LivePhase({ checklist, tracker, onBack }) {
 
   return (
     <>
+      {showSummary && (
+        <BreakSummaryModal
+          hits={tracker.hits}
+          targetedPlayers={targetedPlayers}
+          setName={checklist?.set?.name || '2025-26 Bowman Basketball'}
+          onClose={() => setShowSummary(false)}
+          onNewBreak={onNewBreak}
+        />
+      )}
+
       {/* Header */}
       <div style={{
         background: 'var(--hbg)', borderBottom: '1px solid var(--hb)',
@@ -540,10 +765,27 @@ function LivePhase({ checklist, tracker, onBack }) {
           </div>
         </div>
         {totalHits > 0 && (
-          <div style={{ background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.35)', borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 700, color: '#4caf50' }}>
-            🏆 {totalHits} HIT{totalHits !== 1 ? 'S' : ''}
+          <div style={{ background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.35)', borderRadius: 20, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: '#4caf50' }}>
+            🏆 {totalHits}
           </div>
         )}
+        <button
+          onClick={() => setShowSummary(true)}
+          style={{
+            background: totalHits > 0
+              ? 'linear-gradient(135deg, #ff6b35, #e84d1e)'
+              : 'rgba(255,255,255,0.05)',
+            border: totalHits > 0 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 10, padding: '6px 11px', cursor: 'pointer',
+            color: '#fff', fontSize: 11, fontWeight: 700,
+            fontFamily: totalHits > 0 ? "'Bebas Neue', sans-serif" : 'inherit',
+            letterSpacing: totalHits > 0 ? 1 : 0,
+            flexShrink: 0,
+            boxShadow: totalHits > 0 ? '0 2px 10px rgba(255,107,53,0.4)' : 'none',
+          }}
+        >
+          {totalHits > 0 ? 'END BREAK' : 'End Break'}
+        </button>
       </div>
 
       {/* Player cards */}
@@ -614,7 +856,12 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
       {!loadingChecklist && !checklistError && checklist && (
         phase === 'select'
           ? <SelectPhase checklist={checklist} tracker={tracker} onStartBreak={() => setPhase('live')} onClose={onClose} />
-          : <LivePhase checklist={checklist} tracker={tracker} onBack={() => setPhase('select')} />
+          : <LivePhase
+              checklist={checklist}
+              tracker={tracker}
+              onBack={() => setPhase('select')}
+              onNewBreak={() => { tracker.clearAll(); setPhase('select'); }}
+            />
       )}
     </div>
   );
