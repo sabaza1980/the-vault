@@ -78,6 +78,16 @@ function docToCard(doc) {
   return card;
 }
 
+// ── Fetch display name from users/{uid} doc ─────────────────────────────────
+async function getOwnerName(uid, token, BASE) {
+  try {
+    const r = await fetch(`${BASE}/users/${uid}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) return null;
+    const d = docToCard(await r.json());
+    return d.display_name || null;
+  } catch { return null; }
+}
+
 // ── Handler ──────────────────────────────────────────────────────────────────
 function escHtml(str) {
   return String(str ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -112,7 +122,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { uid, cardId, shareVault, shareSet, og } = req.query;
+  const { uid, cardId, shareVault, shareSet, shareCollection, og, collectionId } = req.query;
 
   // ── OG share-link preview (no uid required for vault/set defaults) ────────
   if (og) {
@@ -141,6 +151,22 @@ export default async function handler(req, res) {
             description = `${series}${par}${rar}. Tracked and valued on The Vault.`.trim().replace(/^[—\s]+/, '');
             if (card.imageUrl && card.imageUrl.startsWith('https://')) ogImage = card.imageUrl;
           }
+        }
+      } catch { /* use defaults */ }
+    } else if (uid && shareCollection && /^[a-zA-Z0-9_-]{1,128}$/.test(uid)) {
+      const safeColId = String(shareCollection).slice(0, 128);
+      redirectUrl = `${BASE_APP}?shareCollection=${encodeURIComponent(safeColId)}&uid=${encodeURIComponent(uid)}`;
+      title = 'Check out my collection in The Vault!';
+      description = 'View my trading card collection — tracked, identified, and valued on The Vault.';
+      try {
+        const { projectId: PID } = getServiceAccount();
+        const token2 = await googleToken();
+        const fsBase2 = `https://firestore.googleapis.com/v1/projects/${PID}/databases/(default)/documents`;
+        const colR = await fetch(`${fsBase2}/users/${uid}/collections/${safeColId}`, { headers: { Authorization: `Bearer ${token2}` } });
+        if (colR.ok) {
+          const colDoc = docToCard(await colR.json());
+          if (colDoc.name) title = `Check out my "${colDoc.name}" collection in The Vault!`;
+          if (colDoc.coverImageUrl && colDoc.coverImageUrl.startsWith('https://')) ogImage = colDoc.coverImageUrl;
         }
       } catch { /* use defaults */ }
     } else if (uid && shareSet && /^[a-zA-Z0-9_-]{1,128}$/.test(uid)) {
@@ -175,21 +201,42 @@ export default async function handler(req, res) {
   if (cardId) {
     // Single card
     const url = `${BASE}/users/${uid}/cards/${cardId}`;
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const [r, ownerName] = await Promise.all([
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } }),
+      getOwnerName(uid, token, BASE),
+    ]);
     if (!r.ok) return res.status(404).json({ error: 'card not found' });
-    const doc = await r.json();
-    const card = docToCard(doc);
-    return res.json({ ...card, id: cardId });
+    const card = docToCard(await r.json());
+    return res.json({ ...card, id: cardId, ownerName });
+  } else if (collectionId) {
+    // Collection definition + all user cards (client resolves which cards belong)
+    const safeColId = String(collectionId).slice(0, 128);
+    const [colR, cardsR, ownerName] = await Promise.all([
+      fetch(`${BASE}/users/${uid}/collections/${safeColId}`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${BASE}/users/${uid}/cards?pageSize=200`, { headers: { Authorization: `Bearer ${token}` } }),
+      getOwnerName(uid, token, BASE),
+    ]);
+    if (!colR.ok) return res.status(404).json({ error: 'collection not found' });
+    const col = docToCard(await colR.json());
+    col.id = safeColId;
+    const cardsData = cardsR.ok ? await cardsR.json() : { documents: [] };
+    const cards = (cardsData.documents || []).map(d => {
+      const id = d.name.split('/').pop();
+      return { ...docToCard(d), id };
+    });
+    return res.json({ collection: col, cards, ownerName });
   } else {
     // All cards for the vault (max 200)
-    const url = `${BASE}/users/${uid}/cards?pageSize=200`;
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const [r, ownerName] = await Promise.all([
+      fetch(`${BASE}/users/${uid}/cards?pageSize=200`, { headers: { Authorization: `Bearer ${token}` } }),
+      getOwnerName(uid, token, BASE),
+    ]);
     if (!r.ok) return res.status(404).json({ error: 'vault not found', cards: [] });
     const data = await r.json();
     const cards = (data.documents || []).map(d => {
       const id = d.name.split('/').pop();
       return { ...docToCard(d), id };
     });
-    return res.json({ cards });
+    return res.json({ cards, ownerName });
   }
 }

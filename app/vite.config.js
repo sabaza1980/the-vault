@@ -30,4 +30,13 @@ function adminConfigPlugin() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), adminConfigPlugin()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://app.myvaults.io',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
 })

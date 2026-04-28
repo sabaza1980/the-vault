@@ -82,5 +82,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── User collections (saved card groups) ──
+    match /users/{uid}/collections/{collectionId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isAdmin();
+    }
+
+    // ── Public collection reads (for shared collection links) ──
+    match /{path=**}/collections/{collectionId} {
+      allow read: if true;
+    }
+
   }
 }

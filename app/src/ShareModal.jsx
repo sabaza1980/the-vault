@@ -216,9 +216,9 @@ function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
 }
 
 // ── Main modal ───────────────────────────────────────────────────────────────
-export default function ShareModal({ mode, card, cards, filterLabel, user, onClose }) {
+export default function ShareModal({ mode, card, cards, filterLabel, user, onClose, collectionId }) {
   const { generate, share, previewUrl, capturing, generateError } = useShareCard({
-    card, cards, mode, filterLabel, user,
+    card, cards, mode, filterLabel, user, collectionId,
   });
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [shareResult, setShareResult] = useState(null); // 'saved' | 'shared' | 'copied' | null
@@ -235,16 +235,20 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
   const displayUrl = mode === 'card' && cardId && uid
     ? `app.myvaults.io?shareCard=${cardId}&uid=${uid}`
     : uid
-      ? filterLabel
-        ? `app.myvaults.io?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
-        : `app.myvaults.io?shareVault=${uid}`
+      ? collectionId
+        ? `app.myvaults.io?shareCollection=${encodeURIComponent(collectionId)}&uid=${uid}`
+        : filterLabel
+          ? `app.myvaults.io?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+          : `app.myvaults.io?shareVault=${uid}`
       : 'app.myvaults.io';
   const fullShareUrl = mode === 'card' && cardId && uid
     ? `${BASE}?shareCard=${cardId}&uid=${uid}`
     : uid
-      ? filterLabel
-        ? `${BASE}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
-        : `${BASE}?shareVault=${uid}`
+      ? collectionId
+        ? `${BASE}?shareCollection=${encodeURIComponent(collectionId)}&uid=${uid}`
+        : filterLabel
+          ? `${BASE}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+          : `${BASE}?shareVault=${uid}`
       : BASE;
 
   // Generate image on mount

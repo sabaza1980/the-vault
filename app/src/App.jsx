@@ -5,6 +5,8 @@ import { useAuth } from "./AuthContext";
 import LandingPage from "./LandingPage";
 import { useFirestoreSync } from "./useFirestoreSync";
 import { useRewardProfile } from "./useRewardProfile";
+import { useCollectionsSync, resolveCollectionCards } from "./useCollectionsSync";
+import CollectionsView, { CollectionCreatorModal, CollectionDetailView } from "./CollectionsView";
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
@@ -417,7 +419,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
       try { newInfo = JSON.parse(rawText.replace(/```json|```/g, "").trim()); } catch { /* keep existing data */ }
 
       // Only apply card-authentication fields — never overwrite player identity/context
-      const CARD_FIELDS = ["cardCategory", "serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes", "isGraded", "gradingCompany", "grade", "certNumber"];
+      const CARD_FIELDS = ["cardCategory", "serialNumber", "hasAutograph", "autographType", "parallel", "cardNumber", "rarity", "condition", "conditionDetail", "confidenceLevel", "notes", "isGraded", "gradingCompany", "grade", "certNumber", "sport", "league", "playerPosition", "season", "isNumbered", "printRun", "isInsert", "insertName", "hasPatch", "isRookie"];
       const filtered = Object.fromEntries(
         Object.entries(newInfo).filter(([k, v]) => CARD_FIELDS.includes(k) && v !== null && v !== undefined)
       );
@@ -493,6 +495,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             {/* Set name — top line */}
             <div style={{ fontSize: 11, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3 }}>
               {fullCardName}
+              {card.insertName && <span style={{ color: "#64b5f6" }}> · {card.insertName}</span>}
               {parallelLabel && <span style={{ color: "#ff6b3580" }}> · {parallelLabel}</span>}
               {card.pack && <span style={{ color: "var(--tg)" }}> · {card.pack}</span>}
             </div>
@@ -533,8 +536,11 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
             <div style={{ display: "flex", gap: 5, marginTop: 8, flexWrap: "wrap" }}>
               {card.isRookie && <Badge label="RC" color="#ff6b35" />}
               {card.hasAutograph && <Badge label="AUTO" color="#f0c040" />}
+              {card.hasPatch && <Badge label="PATCH" color="#26c6da" />}
+              {card.isInsert && !card.insertName && <Badge label="INSERT" color="#64b5f6" />}
               {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
               {card.cardNumber && <Badge label={`#${card.cardNumber}`} color="#555" />}
+              {card.isPC && <Badge label="PC" color="#2196f3" />}
               {card.confidenceLevel === "Low" && <Badge label="⚠ Low Confidence" color="#ff6666" />}
               {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
             </div>
@@ -554,6 +560,20 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--sh)"}
               onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--so)"}
             >{card.isFavourite ? "★" : "☆"}</button>
+            <button
+              onClick={e => { e.stopPropagation(); onUpdate(card.id, { isPC: !card.isPC }); }}
+              title={card.isPC ? "Remove from Personal Collection" : "Add to Personal Collection (PC)"}
+              style={{
+                background: card.isPC ? "rgba(33,150,243,0.15)" : "none",
+                border: card.isPC ? "1px solid rgba(33,150,243,0.4)" : "1px solid transparent",
+                borderRadius: 5, cursor: "pointer",
+                fontSize: 9, fontWeight: 800, lineHeight: 1, padding: "3px 5px",
+                color: card.isPC ? "#2196f3" : "var(--so)",
+                transition: "all 0.15s", letterSpacing: 0.5
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#2196f3"; e.currentTarget.style.borderColor = "rgba(33,150,243,0.4)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = card.isPC ? "#2196f3" : "var(--so)"; e.currentTarget.style.borderColor = card.isPC ? "rgba(33,150,243,0.4)" : "transparent"; }}
+            >PC</button>
             <button
               onClick={e => { e.stopPropagation(); onShare?.(card); }}
               title="Share this card"
@@ -1044,7 +1064,8 @@ const RARITY_COLORS_PUB = {
   'Very Rare': '#9c27b0', 'Ultra Rare': '#ff9800', Legendary: '#f44336',
 };
 
-function PublicShareView({ mode, card, cards, filterLabel, onClose }) {
+function PublicShareView({ mode, card, cards, filterLabel, ownerName, onClose }) {
+  const [expandedCard, setExpandedCard] = useState(null);
   const RARITY_ORDER = { Legendary: 0, 'Ultra Rare': 1, 'Very Rare': 2, Rare: 3, Uncommon: 4, Common: 5 };
   const sorted = cards ? [...cards].sort((a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6)) : [];
   const rarePlus = sorted.filter(c => ['Rare', 'Very Rare', 'Ultra Rare', 'Legendary'].includes(c.rarity)).length;
@@ -1057,29 +1078,129 @@ function PublicShareView({ mode, card, cards, filterLabel, onClose }) {
       display: 'flex', flexDirection: 'column', overflowY: 'auto',
       fontFamily: "'Inter', sans-serif",
     }}>
+      <style>{`
+        .psv-wrap { max-width: 760px; margin: 0 auto; padding: 32px 28px 64px; width: 100%; }
+        .psv-card-img { width: 220px; height: 306px; }
+        .psv-card-name { font-size: 52px; }
+        .psv-card-set { font-size: 13px; }
+        .psv-card-team { font-size: 16px; }
+        .psv-card-value { font-size: 36px; }
+        .psv-badge { font-size: 12px; padding: 3px 10px; }
+        .psv-col-title { font-size: 58px; }
+        .psv-col-subtitle { font-size: 13px; letter-spacing: 2px; }
+        .psv-stat-num { font-size: 32px; }
+        .psv-stat-lbl { font-size: 11px; }
+        .psv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+        .psv-grid-name { font-size: 12px; }
+        .psv-grid-team { font-size: 10px; }
+        .psv-header-logo { font-size: 28px; }
+        .psv-expanded-img { width: 240px; height: 334px; }
+        .psv-expanded-name { font-size: 60px; }
+        .psv-expanded-team { font-size: 16px; }
+        .psv-expanded-value { font-size: 40px; }
+        .psv-owner { font-size: 14px; }
+        @media (max-width: 600px) {
+          .psv-wrap { padding: 20px 16px 48px; }
+          .psv-card-img { width: 150px; height: 209px; }
+          .psv-card-name { font-size: 38px; }
+          .psv-card-set { font-size: 11px; }
+          .psv-card-team { font-size: 13px; }
+          .psv-card-value { font-size: 26px; }
+          .psv-badge { font-size: 10px; padding: 2px 8px; }
+          .psv-col-title { font-size: 40px; }
+          .psv-col-subtitle { font-size: 11px; letter-spacing: 2px; }
+          .psv-stat-num { font-size: 24px; }
+          .psv-stat-lbl { font-size: 10px; }
+          .psv-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+          .psv-grid-name { font-size: 10px; }
+          .psv-grid-team { font-size: 9px; }
+          .psv-header-logo { font-size: 22px; }
+          .psv-expanded-img { width: 170px; height: 237px; }
+          .psv-expanded-name { font-size: 46px; }
+          .psv-expanded-team { font-size: 14px; }
+          .psv-expanded-value { font-size: 32px; }
+          .psv-owner { font-size: 12px; }
+        }
+      `}</style>
+
+      {/* Expanded card overlay */}
+      {expandedCard && (
+        <div
+          onClick={() => setExpandedCard(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 3000,
+            background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(20px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#0e0e1c', borderRadius: 20, padding: '32px 24px',
+              maxWidth: 460, width: '100%', position: 'relative',
+              border: `1px solid ${(RARITY_COLORS_PUB[expandedCard.rarity] || '#333')}40`,
+              boxShadow: `0 0 80px ${(RARITY_COLORS_PUB[expandedCard.rarity] || '#ff6b35')}18`,
+            }}
+          >
+            <button onClick={() => setExpandedCard(null)} style={{
+              position: 'absolute', top: 14, right: 14,
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 20, padding: '5px 14px', color: '#888', fontSize: 12, cursor: 'pointer',
+            }}>✕</button>
+            {expandedCard.imageUrl && (
+              <div className="psv-expanded-img" style={{ borderRadius: 16, overflow: 'hidden', margin: '0 auto 20px', border: `2px solid ${(RARITY_COLORS_PUB[expandedCard.rarity] || '#333')}50`, boxShadow: `0 0 50px ${(RARITY_COLORS_PUB[expandedCard.rarity] || '#ff6b35')}22` }}>
+                <img src={expandedCard.imageUrl} alt={expandedCard.playerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            )}
+            <div style={{ fontSize: 13, color: '#ff6b35', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'center', marginBottom: 6 }}>
+              {expandedCard.fullCardName || [expandedCard.year, expandedCard.brand, expandedCard.series].filter(Boolean).join(' ') || 'Unknown Set'}
+            </div>
+            <div className="psv-expanded-name" style={{ fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, lineHeight: 1, textAlign: 'center' }}>
+              {expandedCard.playerName}
+            </div>
+            {expandedCard.team && expandedCard.team !== 'Unknown' && (
+              <div className="psv-expanded-team" style={{ color: '#666', textAlign: 'center', marginTop: 6 }}>{expandedCard.team}</div>
+            )}
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 12 }}>
+              {expandedCard.isRookie && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(255,107,53,0.15)', color: '#ff6b35', border: '1px solid rgba(255,107,53,0.3)', fontWeight: 700 }}>RC</span>}
+              {expandedCard.hasAutograph && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(240,192,64,0.15)', color: '#f0c040', border: '1px solid rgba(240,192,64,0.3)', fontWeight: 700 }}>AUTO</span>}
+              {expandedCard.hasPatch && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(121,85,72,0.2)', color: '#bcaaa4', border: '1px solid rgba(121,85,72,0.4)', fontWeight: 700 }}>PATCH</span>}
+              {expandedCard.serialNumber && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(206,147,216,0.15)', color: '#ce93d8', border: '1px solid rgba(206,147,216,0.3)', fontWeight: 700 }}>{expandedCard.serialNumber}</span>}
+              {expandedCard.rarity && expandedCard.rarity !== 'Common' && <span className="psv-badge" style={{ borderRadius: 10, background: (RARITY_COLORS_PUB[expandedCard.rarity] || '#555') + '18', color: RARITY_COLORS_PUB[expandedCard.rarity] || '#888', border: `1px solid ${(RARITY_COLORS_PUB[expandedCard.rarity] || '#555')}35`, fontWeight: 700 }}>{expandedCard.rarity}</span>}
+            </div>
+            {expandedCard.estimatedValue > 0 && (
+              <div className="psv-expanded-value" style={{ fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, textAlign: 'center', marginTop: 14 }}>
+                ${expandedCard.estimatedValue.toFixed(2)} <span style={{ fontSize: 13, color: '#3a6a3a', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>EST. VALUE</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header bar */}
       <div style={{
-        padding: '18px 20px', borderBottom: '1px solid #1a1a2e',
+        padding: '20px 28px', borderBottom: '1px solid #1a1a2e',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(20px)',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 22 }}>🏀</span>
-          <span style={{
-            fontSize: 22, fontWeight: 400, color: '#ff6b35',
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 26 }}>🏀</span>
+          <span className="psv-header-logo" style={{
+            fontWeight: 400, color: '#ff6b35',
             fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3,
           }}>THE VAULT</span>
         </div>
         <button onClick={onClose} style={{
-          background: 'var(--gbg, rgba(255,255,255,0.05))',
+          background: 'rgba(255,255,255,0.05)',
           border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 20, padding: '5px 14px',
-          color: '#888', fontSize: 11, cursor: 'pointer', fontWeight: 600,
+          borderRadius: 20, padding: '7px 18px',
+          color: '#888', fontSize: 13, cursor: 'pointer', fontWeight: 600,
         }}>✕ Close</button>
       </div>
 
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px 48px', width: '100%' }}>
+      <div className="psv-wrap">
 
         {/* Single card view */}
         {mode === 'card' && card && (() => {
@@ -1087,35 +1208,36 @@ function PublicShareView({ mode, card, cards, filterLabel, onClose }) {
           const fullName = card.fullCardName || [card.year, card.brand, card.series].filter(Boolean).join(' ') || 'Unknown Set';
           return (
             <div>
-              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: 24 }}>
-                <div style={{
-                  width: 180, height: 250, borderRadius: 14, overflow: 'hidden', flexShrink: 0,
-                  border: `2px solid ${rc}50`,
-                  boxShadow: `0 0 40px ${rc}20`,
-                }}>
+              {ownerName && (
+                <div className="psv-owner" style={{ color: '#555', marginBottom: 18 }}>
+                  From the Vault of <span style={{ color: '#888', fontWeight: 600 }}>{ownerName}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 28 }}>
+                <div className="psv-card-img" style={{ borderRadius: 16, overflow: 'hidden', flexShrink: 0, border: `2px solid ${rc}50`, boxShadow: `0 0 50px ${rc}22` }}>
                   <img src={card.imageUrl} alt={card.playerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ fontSize: 11, color: '#ff6b35', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{fullName}</div>
-                  <div style={{ fontSize: 38, fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, lineHeight: 1 }}>{card.playerName}</div>
-                  {card.team && card.team !== 'Unknown' && <div style={{ fontSize: 13, color: '#666' }}>{card.team}</div>}
-                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 4 }}>
-                    {card.isRookie && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(255,107,53,0.15)', color: '#ff6b35', border: '1px solid rgba(255,107,53,0.3)', fontWeight: 700 }}>RC</span>}
-                    {card.hasAutograph && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(240,192,64,0.15)', color: '#f0c040', border: '1px solid rgba(240,192,64,0.3)', fontWeight: 700 }}>AUTO</span>}
-                    {card.serialNumber && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(206,147,216,0.15)', color: '#ce93d8', border: '1px solid rgba(206,147,216,0.3)', fontWeight: 700 }}>{card.serialNumber}</span>}
-                    {card.rarity && card.rarity !== 'Common' && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: rc + '18', color: rc, border: `1px solid ${rc}35`, fontWeight: 700 }}>{card.rarity}</span>}
+                <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div className="psv-card-set" style={{ color: '#ff6b35', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{fullName}</div>
+                  <div className="psv-card-name" style={{ fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, lineHeight: 1 }}>{card.playerName}</div>
+                  {card.team && card.team !== 'Unknown' && <div className="psv-card-team" style={{ color: '#666', marginTop: 2 }}>{card.team}</div>}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                    {card.isRookie && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(255,107,53,0.15)', color: '#ff6b35', border: '1px solid rgba(255,107,53,0.3)', fontWeight: 700 }}>RC</span>}
+                    {card.hasAutograph && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(240,192,64,0.15)', color: '#f0c040', border: '1px solid rgba(240,192,64,0.3)', fontWeight: 700 }}>AUTO</span>}
+                    {card.serialNumber && <span className="psv-badge" style={{ borderRadius: 10, background: 'rgba(206,147,216,0.15)', color: '#ce93d8', border: '1px solid rgba(206,147,216,0.3)', fontWeight: 700 }}>{card.serialNumber}</span>}
+                    {card.rarity && card.rarity !== 'Common' && <span className="psv-badge" style={{ borderRadius: 10, background: rc + '18', color: rc, border: `1px solid ${rc}35`, fontWeight: 700 }}>{card.rarity}</span>}
                   </div>
                   {card.estimatedValue > 0 && (
-                    <div style={{ fontSize: 28, fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginTop: 4 }}>
-                      ${card.estimatedValue.toFixed(2)} <span style={{ fontSize: 11, color: '#3a6a3a', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>EST. VALUE</span>
+                    <div className="psv-card-value" style={{ fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginTop: 6 }}>
+                      ${card.estimatedValue.toFixed(2)} <span style={{ fontSize: 13, color: '#3a6a3a', fontFamily: "'Inter', sans-serif", fontWeight: 600 }}>EST. VALUE</span>
                     </div>
                   )}
                 </div>
               </div>
               {card.playerContext && (
-                <div style={{ marginBottom: 20, background: '#0e0e1c', border: '1px solid #1a1a2e', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 9, color: '#555', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 6 }}>About This Card</div>
-                  <p style={{ margin: 0, fontSize: 13, color: '#888', lineHeight: 1.7 }}>{card.playerContext}</p>
+                <div style={{ marginBottom: 24, background: '#0e0e1c', border: '1px solid #1a1a2e', borderRadius: 14, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 8 }}>About This Card</div>
+                  <p style={{ margin: 0, fontSize: 15, color: '#888', lineHeight: 1.7 }}>{card.playerContext}</p>
                 </div>
               )}
             </div>
@@ -1125,26 +1247,31 @@ function PublicShareView({ mode, card, cards, filterLabel, onClose }) {
         {/* Collection / set view */}
         {mode !== 'card' && sorted.length > 0 && (
           <div>
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, color: 'rgba(255,107,53,0.55)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>SHARED</div>
-              <div style={{ fontSize: 42, fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, lineHeight: 1 }}>
-                {filterLabel ? `${filterLabel.toUpperCase()} COLLECTION` : 'VAULT'}
+            <div style={{ marginBottom: 28 }}>
+              <div className="psv-col-subtitle" style={{ color: 'rgba(255,107,53,0.6)', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>
+                {ownerName
+                  ? (filterLabel ? `${ownerName}'s Collection` : `${ownerName}'s Vault`)
+                  : 'SHARED'}
               </div>
-              <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
-                <div><span style={{ fontSize: 24, fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif" }}>{sorted.length}</span> <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>cards</span></div>
-                {rarePlus > 0 && <div><span style={{ fontSize: 24, fontWeight: 400, color: '#9c27b0', fontFamily: "'Bebas Neue', sans-serif" }}>{rarePlus}</span> <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>rare+</span></div>}
-                {totalValue > 0 && <div><span style={{ fontSize: 24, fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif" }}>${totalValue.toFixed(0)}</span> <span style={{ fontSize: 10, color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>est. value</span></div>}
+              <div className="psv-col-title" style={{ fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3, lineHeight: 1 }}>
+                {filterLabel ? filterLabel.toUpperCase() : 'VAULT'}
+              </div>
+              <div style={{ display: 'flex', gap: 24, marginTop: 14 }}>
+                <div><span className="psv-stat-num" style={{ fontWeight: 400, color: '#ff6b35', fontFamily: "'Bebas Neue', sans-serif" }}>{sorted.length}</span> <span className="psv-stat-lbl" style={{ color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>cards</span></div>
+                {rarePlus > 0 && <div><span className="psv-stat-num" style={{ fontWeight: 400, color: '#9c27b0', fontFamily: "'Bebas Neue', sans-serif" }}>{rarePlus}</span> <span className="psv-stat-lbl" style={{ color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>rare+</span></div>}
+                {totalValue > 0 && <div><span className="psv-stat-num" style={{ fontWeight: 400, color: '#4caf50', fontFamily: "'Bebas Neue', sans-serif" }}>${totalValue.toFixed(0)}</span> <span className="psv-stat-lbl" style={{ color: '#444', textTransform: 'uppercase', letterSpacing: 1 }}>est. value</span></div>}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 10 }}>
+            <div className="psv-grid" style={{ display: 'grid' }}>
               {sorted.map(c => {
                 const rc = RARITY_COLORS_PUB[c.rarity] || '#333';
                 return (
-                  <div key={c.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <div style={{ aspectRatio: '3/4', borderRadius: 10, overflow: 'hidden', border: `1.5px solid ${rc}45`, boxShadow: `0 0 12px ${rc}12` }}>
+                  <div key={c.id} onClick={() => setExpandedCard(c)} style={{ display: 'flex', flexDirection: 'column', gap: 5, cursor: 'pointer' }}>
+                    <div style={{ aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', border: `1.5px solid ${rc}45`, boxShadow: `0 0 14px ${rc}14` }}>
                       <img src={c.imageUrl} alt={c.playerName || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#888', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.playerName}</div>
+                    <div className="psv-grid-name" style={{ fontWeight: 700, color: '#aaa', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.playerName}</div>
+                    {c.team && c.team !== 'Unknown' && <div className="psv-grid-team" style={{ color: '#555', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{c.team}</div>}
                   </div>
                 );
               })}
@@ -1153,16 +1280,16 @@ function PublicShareView({ mode, card, cards, filterLabel, onClose }) {
         )}
 
         {/* CTA */}
-        <div style={{ marginTop: 36, textAlign: 'center', padding: '24px 0', borderTop: '1px solid #1a1a2e' }}>
-          <div style={{ fontSize: 28, fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, marginBottom: 6 }}>TRACK YOUR OWN COLLECTION</div>
-          <p style={{ margin: '0 0 16px', fontSize: 13, color: '#555' }}>AI card identification · live eBay pricing · instant share</p>
+        <div style={{ marginTop: 48, textAlign: 'center', padding: '32px 0', borderTop: '1px solid #1a1a2e' }}>
+          <div style={{ fontSize: 32, fontWeight: 400, color: '#f0f0f0', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2, marginBottom: 8 }}>TRACK YOUR OWN COLLECTION</div>
+          <p style={{ margin: '0 0 20px', fontSize: 15, color: '#555' }}>AI card identification · live eBay pricing · instant share</p>
           <a
             href="https://app.myvaults.io"
             style={{
               display: 'inline-block',
               background: 'linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%)',
-              color: '#07070f', borderRadius: 12, padding: '12px 28px',
-              fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2,
+              color: '#07070f', borderRadius: 14, padding: '14px 36px',
+              fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 2,
               textDecoration: 'none', fontWeight: 400,
             }}
           >START YOUR VAULT →</a>
@@ -1186,7 +1313,7 @@ const CATEGORY_IMAGES = {
   "Coins":            "/coins.png",
 };
 const CATEGORY_EMOJI = {
-  "Hockey": "🏒", "Non-Sports": "🎭", "Stamps": "📬", "Coins": "🪙", "Other": "🃏", "Favourites": "★",
+  "Hockey": "🏒", "Non-Sports": "🎭", "Stamps": "📬", "Coins": "🪙", "Other": "🃏", "Favourites": "★", "PC": "🏆",
 };
 
 // ── Pro — Coming Soon Modal ───────────────────────────────────────────────────
@@ -1621,6 +1748,8 @@ export default function App() {
   const [sortBy, setSortBy] = useState("newest");
   const [search, setSearch] = useState("");
   const [view, setView] = useState("cards"); // "cards" | "table"
+  const [sportFilters, setSportFilters] = useState({ rookieOnly: false, autoOnly: false, patchOnly: false, numberedOnly: false, gradedOnly: false, insertOnly: false });
+  const [insertFilter, setInsertFilter] = useState(null); // null | "Express Lane" etc.
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
   const [showChat, setShowChat] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -1632,6 +1761,11 @@ export default function App() {
   const [showValueBreakdown, setShowValueBreakdown] = useState(false);
   const [showProComingSoon, setShowProComingSoon] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
+  const [collections, setCollections] = useState([]);
+  const [showCollections, setShowCollections] = useState(false);
+  const [selectedCollection, setSelectedCollection] = useState(null); // collection being viewed
+  const [showCollectionCreator, setShowCollectionCreator] = useState(false);
+  const [editingCollection, setEditingCollection] = useState(null); // collection being edited
   const [referralNotification, setReferralNotification] = useState(null);
   const [adminGiftNotification, setAdminGiftNotification] = useState(null);
   const globalGiftClaimedRef = useRef(false);
@@ -1683,30 +1817,46 @@ export default function App() {
     const shareCard = params.get('shareCard');
     const shareVault = params.get('shareVault');
     const shareSet = params.get('shareSet');
+    const shareCollection = params.get('shareCollection');
     const uid = params.get('uid');
-    if (!uid) return;
 
-    if (shareCard) {
+    if (shareCard && uid) {
       fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}&cardId=${encodeURIComponent(shareCard)}`)
         .then(r => r.ok ? r.json() : null)
-        .then(card => { if (card && !card.error) setPublicView({ mode: 'card', card }); })
+        .then(data => { if (data && !data.error) setPublicView({ mode: 'card', card: data, ownerName: data.ownerName || '' }); })
         .catch(() => {});
-    } else if (shareSet) {
+    } else if (shareCollection && uid) {
+      const colId = decodeURIComponent(shareCollection);
+      fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}&collectionId=${encodeURIComponent(colId)}`)
+        .then(r => { if (!r.ok) { console.error('Collection share API error', r.status); return null; } return r.json(); })
+        .then(data => {
+          if (!data || !data.collection) { console.error('Collection share: missing data', data); return; }
+          const resolved = resolveCollectionCards(data.collection, data.cards || []);
+          setPublicView({ mode: 'set', cards: resolved, filterLabel: data.collection.name || 'Collection', ownerName: data.ownerName || '' });
+        })
+        .catch(e => console.error('Collection share fetch error', e));
+    } else if (shareSet && uid) {
       fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           const all = data?.cards || [];
           const label = decodeURIComponent(shareSet);
-          const filtered = all.filter(c => c.cardCategory === label || c.team === label);
-          if (filtered.length > 0) setPublicView({ mode: 'set', cards: filtered, filterLabel: label });
+          const filtered = label === 'Favourites'
+            ? all.filter(c => c.isFavourite === true)
+            : label === 'PC'
+              ? all.filter(c => c.isPC === true)
+              : all.filter(c => c.cardCategory === label || c.team === label);
+          if (filtered.length > 0) setPublicView({ mode: 'set', cards: filtered, filterLabel: label, ownerName: data?.ownerName || '' });
         })
         .catch(() => {});
     } else if (shareVault) {
-      fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(uid)}`)
+      // Vault share: uid is the shareVault param value itself (no separate uid param)
+      const vaultUid = uid || shareVault;
+      fetch(`${API_BASE}/api/public-card?uid=${encodeURIComponent(vaultUid)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
           const all = data?.cards || [];
-          if (all.length > 0) setPublicView({ mode: 'collection', cards: all });
+          if (all.length > 0) setPublicView({ mode: 'collection', cards: all, ownerName: data?.ownerName || '' });
         })
         .catch(() => {});
     }
@@ -1714,6 +1864,7 @@ export default function App() {
 
   // Sync cards to/from Firestore when the user is signed in.
   useFirestoreSync(user ?? null, cards, setCards);
+  useCollectionsSync(user ?? null, collections, setCollections);
 
   // ── Daily login bonus & streak check ──────────────────────────────────────
   // Runs once per session after the user profile loads.
@@ -1884,7 +2035,8 @@ You MUST perform at least one web search to confirm the card identity before fil
 For SPORTS CARDS:
 1. Search: "[player name] [year] [brand] [set name] checklist" — confirms exact product, insert names, and parallel tiers
 2. If you identified a parallel or insert, also search: "[player name] [parallel name] [set name] [year]" — confirms correct parallel tier and value range
-The search must confirm: exact set name, whether it's an insert or base card, correct parallel label (e.g. "Silver Prizm" vs "Hyper Prizm"), rookie card status, and approximate raw market value.
+3. If you see an insert/subset name printed on the card, search: "[insert name] [set name] [year] checklist" to confirm the exact insert name spelling used by collectors (e.g. "Express Lane Optic 2021" not just "Express Lane")
+The search must confirm: exact set name, whether it's an insert or base card, correct insert name, correct parallel label (e.g. "Silver Prizm" vs "Hyper Prizm"), rookie card status, and approximate raw market value.
 
 CRITICAL parallel identification rules (these are commonly confused):
 - Panini Mosaic: "NBA Debut" is a SUBSET — less valuable than the base Mosaic RC. Confirm which one via search.
@@ -1933,6 +2085,15 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
   "grade": "Grade as printed on slab label (e.g. '9', '9.5', '10'), or null",
   "certNumber": "Cert/barcode number from slab label, or null",
   "isRookie": false,
+  "sport": "Basketball | American Football | Baseball | Soccer | Hockey | Wrestling | UFC | Racing | Golf | Tennis | Cricket | Rugby | Other Sport | null — only for sport cardCategory values, null for TCG/Stamps/Coins",
+  "league": "NBA | WNBA | G League | NFL | MLB | MLS | NHL | CFL | AFL | NRL | EPL | La Liga | Bundesliga | Serie A | Champions League | UFC | WWE | PGA | ATP | WTA | Other | null — for sport cards only",
+  "playerPosition": "Player position (e.g. 'Point Guard', 'Small Forward', 'Quarterback', 'Wide Receiver', 'Pitcher', 'Shortstop', 'Centre Forward', 'Goalkeeper', 'Pitcher') — sport cards only, or null",
+  "season": "Season if different from card print year (e.g. '2023-24' for NBA/NHL), otherwise same as year, or null",
+  "isNumbered": false,
+  "printRun": "Total print run as integer if isNumbered is true (e.g. 99 for a /99 card, 10 for /10), else null",
+  "isInsert": false,
+  "insertName": "Specific insert/subset name within the product if isInsert is true (e.g. 'Express Lane', 'Fast Break', 'All-Stars', 'Shock Wave', 'City Edition', 'Prolific Playmakers', 'All-Rookie Team', 'Dominator', 'Artist Proof'). null if base set card.",
+  "hasPatch": false,
   "hasAutograph": false,
   "autographType": "'On-Card' | 'Sticker' | null — only if hasAutograph is true",
   "rarity": "Common | Uncommon | Rare | Very Rare | Ultra Rare | Legendary",
@@ -1993,8 +2154,25 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         }
       }
 
-      setCards(prev => [{ id: cardId, imageUrl: persistedImageUrl, ...cardInfo, estimatedValue: parseFloat(cardInfo.estimatedValue) || 0, addedAt: new Date().toISOString() }, ...prev]);
+      const aiValue = parseFloat(cardInfo.estimatedValue) || 0;
+      const newCard = { id: cardId, imageUrl: persistedImageUrl, ...cardInfo, estimatedValue: aiValue, addedAt: new Date().toISOString() };
+      setCards(prev => [newCard, ...prev]);
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "done" } : q));
+
+      // Background pricing fetch — populates estimatedValue so new cards appear in Top 10
+      if (aiValue === 0) {
+        Promise.all([fetchPricingProxy(newCard), fetchEbaySales(newCard)]).then(([proxyResult, ebayResult]) => {
+          let value = null;
+          if (proxyResult) {
+            value = proxyResult.raw != null ? parseFloat(proxyResult.raw)
+              : proxyResult.avg != null ? proxyResult.avg : null;
+          }
+          if (!value && ebayResult?.avg) value = ebayResult.avg;
+          if (value && value > 0) {
+            setCards(prev => prev.map(c => String(c.id) === String(cardId) ? { ...c, estimatedValue: Math.round(value * 100) / 100 } : c));
+          }
+        }).catch(() => {});
+      }
     } catch (err) {
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "error", errorMsg: err.message } : q));
       console.error(err);
@@ -2168,7 +2346,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  const categories = ["All", "Favourites", ...new Set(cards.map(c => c.cardCategory).filter(cat => cat && cat !== "Other" && cat !== "Unknown"))].concat(
+  const categories = ["All", "Favourites", "PC", ...new Set(cards.map(c => c.cardCategory).filter(cat => cat && cat !== "Other" && cat !== "Unknown"))].concat(
     cards.some(c => !c.cardCategory || c.cardCategory === "Other") ? ["Other"] : []
   );
 
@@ -2181,6 +2359,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
     .filter(c => {
       if (filter === "All") return true;
       if (filter === "Favourites") return c.isFavourite === true;
+      if (filter === "PC") return c.isPC === true;
       if (filter === "Other") return !c.cardCategory || c.cardCategory === "Other" || c.cardCategory === "Unknown";
       return c.cardCategory === filter;
     })
@@ -2195,13 +2374,32 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         (c.series || "").toLowerCase().includes(q) ||
         (c.year || "").toLowerCase().includes(q) ||
         (c.parallel || "").toLowerCase().includes(q) ||
-        (c.serialNumber || "").toLowerCase().includes(q)
+        (c.serialNumber || "").toLowerCase().includes(q) ||
+        (c.sport || "").toLowerCase().includes(q) ||
+        (c.league || "").toLowerCase().includes(q) ||
+        (c.playerPosition || "").toLowerCase().includes(q) ||
+        (c.season || "").toLowerCase().includes(q) ||
+        (c.brand || "").toLowerCase().includes(q) ||
+        (c.rarity || "").toLowerCase().includes(q) ||
+        (c.condition || "").toLowerCase().includes(q) ||
+        (c.insertName || "").toLowerCase().includes(q)
       );
+    })
+    .filter(c => insertFilter ? c.insertName === insertFilter : true)
+    .filter(c => {
+      if (sportFilters.rookieOnly && !c.isRookie) return false;
+      if (sportFilters.autoOnly && !c.hasAutograph) return false;
+      if (sportFilters.patchOnly && !c.hasPatch) return false;
+      if (sportFilters.numberedOnly && !c.isNumbered && !c.serialNumber) return false;
+      if (sportFilters.gradedOnly && !c.isGraded) return false;
+      if (sportFilters.insertOnly && !c.isInsert) return false;
+      return true;
     })
     .sort((a, b) => {
       if (sortBy === "newest") return b.id - a.id;
-      if (sortBy === "player") return a.playerName.localeCompare(b.playerName);
+      if (sortBy === "player") return (a.playerName || "").localeCompare(b.playerName || "");
       if (sortBy === "set") return (a.fullCardName || "").localeCompare(b.fullCardName || "");
+      if (sortBy === "value") return (b.estimatedValue || 0) - (a.estimatedValue || 0);
       return 0;
     });
 
@@ -2281,6 +2479,22 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · Live pricing</p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, minWidth: 0 }}>
+            {user && (
+              <button
+                onClick={() => setShowCollections(v => !v)}
+                title="My Collections"
+                style={{
+                  background: showCollections ? "#ff6b3518" : "var(--gbg)",
+                  border: `1px solid ${showCollections ? "#ff6b3550" : "var(--gb)"}`,
+                  borderRadius: 20, padding: "5px 12px",
+                  color: showCollections ? "#ff6b35" : "var(--gc)",
+                  fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+                }}
+              >
+                <span style={{ fontSize: 13 }}>📚</span> Collections
+              </button>
+            )}
             {cards.length > 0 && (
               <button
                 onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
@@ -2401,6 +2615,18 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                   {totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`}
                 </span>
                 <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</span>
+              </div>
+            )}
+            {cards.filter(c => c.isFavourite).length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{cards.filter(c => c.isFavourite).length}</span>
+                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>★ Faves</span>
+              </div>
+            )}
+            {cards.filter(c => c.isPC).length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: "#2196f3", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{cards.filter(c => c.isPC).length}</span>
+                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>PC</span>
               </div>
             )}
             {/* Daily / streak bonus claim button — non-blocking, user-initiated */}
@@ -2550,6 +2776,64 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Favourites strip ─────────────────────────────────────────── */}
+        {cards.filter(c => c.isFavourite).length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 9, color: "#f0c040", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              ★ Favourites
+              <span style={{ fontSize: 8, color: "var(--tf)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>{cards.filter(c => c.isFavourite).length} card{cards.filter(c => c.isFavourite).length !== 1 ? "s" : ""}</span>
+              <button
+                onClick={() => setShareModal({ mode: 'set', cards: cards.filter(c => c.isFavourite), filterLabel: 'Favourites' })}
+                style={{ marginLeft: "auto", background: "rgba(240,192,64,0.1)", border: "1px solid rgba(240,192,64,0.3)", borderRadius: 14, padding: "3px 10px", color: "#f0c040", fontSize: 9, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}
+              >Share ↑</button>
+            </div>
+            <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "thin", scrollbarColor: "rgba(240,192,64,0.2) transparent" }}>
+              {cards.filter(c => c.isFavourite).map(card => {
+                const rarityColors = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#f44336" };
+                const rc = rarityColors[card.rarity] || "#555";
+                return (
+                  <div key={card.id} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5 }}>
+                    <div style={{ position: "relative", width: 90, height: 124, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(240,192,64,0.35)", boxShadow: `0 0 14px rgba(240,192,64,0.12), 0 0 6px ${rc}18` }}>
+                      <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div style={{ position: "absolute", top: 3, right: 5, fontSize: 14, color: "#f0c040", textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}>★</div>
+                      {card.isPC && <div style={{ position: "absolute", bottom: 4, left: 5, background: "rgba(33,150,243,0.85)", borderRadius: 4, fontSize: 8, fontWeight: 800, color: "#fff", padding: "1px 5px", letterSpacing: 0.5 }}>PC</div>}
+                    </div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ts)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.playerName}</div>
+                    {card.estimatedValue > 0 && <div style={{ fontSize: 11, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 0.5 }}>${card.estimatedValue.toFixed(2)}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Personal Collection (PC) strip ───────────────────────────── */}
+        {cards.filter(c => c.isPC).length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 9, color: "#2196f3", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+              🏆 Personal Collection
+              <span style={{ fontSize: 8, color: "var(--tf)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>{cards.filter(c => c.isPC).length} card{cards.filter(c => c.isPC).length !== 1 ? "s" : ""}</span>
+              <button
+                onClick={() => setShareModal({ mode: 'set', cards: cards.filter(c => c.isPC), filterLabel: 'PC' })}
+                style={{ marginLeft: "auto", background: "rgba(33,150,243,0.1)", border: "1px solid rgba(33,150,243,0.3)", borderRadius: 14, padding: "3px 10px", color: "#2196f3", fontSize: 9, fontWeight: 700, cursor: "pointer", letterSpacing: 0.5 }}
+              >Share ↑</button>
+            </div>
+            <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "thin", scrollbarColor: "rgba(33,150,243,0.2) transparent" }}>
+              {cards.filter(c => c.isPC).map(card => (
+                <div key={card.id} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5 }}>
+                  <div style={{ position: "relative", width: 90, height: 124, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(33,150,243,0.35)", boxShadow: "0 0 14px rgba(33,150,243,0.12)" }}>
+                    <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div style={{ position: "absolute", bottom: 4, left: 5, background: "rgba(33,150,243,0.85)", borderRadius: 4, fontSize: 8, fontWeight: 800, color: "#fff", padding: "1px 5px", letterSpacing: 0.5 }}>PC</div>
+                    {card.isFavourite && <div style={{ position: "absolute", top: 3, right: 5, fontSize: 14, color: "#f0c040", textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}>★</div>}
+                  </div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "var(--ts)", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{card.playerName}</div>
+                  {card.estimatedValue > 0 && <div style={{ fontSize: 11, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 0.5 }}>${card.estimatedValue.toFixed(2)}</div>}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -2719,10 +3003,10 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         )}
 
         {/* Category Tiles */}
-        {cards.length > 0 && categories.filter(c => c !== "All" && c !== "Favourites").length > 1 && (
+        {cards.length > 0 && categories.filter(c => c !== "All" && c !== "Favourites" && c !== "PC").length > 1 && (
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10 }}>
-              {categories.filter(c => c !== "All" && c !== "Favourites").map(cat => {
+              {categories.filter(c => c !== "All" && c !== "Favourites" && c !== "PC").map(cat => {
                 const img = CATEGORY_IMAGES[cat];
                 const emoji = CATEGORY_EMOJI[cat] || "🃏";
                 const catCards = cards.filter(c =>
@@ -2795,7 +3079,8 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             <div style={{ display: "flex", gap: 5, flex: 1, flexWrap: "wrap" }}>
               {categories.map(t => {
                 const isFav = t === "Favourites";
-                const activeColor = isFav ? "#f0c040" : "#ff6b35";
+                const isPC = t === "PC";
+                const activeColor = isFav ? "#f0c040" : isPC ? "#2196f3" : "#ff6b35";
                 return (
                   <button key={t} onClick={() => setFilter(t)} style={{
                     padding: "4px 12px", borderRadius: 20, border: "1px solid",
@@ -2803,7 +3088,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                     background: filter === t ? `${activeColor}15` : "transparent",
                     color: filter === t ? activeColor : "var(--tm)",
                     cursor: "pointer", fontSize: 12, fontWeight: 600
-                  }}>{isFav ? "★ Faves" : t}</button>
+                  }}>{isFav ? "★ Faves" : isPC ? "🏆 PC" : t}</button>
                 );
               })}
             </div>
@@ -2814,6 +3099,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
               <option value="newest">Newest</option>
               <option value="player">Player A–Z</option>
               <option value="set">Set Name</option>
+              <option value="value">Highest Value</option>
             </select>
             <div style={{ display: "flex", gap: 4 }}>
               {["cards", "table"].map(v => (
@@ -2838,7 +3124,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 }}
               >{bundleMode ? "✕ Cancel Bundle" : "Bundle Sell"}</button>
             )}
-            {filter !== "All" && filter !== "Favourites" && (
+            {filter !== "All" && filter !== "Favourites" && filter !== "PC" && (
               <button
                 onClick={() => setShareModal({ mode: 'set', cards: filteredCards, filterLabel: filter })}
                 style={{
@@ -2850,8 +3136,152 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 }}
               >Share Set ↑</button>
             )}
+            {filter === "Favourites" && filteredCards.length > 0 && (
+              <button
+                onClick={() => setShareModal({ mode: 'set', cards: filteredCards, filterLabel: 'Favourites' })}
+                style={{
+                  padding: "4px 12px", borderRadius: 8,
+                  border: "1px solid rgba(240,192,64,0.3)",
+                  background: "rgba(240,192,64,0.08)",
+                  color: "#f0c040",
+                  cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
+                }}
+              >Share Faves ↑</button>
+            )}
+            {filter === "PC" && filteredCards.length > 0 && (
+              <button
+                onClick={() => setShareModal({ mode: 'set', cards: filteredCards, filterLabel: 'PC' })}
+                style={{
+                  padding: "4px 12px", borderRadius: 8,
+                  border: "1px solid rgba(33,150,243,0.3)",
+                  background: "rgba(33,150,243,0.08)",
+                  color: "#2196f3",
+                  cursor: "pointer", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap"
+                }}
+              >Share PC ↑</button>
+            )}
           </div>
         )}
+
+        {/* Sport Quick Filters */}
+        {cards.length > 0 && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+            {[
+              { key: "rookieOnly", label: "RC", title: "Rookie Cards Only" },
+              { key: "autoOnly", label: "AUTO", title: "Autographs Only" },
+              { key: "patchOnly", label: "PATCH", title: "Patch / Memorabilia Only" },
+              { key: "numberedOnly", label: "#", title: "Numbered Cards Only" },
+              { key: "gradedOnly", label: "GRADED", title: "Graded Only" },
+              { key: "insertOnly", label: "INSERT", title: "Insert / Subset Only" },
+            ].map(({ key, label, title }) => {
+              const active = sportFilters[key];
+              return (
+                <button
+                  key={key}
+                  title={title}
+                  onClick={() => setSportFilters(prev => ({ ...prev, [key]: !prev[key] }))}
+                  style={{
+                    padding: "3px 10px", borderRadius: 20, border: "1px solid",
+                    borderColor: active ? "#ff6b35" : "var(--b)",
+                    background: active ? "#ff6b3520" : "transparent",
+                    color: active ? "#ff6b35" : "var(--td)",
+                    cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.5
+                  }}
+                >{label}</button>
+              );
+            })}
+            {Object.values(sportFilters).some(Boolean) && (
+              <button
+                onClick={() => setSportFilters({ rookieOnly: false, autoOnly: false, patchOnly: false, numberedOnly: false, gradedOnly: false, insertOnly: false })}
+                style={{
+                  padding: "3px 10px", borderRadius: 20, border: "1px solid var(--b)",
+                  background: "transparent", color: "var(--tm)",
+                  cursor: "pointer", fontSize: 11
+                }}
+              >✕ Clear</button>
+            )}
+          </div>
+        )}
+
+        {/* Insert Collection Browser */}
+        {(() => {
+          // Build pool: cards visible under current category + sport filters (but before insertFilter)
+          const poolForInserts = cards
+            .filter(c => {
+              if (filter === "All") return true;
+              if (filter === "Favourites") return c.isFavourite === true;
+              if (filter === "PC") return c.isPC === true;
+              if (filter === "Other") return !c.cardCategory || c.cardCategory === "Other" || c.cardCategory === "Unknown";
+              return c.cardCategory === filter;
+            })
+            .filter(c => {
+              if (sportFilters.rookieOnly && !c.isRookie) return false;
+              if (sportFilters.autoOnly && !c.hasAutograph) return false;
+              if (sportFilters.patchOnly && !c.hasPatch) return false;
+              if (sportFilters.numberedOnly && !c.isNumbered && !c.serialNumber) return false;
+              if (sportFilters.gradedOnly && !c.isGraded) return false;
+              if (sportFilters.insertOnly && !c.isInsert) return false;
+              return true;
+            });
+
+          // Group by insertName — only named inserts
+          const insertGroups = {};
+          poolForInserts.forEach(c => {
+            if (c.insertName) {
+              if (!insertGroups[c.insertName]) insertGroups[c.insertName] = [];
+              insertGroups[c.insertName].push(c);
+            }
+          });
+          const insertEntries = Object.entries(insertGroups).sort((a, b) => b[1].length - a[1].length);
+
+          if (insertEntries.length === 0) return null;
+
+          return (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 10, color: "var(--td)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 7 }}>
+                Inserts & Subsets
+                {insertFilter && (
+                  <button
+                    onClick={() => setInsertFilter(null)}
+                    style={{ marginLeft: 8, background: "none", border: "none", color: "#64b5f6", cursor: "pointer", fontSize: 10, fontWeight: 700 }}
+                  >✕ Show all</button>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {insertEntries.map(([name, group]) => {
+                  const active = insertFilter === name;
+                  const setValue = group.reduce((s, c) => s + (c.estimatedValue || 0), 0);
+                  return (
+                    <button
+                      key={name}
+                      onClick={() => setInsertFilter(active ? null : name)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "5px 12px", borderRadius: 20, border: "1px solid",
+                        borderColor: active ? "#64b5f6" : "var(--b)",
+                        background: active ? "#64b5f620" : "var(--deep)",
+                        color: active ? "#64b5f6" : "var(--ts)",
+                        cursor: "pointer", fontSize: 11, fontWeight: 600,
+                        transition: "all 0.12s", whiteSpace: "nowrap"
+                      }}
+                    >
+                      <span>{name}</span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700,
+                        background: active ? "#64b5f640" : "var(--gbg)",
+                        color: active ? "#64b5f6" : "var(--td)",
+                        padding: "1px 6px", borderRadius: 10
+                      }}>{group.length}</span>
+                      {setValue > 0 && <span style={{ fontSize: 10, color: active ? "#64b5f6" : "#4caf50", opacity: 0.8 }}>
+                        {setValue >= 1000 ? `$${(setValue / 1000).toFixed(1)}k` : `$${Math.round(setValue)}`}
+                      </span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Card List */}
         {view === "cards" && (
@@ -2893,7 +3323,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--b)" }}>
-                    {["★", "Player", "Set", "Category", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
+                    {["★", "PC", "Player", "Set", "Category", "Year", "Parallel", "Serial", "Auto", "Rarity", "Condition", "Est. Value", ""].map(h => (
                       <th key={h} style={{ padding: "8px 10px", color: "var(--td)", fontWeight: 600, textAlign: "left", whiteSpace: "nowrap", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
                     ))}
                   </tr>
@@ -2905,6 +3335,9 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                       <tr key={card.id} style={{ borderBottom: "1px solid var(--b)", background: "transparent" }}>
                         <td style={{ padding: "9px 6px", textAlign: "center" }}>
                           <button onClick={() => handleUpdate(card.id, { isFavourite: !card.isFavourite })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, padding: 2, color: card.isFavourite ? "#f0c040" : "var(--so)" }} title={card.isFavourite ? "Unfavourite" : "Favourite"}>{card.isFavourite ? "★" : "☆"}</button>
+                        </td>
+                        <td style={{ padding: "9px 6px", textAlign: "center" }}>
+                          <button onClick={() => handleUpdate(card.id, { isPC: !card.isPC })} style={{ background: card.isPC ? "rgba(33,150,243,0.15)" : "none", border: card.isPC ? "1px solid rgba(33,150,243,0.4)" : "1px solid transparent", borderRadius: 5, cursor: "pointer", fontSize: 9, fontWeight: 800, padding: "2px 5px", color: card.isPC ? "#2196f3" : "var(--so)" }} title={card.isPC ? "Remove from PC" : "Add to Personal Collection"}>PC</button>
                         </td>
                         <td style={{ padding: "9px 10px", color: "var(--t)", fontWeight: 600, whiteSpace: "nowrap" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -2982,15 +3415,76 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           card={publicView.card}
           cards={publicView.cards}
           filterLabel={publicView.filterLabel}
+          ownerName={publicView.ownerName}
           onClose={() => setPublicView(null)}
         />
       )}
+      {/* ── Collections overlay ─────────────────────────────────────── */}
+      {showCollections && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 500,
+          background: 'var(--bg)', overflowY: 'auto',
+          padding: '16px',
+        }}>
+          {/* Collections header nav */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <button onClick={() => { setShowCollections(false); setSelectedCollection(null); setShowCollectionCreator(false); setEditingCollection(null); }}
+              style={{ background: 'none', border: 'none', color: 'var(--t)', fontSize: 20, cursor: 'pointer', padding: '2px 6px', lineHeight: 1 }}>✕</button>
+            <span style={{ fontSize: 13, color: 'var(--ts)', fontWeight: 600 }}>Collections</span>
+          </div>
+
+          {selectedCollection && !showCollectionCreator ? (
+            <CollectionDetailView
+              col={selectedCollection}
+              allCards={cards}
+              onBack={() => setSelectedCollection(null)}
+              onEdit={() => { setEditingCollection(selectedCollection); setShowCollectionCreator(true); }}
+              onShare={(col, resolvedCards) => setShareModal({ mode: 'set', cards: resolvedCards, filterLabel: col.name, collectionId: col.id })}
+              onDelete={(id) => {
+                setCollections(prev => prev.filter(c => c.id !== id));
+                setSelectedCollection(null);
+              }}
+              onUpdate={(updated) => {
+                setCollections(prev => prev.map(c => c.id === updated.id ? updated : c));
+                setSelectedCollection(updated);
+              }}
+            />
+          ) : (
+            <CollectionsView
+              collections={collections}
+              allCards={cards}
+              onCreateNew={() => { setEditingCollection(null); setShowCollectionCreator(true); }}
+              onSelect={(col) => setSelectedCollection(col)}
+              onShare={(col, resolvedCards) => setShareModal({ mode: 'set', cards: resolvedCards, filterLabel: col.name, collectionId: col.id })}
+            />
+          )}
+
+          {showCollectionCreator && (
+            <CollectionCreatorModal
+              existing={editingCollection}
+              allCards={cards}
+              onSave={(saved) => {
+                setCollections(prev => {
+                  const exists = prev.some(c => c.id === saved.id);
+                  return exists ? prev.map(c => c.id === saved.id ? saved : c) : [saved, ...prev];
+                });
+                if (editingCollection) setSelectedCollection(saved);
+                setShowCollectionCreator(false);
+                setEditingCollection(null);
+              }}
+              onClose={() => { setShowCollectionCreator(false); setEditingCollection(null); }}
+            />
+          )}
+        </div>
+      )}
+
       {shareModal && (
         <ShareModal
           mode={shareModal.mode}
           card={shareModal.card}
           cards={shareModal.cards}
           filterLabel={shareModal.filterLabel}
+          collectionId={shareModal.collectionId}
           user={user}
           onClose={() => setShareModal(null)}
         />

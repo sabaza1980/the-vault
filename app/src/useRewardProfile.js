@@ -27,6 +27,10 @@ export function useRewardProfile(user) {
       if (!d.referral_code) {
         setDoc(ref, { referral_code: user.uid }, { merge: true }).catch(() => {});
       }
+      // Persist Firebase Auth display name so share links can show it
+      if (!d.display_name && user.displayName) {
+        setDoc(ref, { display_name: user.displayName }, { merge: true }).catch(() => {});
+      }
       setRawProfile({
         _uid:                 user.uid,
         cardCredits:          d.card_credits           ?? 0,
@@ -46,6 +50,7 @@ export function useRewardProfile(user) {
         referralCount:        d.referral_count         ?? 0,
         // Credit gifts
         lastGiftClaimedAt:    d.last_gift_claimed_at   ?? null,
+        displayName:          d.display_name            ?? user.displayName ?? null,
       });
     });
     return unsub;

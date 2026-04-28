@@ -233,10 +233,12 @@ async function drawCollection(cards, filterLabel, user) {
 
   const RARITY_ORDER = { Legendary: 0, 'Ultra Rare': 1, 'Very Rare': 2, Rare: 3, Uncommon: 4, Common: 5 };
   const sorted = [...cards].sort((a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6));
-  const gridCards = sorted.slice(0, 9);
-  const overflow = cards.length - 9;
+  // Show 8 cards + 1 overflow cell when > 9, otherwise up to 9
+  const showOverflow = cards.length > 9;
+  const gridCards = showOverflow ? sorted.slice(0, 8) : sorted.slice(0, 9);
+  const overflowCount = showOverflow ? cards.length - 8 : 0;
   const namePrefix = user?.displayName ? `${user.displayName.toUpperCase()}'S` : 'MY';
-  const titleLine = filterLabel ? `${filterLabel.toUpperCase()} SET` : 'VAULT';
+  const titleLine = filterLabel ? filterLabel.toUpperCase() : 'VAULT';
   const rarePlus = cards.filter(c => ['Rare', 'Very Rare', 'Ultra Rare', 'Legendary'].includes(c.rarity)).length;
   const totalValue = cards.reduce((s, c) => s + (Number(c.estimatedValue) || 0), 0);
 
@@ -311,18 +313,18 @@ async function drawCollection(cards, filterLabel, user) {
     ctx.lineWidth = 3;
     rrect(ctx, gx, gy, GW, GH, 14); ctx.stroke();
   }
-  if (overflow > 0 && gridCards.length < 9) {
-    const col = gridCards.length % GCOLS, row = Math.floor(gridCards.length / GCOLS);
-    const gx = GRID_X + col * (GW + GGAP), gy = GRID_Y + row * (GH + GGAP);
-    ctx.fillStyle = 'rgba(255,107,53,0.08)';
-    rrect(ctx, gx, gy, GW, GH, 14); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,107,53,0.22)';
+  if (showOverflow) {
+    // Draw the +N cell at grid position 8 (3rd column, 3rd row)
+    const ox = GRID_X + 2 * (GW + GGAP), oy = GRID_Y + 2 * (GH + GGAP);
+    ctx.fillStyle = 'rgba(255,107,53,0.12)';
+    rrect(ctx, ox, oy, GW, GH, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,107,53,0.3)';
     ctx.lineWidth = 3;
-    rrect(ctx, gx, gy, GW, GH, 14); ctx.stroke();
+    rrect(ctx, ox, oy, GW, GH, 14); ctx.stroke();
     ctx.font = '400 52px "Bebas Neue", sans-serif';
     ctx.fillStyle = '#ff6b35';
     ctx.textAlign = 'center';
-    ctx.fillText(`+${overflow}`, gx + GW / 2, gy + GH / 2 + 20);
+    ctx.fillText(`+${overflowCount}`, ox + GW / 2, oy + GH / 2 + 20);
     ctx.textAlign = 'left';
   }
 
@@ -351,7 +353,7 @@ function isMobile() {
   return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
 }
 
-export function useShareCard({ card, cards, mode, filterLabel, user }) {
+export function useShareCard({ card, cards, mode, filterLabel, user, collectionId }) {
   const [imageBlob, setImageBlob] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [capturing, setCapturing] = useState(false);
@@ -436,9 +438,11 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     const shareUrl = mode === 'card' && cardId && uid
       ? `${ogBase}?og=1&cardId=${cardId}&uid=${uid}`
       : uid
-        ? filterLabel
-          ? `${ogBase}?og=1&shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
-          : `${ogBase}?og=1&shareVault=1&uid=${uid}`
+        ? collectionId
+          ? `${ogBase}?og=1&shareCollection=${encodeURIComponent(collectionId)}&uid=${uid}`
+          : filterLabel
+            ? `${ogBase}?og=1&shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
+            : `${ogBase}?og=1&shareVault=1&uid=${uid}`
         : BASE;
     const shareTitle = mode === 'card' ? `${cardName} — The Vault` : 'My Trading Card Vault';
     // Include the link inline so every platform gets both the description and the URL
@@ -565,7 +569,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user }) {
     }
 
     return false;
-  }, [imageBlob, card, cards, mode, filterLabel, user]);
+  }, [imageBlob, card, cards, mode, filterLabel, user, collectionId]);
 
   return { generate, share, imageBlob, previewUrl, capturing, generateError };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { AdMob, RewardAdPluginEvents } from '@capacitor-community/admob';
 
@@ -29,24 +29,61 @@ export default function AdGateModal({
 }) {
   const [phase, setPhase] = useState('idle'); // 'idle' | 'loading' | 'watching' | 'error'
   const [countdown, setCountdown] = useState(0);
+  const adReadyRef = useRef(false);
+  const loadListenersRef = useRef([]);
+
+  // Pre-load the rewarded ad as soon as the modal mounts so it's ready instantly.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let loadedListener, failedListener;
+
+    const preload = async () => {
+      try {
+        loadedListener = await AdMob.addListener(RewardAdPluginEvents.Loaded, () => {
+          adReadyRef.current = true;
+        });
+        failedListener = await AdMob.addListener(RewardAdPluginEvents.FailedToLoad, () => {
+          adReadyRef.current = false;
+        });
+        loadListenersRef.current = [loadedListener, failedListener];
+        await AdMob.prepareRewardVideoAd({ adId: REWARDED_AD_UNIT_ID });
+      } catch {
+        // Silently ignore — handleWatch will attempt to load again on tap.
+      }
+    };
+
+    preload();
+
+    return () => {
+      loadListenersRef.current.forEach(l => l?.remove());
+      loadListenersRef.current = [];
+    };
+  }, []);
 
   const handleWatch = async () => {
-    setPhase('loading');
-
     if (Capacitor.isNativePlatform()) {
+      // If the ad is already preloaded, go straight to watching; otherwise show loading.
+      setPhase(adReadyRef.current ? 'watching' : 'loading');
+
       try {
-        // Listen for reward before showing
         const rewardListener = await AdMob.addListener(RewardAdPluginEvents.Rewarded, () => {
           rewardListener.remove();
           onWatched();
         });
 
-        // Prepare and show the rewarded ad
-        await AdMob.prepareRewardVideoAd({ adId: REWARDED_AD_UNIT_ID });
+        // Only prepare again if not already ready from the preload.
+        if (!adReadyRef.current) {
+          await AdMob.prepareRewardVideoAd({ adId: REWARDED_AD_UNIT_ID });
+          adReadyRef.current = true;
+        }
+
         setPhase('watching');
         await AdMob.showRewardVideoAd();
+        adReadyRef.current = false;
         setPhase('idle');
       } catch {
+        adReadyRef.current = false;
         setPhase('error');
         setTimeout(() => setPhase('idle'), 3000);
       }
