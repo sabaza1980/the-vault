@@ -54,7 +54,7 @@ function useDebounce(value, delay) {
 
 // ── Break Info Form ──────────────────────────────────────────────────────────
 function BreakInfoForm({ info, onChange }) {
-  const [collapsed, setCollapsed] = useState(() => !!info.breakerName);
+  const [collapsed, setCollapsed] = useState(false);
 
   const inputStyle = {
     width: '100%', background: 'var(--input)', border: '1px solid var(--b)',
