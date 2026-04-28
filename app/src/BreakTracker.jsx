@@ -433,8 +433,15 @@ function HitPickerDropdown({ variants, onSelect, onClose, anchorRect }) {
 
   const pos = {};
   if (anchorRect) {
+    const DROPDOWN_W = 260;
+    const PADDING = 8;
     const spaceBelow = window.innerHeight - anchorRect.bottom;
-    pos.left = Math.min(anchorRect.left, window.innerWidth - 270);
+    // Prefer left-align to button; if it overflows right edge, right-align to button's right edge
+    if (anchorRect.left + DROPDOWN_W + PADDING > window.innerWidth) {
+      pos.left = Math.max(PADDING, anchorRect.right - DROPDOWN_W);
+    } else {
+      pos.left = anchorRect.left;
+    }
     if (spaceBelow > 220) { pos.top = anchorRect.bottom + 6; }
     else { pos.bottom = window.innerHeight - anchorRect.top + 6; }
   } else {
