@@ -3,10 +3,10 @@ import html2canvas from 'html2canvas';
 import { useTrackerState } from './useTrackerState.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
-const ACTIVE_SET_ID = '2025-26-bowman-basketball';
 
 const COLLECTIONS = [
   { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
+  { id: '2025-26-topps-cosmic-chrome-basketball', name: '2025-26 Topps Cosmic Chrome Basketball' },
 ];
 const BREAK_TYPES = ['PYT', 'PYP', 'Random Team'];
 const PLATFORMS = ['Whatnot', 'Fanatics'];
@@ -866,7 +866,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
 }
 
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
@@ -883,7 +883,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo }) {
     if (targetedSlugs.length === 0) return;
     Promise.allSettled(
       targetedSlugs.map(slug =>
-        fetch(`${API_BASE}/api/sets-player?setId=${ACTIVE_SET_ID}&player=${encodeURIComponent(slug)}`)
+        fetch(`${API_BASE}/api/sets-player?setId=${activeSetId}&player=${encodeURIComponent(slug)}`)
           .then(r => r.ok ? r.json() : null)
           .then(data => ({ slug, data }))
       )
@@ -975,19 +975,27 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
   const [checklistError, setChecklistError] = useState(null);
   const [phase, setPhase] = useState('select');
 
-  const tracker = useTrackerState(ACTIVE_SET_ID);
   const [breakInfo, updateBreakInfo] = useBreakInfo();
+  const activeSetId = breakInfo.collection || '2025-26-bowman-basketball';
+
+  const tracker = useTrackerState(activeSetId);
 
   const fetchChecklist = useCallback(() => {
     setLoadingChecklist(true);
     setChecklistError(null);
-    fetch(`${API_BASE}/api/sets-checklist?setId=${ACTIVE_SET_ID}`)
+    fetch(`${API_BASE}/api/sets-checklist?setId=${activeSetId}`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => { setChecklist(data); setLoadingChecklist(false); })
       .catch(e => { setChecklistError(e.message); setLoadingChecklist(false); });
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSetId]);
 
-  useEffect(() => { fetchChecklist(); }, [fetchChecklist]);
+  // Reset to select phase and reload checklist when set changes
+  useEffect(() => {
+    setPhase('select');
+    fetchChecklist();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSetId]);
 
   return (
     <div style={{
@@ -1026,6 +1034,7 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
               onBack={() => setPhase('select')}
               onNewBreak={() => { tracker.clearAll(); setPhase('select'); }}
               breakInfo={breakInfo}
+              activeSetId={activeSetId}
             />
       )}
     </div>

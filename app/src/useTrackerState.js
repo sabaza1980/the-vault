@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 
 // localStorage keys:
 // vault.tracker.{setId}.targeted  = JSON array of player slugs
@@ -32,6 +32,12 @@ export function useTrackerState(setId) {
   const [hits, setHits] = useState(
     () => readJSON(hitsKey(setId), [])
   );
+
+  // Reload from localStorage whenever the active set switches
+  useEffect(() => {
+    setTargeted(new Set(readJSON(targetedKey(setId), [])));
+    setHits(readJSON(hitsKey(setId), []));
+  }, [setId]);
 
   const isTargeted = useCallback((slug) => targeted.has(slug), [targeted]);
 
