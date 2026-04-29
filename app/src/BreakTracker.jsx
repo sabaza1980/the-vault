@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import html2canvas from 'html2canvas';
+import AdGateModal from './AdGateModal.jsx';
 import { useTrackerState } from './useTrackerState.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
@@ -631,10 +632,11 @@ function PlayerLiveCard({ player, appearances, loading, tracker }) {
 }
 
 // ── Break Summary Modal ───────────────────────────────────────────────────────
-function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose, onNewBreak }) {
+function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose, onNewBreak, user, onSignUpPrompt }) {
   const cardRef = useRef();
   const [screenshotting, setScreenshotting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
+  const [adGate, setAdGate] = useState(null); // null | 'csv' | 'screenshot'
 
   // Group hits by player
   const grouped = useMemo(() => {
@@ -710,13 +712,68 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
     }
   }, []);
 
+  // ── Ad-gated export triggers ────────────────────────────────────────────────
+  const handleExportClick = useCallback((type) => {
+    setAdGate(type);
+  }, []);
+
+  const handleAdWatched = useCallback(() => {
+    const type = adGate;
+    setAdGate(null);
+    if (type === 'csv') downloadCSV();
+    if (type === 'screenshot') downloadScreenshot();
+  }, [adGate, downloadCSV, downloadScreenshot]);
+
   return (
+    <>
+    {adGate && (
+      <AdGateModal
+        title="Unlock Export"
+        description="Watch a short ad to download your break summary."
+        rewardLine={adGate === 'csv' ? 'Download CSV' : 'Save Image'}
+        isDismissable
+        onWatched={handleAdWatched}
+        onUpgrade={() => setAdGate(null)}
+        onDismiss={() => setAdGate(null)}
+      />
+    )}
     <div style={{
       position: 'fixed', inset: 0, zIndex: 600,
       background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       overflowY: 'auto', padding: '24px 16px 40px',
     }}>
+      {/* Sign-up prompt (unauthenticated users) */}
+      {!user && (
+        <div style={{
+          width: '100%', maxWidth: 480, marginBottom: 14,
+          background: 'linear-gradient(135deg, rgba(255,107,53,0.14), rgba(255,107,53,0.06))',
+          border: '1px solid rgba(255,107,53,0.3)', borderRadius: 14,
+          padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.4 }}>
+              Save your breaks forever 🏆
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+              Create a free account to sync your hit history across devices.
+            </div>
+          </div>
+          <button
+            onClick={onSignUpPrompt}
+            style={{
+              flexShrink: 0, padding: '8px 14px', borderRadius: 10,
+              background: 'linear-gradient(135deg, #ff6b35, #e84d1e)',
+              border: 'none', color: '#fff', fontSize: 12, fontWeight: 700,
+              cursor: 'pointer', fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1,
+              boxShadow: '0 2px 10px rgba(255,107,53,0.4)',
+            }}
+          >
+            Sign Up Free
+          </button>
+        </div>
+      )}
+
       {/* Screenshottable card */}
       <div ref={cardRef} style={{
         width: '100%', maxWidth: 480,
@@ -809,7 +866,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
       {/* Export buttons */}
       <div style={{ width: '100%', maxWidth: 480, marginTop: 14, display: 'flex', gap: 8 }}>
         <button
-          onClick={downloadScreenshot}
+          onClick={() => handleExportClick('screenshot')}
           disabled={screenshotting}
           style={{
             flex: 1, padding: '12px 0', borderRadius: 12,
@@ -821,7 +878,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
           {screenshotting ? '…' : '📸 Save Image'}
         </button>
         <button
-          onClick={downloadCSV}
+          onClick={() => handleExportClick('csv')}
           style={{
             flex: 1, padding: '12px 0', borderRadius: 12,
             background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.3)',
@@ -862,11 +919,12 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
         </button>
       </div>
     </div>
+    </>
   );
 }
 
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId, user, onSignUpPrompt }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
@@ -908,6 +966,8 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSe
           breakInfo={breakInfo}
           onClose={() => setShowSummary(false)}
           onNewBreak={onNewBreak}
+          user={user}
+          onSignUpPrompt={onSignUpPrompt}
         />
       )}
 
@@ -1035,6 +1095,8 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
               onNewBreak={() => { tracker.clearAll(); setPhase('select'); }}
               breakInfo={breakInfo}
               activeSetId={activeSetId}
+              user={user}
+              onSignUpPrompt={onSignUpPrompt}
             />
       )}
     </div>
