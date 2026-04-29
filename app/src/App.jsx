@@ -13,9 +13,10 @@ import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
 import AdGateModal from "./AdGateModal";
 import BreakTracker from "./BreakTracker";
+import BreaksView from "./BreaksView";
 import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, increment } from "firebase/firestore";
+import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, getDocs, increment } from "firebase/firestore";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
@@ -1763,6 +1764,7 @@ export default function App() {
   const [showProComingSoon, setShowProComingSoon] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
   const [showBreakTracker, setShowBreakTracker] = useState(false);
+  const [showBreaksView, setShowBreaksView] = useState(false);
   const [collections, setCollections] = useState([]);
   const [showCollections, setShowCollections] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null); // collection being viewed
@@ -1796,8 +1798,22 @@ export default function App() {
     localStorage.setItem("vault-theme", next);
     return next;
   });
+  // Sync theme to <html> so portalled elements (e.g. dropdowns) can use CSS vars
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
   const fileRef = useRef();
   const cameraRef = useRef();
+  const headerRef = useRef();
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const ro = new ResizeObserver(entries => {
+      setHeaderHeight(entries[0].contentRect.height + /* border */ 1);
+    });
+    ro.observe(headerRef.current);
+    return () => ro.disconnect();
+  }, []);
   const isProcessing = useRef(false);
   const pendingQueue = useRef([]);
 
@@ -2223,6 +2239,65 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
     cancelBundleMode();
   }, [handleUpdate, cancelBundleMode]);
 
+  // ── Break save / add-to-vault handlers ────────────────────────────────────
+  const handleSaveBreak = useCallback(async (breakData) => {
+    // Save to localStorage (always, for all users)
+    try {
+      const existing = JSON.parse(localStorage.getItem('vault.saved.breaks') || '[]');
+      if (!existing.some(b => b.id === breakData.id)) {
+        existing.unshift(breakData);
+        localStorage.setItem('vault.saved.breaks', JSON.stringify(existing));
+      }
+    } catch {}
+    // Save to Firestore (authenticated users)
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid, 'breaks', breakData.id), breakData);
+      } catch (e) { console.error('Failed to save break to Firestore', e); }
+    }
+  }, [user]);
+
+  const handleAddCardFromBreak = useCallback(async ({ hit, setId, setName, imageDataUrl }) => {
+    const cardId = Date.now();
+    // Extract year (e.g. "2025-26-bowman" → "2026") and brand
+    const yearMatch = setId.match(/^(\d{4})-(\d{2})/);
+    const year = yearMatch ? '20' + yearMatch[2] : new Date().getFullYear().toString();
+    const brand = setId.includes('bowman') ? 'Bowman' : setId.includes('topps') ? 'Topps' : '';
+
+    let imageUrl = null;
+    if (imageDataUrl && user) {
+      try {
+        const base64 = imageDataUrl.split(',')[1];
+        const storageRef = ref(storage, `users/${user.uid}/cards/${cardId}.jpg`);
+        await uploadString(storageRef, base64, 'base64', { contentType: 'image/jpeg' });
+        imageUrl = await getDownloadURL(storageRef);
+      } catch {
+        imageUrl = imageDataUrl; // fallback to local data URL
+      }
+    } else if (imageDataUrl) {
+      imageUrl = imageDataUrl; // anonymous user: keep as data URL
+    }
+
+    const newCard = {
+      id: cardId,
+      imageUrl,
+      playerName: hit.playerName,
+      fullCardName: `${hit.playerName} ${hit.variantName}`,
+      team: hit.team,
+      year,
+      brand,
+      series: setName,
+      cardNumber: hit.cardNumber || '',
+      rarity: hit.variantName === 'Base' ? 'Base' : 'Insert',
+      condition: 'Unknown',
+      estimatedValue: 0,
+      addedAt: new Date().toISOString(),
+      fromBreakId: hit.breakId || null,
+    };
+    setCards(prev => [newCard, ...prev]);
+    return cardId;
+  }, [user, setCards]);
+
   // handleFiles reads live values via refs so it never uses stale closure data.
   // Keeping [runQueue] as the only dep means the function reference is stable
   // and won't cause unnecessary re-creation on every card/profile change.
@@ -2462,10 +2537,10 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       `}</style>
 
       {/* Header */}
-      <div style={{
+      <div ref={headerRef} style={{
         background: "var(--hbg)",
         borderBottom: "1px solid var(--hb)", padding: "16px 16px 14px",
-        position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(20px)"
+        position: "sticky", top: 0, zIndex: 600, backdropFilter: "blur(20px)"
       }}>
         <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minWidth: 0 }}>
           <div>
@@ -2499,7 +2574,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             )}
             <button
               onClick={() => setShowBreakTracker(true)}
-              title="Break Hit Tracker"
+              title="New Break"
               style={{
                 background: showBreakTracker ? "#ff6b3518" : "var(--gbg)",
                 border: `1px solid ${showBreakTracker ? "#ff6b3550" : "var(--gb)"}`,
@@ -2509,7 +2584,21 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
               }}
             >
-              <span style={{ fontSize: 13 }}>🎯</span> Breaks
+              <span style={{ fontSize: 13 }}>🎯</span> New Break
+            </button>
+            <button
+              onClick={() => setShowBreaksView(true)}
+              title="My Breaks"
+              style={{
+                background: showBreaksView ? "#ff6b3518" : "var(--gbg)",
+                border: `1px solid ${showBreaksView ? "#ff6b3550" : "var(--gb)"}`,
+                borderRadius: 20, padding: "5px 12px",
+                color: showBreaksView ? "#ff6b35" : "var(--gc)",
+                fontSize: 11, fontWeight: 700, cursor: "pointer",
+                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+              }}
+            >
+              <span style={{ fontSize: 13 }}>📦</span> My Breaks
             </button>
             {cards.length > 0 && (
               <button
@@ -2704,6 +2793,18 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           user={user}
           onClose={() => setShowBreakTracker(false)}
           onSignUpPrompt={() => setShowAuth(true)}
+          onSaveBreak={handleSaveBreak}
+          topOffset={headerHeight}
+        />
+      )}
+
+      {/* My Breaks overlay */}
+      {showBreaksView && (
+        <BreaksView
+          user={user}
+          onClose={() => setShowBreaksView(false)}
+          onAddCard={handleAddCardFromBreak}
+          topOffset={headerHeight}
         />
       )}
 

@@ -1,5 +1,7 @@
 ﻿import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
+import { Capacitor } from '@capacitor/core';
 import AdGateModal from './AdGateModal.jsx';
 import { useTrackerState } from './useTrackerState.js';
 
@@ -432,29 +434,33 @@ function HitPickerDropdown({ variants, onSelect, onClose, anchorRect }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
 
+  const DROPDOWN_W = 220;
   const pos = {};
   if (anchorRect) {
-    const DROPDOWN_W = 260;
     const PADDING = 8;
-    const spaceBelow = window.innerHeight - anchorRect.bottom;
-    // Prefer left-align to button; if it overflows right edge, right-align to button's right edge
-    if (anchorRect.left + DROPDOWN_W + PADDING > window.innerWidth) {
-      pos.left = Math.max(PADDING, anchorRect.right - DROPDOWN_W);
-    } else {
-      pos.left = anchorRect.left;
+
+    // Always open below the button
+    pos.top = anchorRect.bottom + 4;
+
+    // Horizontal: left-align to button; shift left if it would overflow right edge
+    let left = anchorRect.left;
+    if (left + DROPDOWN_W + PADDING > window.innerWidth) {
+      left = Math.max(PADDING, anchorRect.right - DROPDOWN_W);
     }
-    if (spaceBelow > 220) { pos.top = anchorRect.bottom + 6; }
-    else { pos.bottom = window.innerHeight - anchorRect.top + 6; }
+    pos.left = Math.max(PADDING, left);
+
+    // Cap height so it doesn't run off screen bottom
+    pos.maxHeight = Math.max(120, window.innerHeight - anchorRect.bottom - PADDING - 4);
   } else {
     pos.top = '50%'; pos.left = '50%'; pos.transform = 'translate(-50%,-50%)';
   }
 
-  return (
+  const dropdown = (
     <div ref={ref} style={{
-      position: 'fixed', zIndex: 300,
+      position: 'fixed', zIndex: 9999,
       background: 'var(--card)', border: '1px solid var(--b)', borderRadius: 10,
       padding: 6, boxShadow: '0 8px 28px rgba(0,0,0,0.55)',
-      minWidth: 190, maxWidth: 260, maxHeight: 300, overflowY: 'auto',
+      minWidth: 190, maxWidth: DROPDOWN_W, overflowY: 'auto',
       ...pos,
     }}>
       <div style={{ fontSize: 10, color: 'var(--tg)', padding: '4px 8px 6px', fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
@@ -484,24 +490,20 @@ function HitPickerDropdown({ variants, onSelect, onClose, anchorRect }) {
       ))}
     </div>
   );
+
+  return createPortal(dropdown, document.body);
 }
 
 // ── Card Slot ─────────────────────────────────────────────────────────────────
 function CardSlot({ appearance, player, tracker }) {
   const { subset, card, variants } = appearance;
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [anchorRect, setAnchorRect] = useState(null);
-  const btnRef = useRef();
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
   const slotHits = tracker.getHitsForCard(player.slug, subset.id, card.number);
 
-  const handleAddHit = useCallback(e => {
-    e.stopPropagation();
-    setAnchorRect(btnRef.current?.getBoundingClientRect() || null);
-    setPickerOpen(true);
-  }, []);
-
-  const handleSelect = useCallback(variant => {
+  const handleAddHit = useCallback(() => {
+    const variant = variants[selectedIdx] || variants[0];
+    if (!variant) return;
     tracker.addHit({
       playerSlug: player.slug,
       subsetId: subset.id,
@@ -509,13 +511,15 @@ function CardSlot({ appearance, player, tracker }) {
       parallelId: variant.id || 'base',
       variantName: variant.isBase ? 'Base' : variant.name,
     });
-  }, [tracker, player.slug, subset.id, card.number]);
+  }, [tracker, player.slug, subset.id, card.number, variants, selectedIdx]);
+
+  const hasHit = slotHits.length > 0;
 
   return (
     <div style={{
-      minWidth: 148, maxWidth: 190, flexShrink: 0,
-      background: slotHits.length > 0 ? 'rgba(76,175,80,0.07)' : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${slotHits.length > 0 ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.07)'}`,
+      minWidth: 160, maxWidth: 210, flexShrink: 0,
+      background: hasHit ? 'rgba(76,175,80,0.07)' : 'rgba(255,255,255,0.03)',
+      border: `1px solid ${hasHit ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.07)'}`,
       borderRadius: 10, padding: '8px 10px',
       display: 'flex', flexDirection: 'column', gap: 6,
     }}>
@@ -554,9 +558,29 @@ function CardSlot({ appearance, player, tracker }) {
         </div>
       )}
 
-      {/* Add hit */}
+      {/* Variant select (only if >1 variant) */}
+      {variants.length > 1 && (
+        <select
+          value={selectedIdx}
+          onChange={e => setSelectedIdx(Number(e.target.value))}
+          style={{
+            background: 'var(--input)', border: '1px solid var(--b)',
+            borderRadius: 6, padding: '4px 6px',
+            color: 'var(--t)', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', outline: 'none', width: '100%',
+            fontFamily: "'Barlow Condensed', sans-serif",
+          }}
+        >
+          {variants.map((v, i) => (
+            <option key={v.id || i} value={i}>
+              {v.isBase ? 'Base' : v.name}{v.printRun ? ` /${v.printRun}` : ''}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {/* Add hit button */}
       <button
-        ref={btnRef}
         onClick={handleAddHit}
         style={{
           background: 'rgba(255,107,53,0.08)', border: '1px dashed rgba(255,107,53,0.35)',
@@ -566,17 +590,8 @@ function CardSlot({ appearance, player, tracker }) {
         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,107,53,0.16)'; }}
         onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,107,53,0.08)'; }}
       >
-        + HIT! (Pending Arrival)
+        + HIT!
       </button>
-
-      {pickerOpen && (
-        <HitPickerDropdown
-          variants={variants}
-          onSelect={handleSelect}
-          onClose={() => setPickerOpen(false)}
-          anchorRect={anchorRect}
-        />
-      )}
     </div>
   );
 }
@@ -632,11 +647,44 @@ function PlayerLiveCard({ player, appearances, loading, tracker }) {
 }
 
 // ── Break Summary Modal ───────────────────────────────────────────────────────
-function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose, onNewBreak, user, onSignUpPrompt }) {
+function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, activeSetId, onClose, onNewBreak, user, onSignUpPrompt, onSaveBreak }) {
   const cardRef = useRef();
   const [screenshotting, setScreenshotting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
   const [adGate, setAdGate] = useState(null); // null | 'csv' | 'screenshot'
+  const [breakSaved, setBreakSaved] = useState(false);
+
+  // Auto-save break when summary opens
+  const savedRef = useRef(false);
+  useEffect(() => {
+    if (savedRef.current || hits.length === 0 || !onSaveBreak) return;
+    savedRef.current = true;
+    const breakData = {
+      id: crypto.randomUUID(),
+      savedAt: new Date().toISOString(),
+      breakerName: breakInfo?.breakerName || '',
+      breakType: breakInfo?.breakType || '',
+      platform: breakInfo?.platform || '',
+      date: breakInfo?.date || '',
+      time: breakInfo?.time || '',
+      setId: activeSetId,
+      setName: setName,
+      hits: hits.map(h => ({
+        id: h.id,
+        timestamp: h.timestamp,
+        playerSlug: h.playerSlug,
+        playerName: targetedPlayers.find(p => p.slug === h.playerSlug)?.name || h.playerSlug,
+        team: targetedPlayers.find(p => p.slug === h.playerSlug)?.team || '',
+        subsetId: h.subsetId,
+        cardNumber: h.cardNumber,
+        parallelId: h.parallelId,
+        variantName: h.variantName,
+        received: false,
+        vaultCardId: null,
+      })),
+    };
+    onSaveBreak(breakData).then(() => setBreakSaved(true)).catch(() => {});
+  }, []); // eslint-disable-line
 
   // Group hits by player
   const grouped = useMemo(() => {
@@ -714,8 +762,14 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
 
   // ── Ad-gated export triggers ────────────────────────────────────────────────
   const handleExportClick = useCallback((type) => {
+    if (!Capacitor.isNativePlatform()) {
+      // Web: no ad gate, download directly
+      if (type === 'csv') downloadCSV();
+      if (type === 'screenshot') downloadScreenshot();
+      return;
+    }
     setAdGate(type);
-  }, []);
+  }, [downloadCSV, downloadScreenshot]);
 
   const handleAdWatched = useCallback(() => {
     const type = adGate;
@@ -743,8 +797,21 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       overflowY: 'auto', padding: '24px 16px 40px',
     }}>
-      {/* Sign-up prompt (unauthenticated users) */}
-      {!user && (
+      {/* Saved confirmation */}
+      {breakSaved && (
+        <div style={{
+          width: '100%', maxWidth: 480, marginBottom: 10,
+          background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.25)',
+          borderRadius: 10, padding: '8px 14px',
+          fontSize: 12, color: '#4caf50', fontWeight: 600,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          ✓ Break saved to My Breaks
+        </div>
+      )}
+
+      {/* Sign-up prompt (unauthenticated users, native only) */}
+      {!user && Capacitor.isNativePlatform() && (
         <div style={{
           width: '100%', maxWidth: 480, marginBottom: 14,
           background: 'linear-gradient(135deg, rgba(255,107,53,0.14), rgba(255,107,53,0.06))',
@@ -924,7 +991,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, onClose,
 }
 
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId, user, onSignUpPrompt }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId, user, onSignUpPrompt, onSaveBreak }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
@@ -964,10 +1031,12 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSe
           targetedPlayers={targetedPlayers}
           setName={checklist?.set?.name || '2025-26 Bowman Basketball'}
           breakInfo={breakInfo}
+          activeSetId={activeSetId}
           onClose={() => setShowSummary(false)}
           onNewBreak={onNewBreak}
           user={user}
           onSignUpPrompt={onSignUpPrompt}
+          onSaveBreak={onSaveBreak}
         />
       )}
 
@@ -1029,7 +1098,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSe
 }
 
 // ── Main BreakTracker ─────────────────────────────────────────────────────────
-export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
+export default function BreakTracker({ user, onClose, onSignUpPrompt, onSaveBreak, topOffset = 0 }) {
   const [checklist, setChecklist] = useState(null);
   const [loadingChecklist, setLoadingChecklist] = useState(true);
   const [checklistError, setChecklistError] = useState(null);
@@ -1059,7 +1128,7 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 500,
+      position: 'fixed', left: 0, right: 0, bottom: 0, top: topOffset, zIndex: 500,
       background: 'var(--bg)', display: 'flex', flexDirection: 'column',
       fontFamily: "'Inter', sans-serif", overflow: 'hidden',
     }}>
@@ -1097,6 +1166,7 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt }) {
               activeSetId={activeSetId}
               user={user}
               onSignUpPrompt={onSignUpPrompt}
+              onSaveBreak={onSaveBreak}
             />
       )}
     </div>
