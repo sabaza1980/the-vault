@@ -47,24 +47,38 @@ export default async function handler(req, res) {
     let totalVariants = 0;
 
     for (const subset of subsets) {
-      const parallels = (subset.parallels || []).map(pId => {
-        const pDef = parallelLibrary[pId] || {};
-        return {
-          id: pId,
-          name: pDef.name || pId,
-          shortName: pDef.shortName || pDef.name || pId,
-          printRun: pDef.printRun || null,
-          color: pDef.color || null,
-          exclusive: pDef.exclusive || null,
+      // For insert-versions subsets (e.g. Planetary Pursuits), each version IS the variant
+      let allVariants;
+      if (subset.type === 'insert-versions' && subset.versions && subset.versions.length > 0) {
+        allVariants = subset.versions.map(v => ({
+          id: `version-${toSlug(v)}`,
+          name: v,
+          shortName: v,
+          printRun: null,
+          color: null,
+          exclusive: null,
           isBase: false,
-        };
-      });
+        }));
+      } else {
+        const parallels = (subset.parallels || []).map(pId => {
+          const pDef = parallelLibrary[pId] || {};
+          return {
+            id: pId,
+            name: pDef.name || pId,
+            shortName: pDef.shortName || pDef.name || pId,
+            printRun: pDef.printRun || null,
+            color: pDef.color || null,
+            exclusive: pDef.exclusive || null,
+            isBase: false,
+          };
+        });
 
-      // Include base as the first variant
-      const allVariants = [
-        { id: null, name: 'Base', shortName: 'Base', printRun: null, color: null, exclusive: subset.exclusive || null, isBase: true },
-        ...parallels,
-      ];
+        // Include base as the first variant
+        allVariants = [
+          { id: null, name: 'Base', shortName: 'Base', printRun: null, color: null, exclusive: subset.exclusive || null, isBase: true },
+          ...parallels,
+        ];
+      }
 
       const matchingCards = (subset.cards || []).filter(card => {
         const names = card.player.includes(' / ')

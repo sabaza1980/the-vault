@@ -118,6 +118,7 @@ export default async function handler(req, res) {
       league: s.league || 'NBA',
       exclusive: s.exclusive || null,
       parallels: s.parallels || [],
+      versions: s.versions || [],
     }));
 
     return res.status(200).json({
