@@ -1809,7 +1809,7 @@ export default function App() {
   useEffect(() => {
     if (!headerRef.current) return;
     const ro = new ResizeObserver(entries => {
-      setHeaderHeight(entries[0].contentRect.height + /* border */ 1);
+      setHeaderHeight(entries[0].target.offsetHeight);
     });
     ro.observe(headerRef.current);
     return () => ro.disconnect();
