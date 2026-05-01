@@ -2794,7 +2794,6 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           onClose={() => setShowBreakTracker(false)}
           onSignUpPrompt={() => setShowAuth(true)}
           onSaveBreak={handleSaveBreak}
-          topOffset={headerHeight}
         />
       )}
 
@@ -2804,7 +2803,6 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           user={user}
           onClose={() => setShowBreaksView(false)}
           onAddCard={handleAddCardFromBreak}
-          topOffset={headerHeight}
         />
       )}
 

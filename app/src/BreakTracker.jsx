@@ -1128,7 +1128,7 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt, onSaveBrea
 
   return (
     <div style={{
-      position: 'fixed', left: 0, right: 0, bottom: 0, top: topOffset, zIndex: 500,
+      position: 'fixed', inset: 0, zIndex: 700,
       background: 'var(--bg)', display: 'flex', flexDirection: 'column',
       fontFamily: "'Inter', sans-serif", overflow: 'hidden',
     }}>

@@ -138,7 +138,7 @@ function AddToVaultModal({ hit, brk, onClose, onAdded, onAddCard }) {
   };
 
   const containerStyle = {
-    position: 'fixed', inset: 0, zIndex: 502,
+    position: 'fixed', inset: 0, zIndex: 702,
     background: 'rgba(0,0,0,0.92)', display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', padding: '24px 16px',
     fontFamily: "'Inter', sans-serif",
@@ -351,7 +351,7 @@ function BreakDetailView({ brk, onBack, onMarkReceived, onAddToVault, topOffset 
 
   return (
     <div style={{
-      position: 'fixed', left: 0, right: 0, bottom: 0, top: topOffset, zIndex: 501,
+      position: 'fixed', inset: 0, zIndex: 701,
       background: 'var(--bg)', display: 'flex', flexDirection: 'column',
       fontFamily: "'Inter', sans-serif", overflow: 'hidden',
     }}>
@@ -502,7 +502,7 @@ export default function BreaksView({ user, onClose, onAddCard, topOffset = 0 }) 
   // Breaks list
   return (
     <div style={{
-      position: 'fixed', left: 0, right: 0, bottom: 0, top: topOffset, zIndex: 500,
+      position: 'fixed', inset: 0, zIndex: 700,
       background: 'var(--bg)', display: 'flex', flexDirection: 'column',
       fontFamily: "'Inter', sans-serif", overflow: 'hidden',
     }}>
