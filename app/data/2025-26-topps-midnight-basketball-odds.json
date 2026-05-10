@@ -1,0 +1,52 @@
+{
+  "_comment": "Odds for 2025-26 Topps Midnight Basketball. Values are estimated until Topps publishes official odds.",
+  "setId": "2025-26-topps-midnight-basketball",
+  "source": "Estimated — pending Topps official odds publication",
+  "lastUpdated": "2026-05-10",
+  "configurations": {
+    "Hobby": {
+      "cardsPerPack": 5,
+      "packsPerBox": 16,
+      "boxesPerCase": 12
+    },
+    "Collector": {
+      "cardsPerPack": 8,
+      "packsPerBox": 8,
+      "boxesPerCase": 8
+    }
+  },
+  "perParallel": {
+    "_comment": "Base parallel rainbow — odds apply to ANY card in the base set. Divide by 100 to get per-card odds.",
+    "mid-refractor":       { "Hobby": { "oddsPer": "pack", "ratio": "1:3",     "estimated": true } },
+    "mid-moonbeam":        { "Hobby": { "oddsPer": "pack", "ratio": "1:10",    "estimated": true } },
+    "mid-silver-lunar":    { "Hobby": { "oddsPer": "pack", "ratio": "1:32",    "estimated": true } },
+    "mid-blue-dusk":       { "Hobby": { "oddsPer": "pack", "ratio": "1:56",    "estimated": true } },
+    "mid-purple-twilight": { "Hobby": { "oddsPer": "pack", "ratio": "1:85",    "estimated": true } },
+    "mid-gold-nocturne":   { "Hobby": { "oddsPer": "pack", "ratio": "1:167",   "estimated": true } },
+    "mid-orange-ember":    { "Hobby": { "oddsPer": "pack", "ratio": "1:333",   "estimated": true } },
+    "mid-red-crimson":     { "Hobby": { "oddsPer": "pack", "ratio": "1:832",   "estimated": true } },
+    "mid-black-void":      { "Hobby": { "oddsPer": "pack", "ratio": "1:1664",  "estimated": true } },
+    "mid-superfractor":    { "Hobby": { "oddsPer": "pack", "ratio": "1:8320",  "estimated": true } }
+  },
+  "perInsert": {
+    "_comment": "Insert subset odds — pending checklist & odds publication.",
+    "night-owls":    { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "moonfall":      { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "insomnia":      { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "daydreamers":   { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "nightshade":    { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "dreamland":     { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "night-vision":  { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } },
+    "twilight":      { "Hobby": { "oddsPer": "pack", "ratio": "TBD", "estimated": true } }
+  },
+  "perAuto": {
+    "_comment": "Autograph subset odds — pending checklist & odds publication.",
+    "rookie-jersey-autographs":  { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } },
+    "stroke-of-midnight":        { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } },
+    "midnight-sun-signatures":   { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } },
+    "dark-matter":               { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } },
+    "midnight-oil-marks":        { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } },
+    "horizon":                   { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } },
+    "dark-marks":                { "Hobby": { "oddsPer": "box",  "ratio": "TBD", "estimated": true } }
+  }
+}

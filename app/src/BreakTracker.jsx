@@ -10,6 +10,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || '';
 const COLLECTIONS = [
   { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
   { id: '2025-26-topps-cosmic-chrome-basketball', name: '2025-26 Topps Cosmic Chrome Basketball' },
+  { id: '2025-26-topps-midnight-basketball', name: '2025-26 Topps Midnight Basketball' },
 ];
 const BREAK_TYPES = ['PYT', 'PYP', 'Random Team'];
 const PLATFORMS = ['Whatnot', 'Fanatics'];
@@ -22,8 +23,18 @@ function defaultBreakInfo() {
     date: now.toISOString().slice(0, 10),
     time: now.toTimeString().slice(0, 5),
     platform: 'Whatnot',
-    collection: '2025-26-bowman-basketball',
+    collections: ['2025-26-bowman-basketball'],
   };
+}
+
+// Derive a stable composite key and display name from an array of set IDs
+function compositeSetId(ids) {
+  return [...ids].sort().join('--');
+}
+function compositeSetName(ids) {
+  return ids
+    .map(id => COLLECTIONS.find(c => c.id === id)?.name || id)
+    .join(' + ');
 }
 
 const BREAK_INFO_KEY = 'vault.tracker.breakInfo';
@@ -31,7 +42,16 @@ const BREAK_INFO_KEY = 'vault.tracker.breakInfo';
 function useBreakInfo() {
   const [info, setInfo] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(BREAK_INFO_KEY)) || defaultBreakInfo();
+      const saved = JSON.parse(localStorage.getItem(BREAK_INFO_KEY)) || defaultBreakInfo();
+      // Migrate old single-collection field
+      if (saved.collection && !saved.collections) {
+        saved.collections = [saved.collection];
+        delete saved.collection;
+      }
+      if (!Array.isArray(saved.collections) || saved.collections.length === 0) {
+        saved.collections = ['2025-26-bowman-basketball'];
+      }
+      return saved;
     } catch {
       return defaultBreakInfo();
     }
@@ -136,12 +156,40 @@ function BreakInfoForm({ info, onChange }) {
             </div>
           </div>
 
-          {/* Collection */}
+          {/* Collections (multi-select) */}
           <div>
-            <label style={labelStyle}>Collection</label>
-            <select value={info.collection} onChange={e => onChange('collection', e.target.value)} style={{ ...inputStyle, appearance: 'none', cursor: 'pointer' }}>
-              {COLLECTIONS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <label style={labelStyle}>Sets in this break</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {COLLECTIONS.map(c => {
+                const checked = (info.collections || []).includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+                      padding: '7px 10px', borderRadius: 9,
+                      border: `1px solid ${checked ? 'rgba(255,107,53,0.5)' : 'var(--b)'}`,
+                      background: checked ? 'rgba(255,107,53,0.08)' : 'var(--input)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        const current = info.collections || [];
+                        const next = checked
+                          ? current.filter(id => id !== c.id)
+                          : [...current, c.id];
+                        if (next.length > 0) onChange('collections', next);
+                      }}
+                      style={{ accentColor: '#ff6b35', width: 14, height: 14, flexShrink: 0 }}
+                    />
+                    <span style={{ fontSize: 12, color: checked ? '#ff6b35' : 'var(--t)', fontWeight: checked ? 600 : 400 }}>{c.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -376,6 +424,26 @@ function SelectPhase({ checklist, tracker, onStartBreak, onClose, breakInfo, onB
       {/* List */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <BreakInfoForm info={breakInfo} onChange={onBreakInfoChange} />
+        {/* Stub subsets banner */}
+        {(() => {
+          const stubs = (checklist?.subsets || []).filter(s => s.isStub);
+          if (stubs.length === 0) return null;
+          const autoStubs = stubs.filter(s => s.isAuto);
+          const insertStubs = stubs.filter(s => s.isInsert && !s.isAuto);
+          const parts = [];
+          if (autoStubs.length) parts.push(`${autoStubs.length} auto subset${autoStubs.length !== 1 ? 's' : ''}`);
+          if (insertStubs.length) parts.push(`${insertStubs.length} insert subset${insertStubs.length !== 1 ? 's' : ''}`);
+          return (
+            <div style={{
+              margin: '0 14px 2px', padding: '8px 12px', borderRadius: 9,
+              background: 'rgba(255,193,7,0.07)', border: '1px solid rgba(255,193,7,0.25)',
+              fontSize: 11, color: 'rgba(255,193,7,0.85)', lineHeight: 1.5,
+            }}>
+              <span style={{ fontWeight: 700 }}>⏳ Coming soon:</span>{' '}
+              {parts.join(' & ')} {stubs.length !== 1 ? 'have' : 'has'} checklists pending and won't appear until populated.
+            </div>
+          );
+        })()}
         {viewMode === 'player' && filteredPlayers.map(p => (
           <PlayerSelectRow key={p.slug} player={p} isTargeted={isTargeted(p.slug)} onToggle={toggleTarget} />
         ))}
@@ -991,7 +1059,7 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, activeSe
 }
 
 // ── LIVE PHASE ────────────────────────────────────────────────────────────────
-function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId, user, onSignUpPrompt, onSaveBreak }) {
+function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSetId, activeCollections, user, onSignUpPrompt, onSaveBreak }) {
   const targetedSlugs = tracker.getTargetedSlugs();
   const targetedPlayers = useMemo(
     () => checklist.players.filter(p => targetedSlugs.includes(p.slug)),
@@ -1004,13 +1072,30 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSe
   const [showSummary, setShowSummary] = useState(false);
   const totalHits = tracker.hits.length;
 
+  // Fetch appearances from all selected sets for each targeted player
+  const setIds = activeCollections || [activeSetId];
+
   useEffect(() => {
     if (targetedSlugs.length === 0) return;
     Promise.allSettled(
       targetedSlugs.map(slug =>
-        fetch(`${API_BASE}/api/sets-player?setId=${activeSetId}&player=${encodeURIComponent(slug)}`)
-          .then(r => r.ok ? r.json() : null)
-          .then(data => ({ slug, data }))
+        Promise.allSettled(
+          setIds.map(sid =>
+            fetch(`${API_BASE}/api/sets-player?setId=${sid}&player=${encodeURIComponent(slug)}`)
+              .then(r => r.ok ? r.json() : null)
+          )
+        ).then(perSet => {
+          // Merge appearances from all sets
+          const appearances = [];
+          for (const r of perSet) {
+            if (r.status === 'fulfilled' && r.value?.appearances) {
+              appearances.push(...r.value.appearances);
+            }
+          }
+          // Use first valid result for player meta, supplement with merged appearances
+          const first = perSet.find(r => r.status === 'fulfilled' && r.value)?.value || {};
+          return { slug, data: { ...first, appearances } };
+        })
       )
     ).then(results => {
       const updates = {};
@@ -1029,7 +1114,7 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSe
         <BreakSummaryModal
           hits={tracker.hits}
           targetedPlayers={targetedPlayers}
-          setName={checklist?.set?.name || '2025-26 Bowman Basketball'}
+          setName={checklist?.set?.name || activeCollections?.map(id => COLLECTIONS.find(c => c.id === id)?.name || id).join(' + ') || '2025-26 Bowman Basketball'}
           breakInfo={breakInfo}
           activeSetId={activeSetId}
           onClose={() => setShowSummary(false)}
@@ -1097,6 +1182,34 @@ function LivePhase({ checklist, tracker, onBack, onNewBreak, breakInfo, activeSe
   );
 }
 
+// ── Merge multiple checklists into one ───────────────────────────────────────
+function mergeChecklists(results) {
+  // results: array of { setId, data } where data is the API response
+  const playerMap = new Map();
+  const teamMap = new Map();
+  const allSubsets = [];
+
+  for (const { data } of results) {
+    for (const subset of (data.subsets || [])) {
+      allSubsets.push(subset);
+    }
+    for (const p of (data.players || [])) {
+      if (!playerMap.has(p.slug)) playerMap.set(p.slug, p);
+    }
+    for (const t of (data.teams || [])) {
+      if (!teamMap.has(t.name)) teamMap.set(t.name, t);
+    }
+  }
+
+  const players = [...playerMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const teams   = [...teamMap.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+  // Use first result's set meta; caller will override display name
+  const set = results[0]?.data?.set || {};
+
+  return { set, subsets: allSubsets, players, teams };
+}
+
 // ── Main BreakTracker ─────────────────────────────────────────────────────────
 export default function BreakTracker({ user, onClose, onSignUpPrompt, onSaveBreak, topOffset = 0 }) {
   const [checklist, setChecklist] = useState(null);
@@ -1105,21 +1218,34 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt, onSaveBrea
   const [phase, setPhase] = useState('select');
 
   const [breakInfo, updateBreakInfo] = useBreakInfo();
-  const activeSetId = breakInfo.collection || '2025-26-bowman-basketball';
+  const activeCollections = breakInfo.collections?.length ? breakInfo.collections : ['2025-26-bowman-basketball'];
+  const activeSetId = compositeSetId(activeCollections);
+  const activeSetName = compositeSetName(activeCollections);
 
   const tracker = useTrackerState(activeSetId);
 
   const fetchChecklist = useCallback(() => {
     setLoadingChecklist(true);
     setChecklistError(null);
-    fetch(`${API_BASE}/api/sets-checklist?setId=${activeSetId}`)
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(data => { setChecklist(data); setLoadingChecklist(false); })
+    Promise.all(
+      activeCollections.map(setId =>
+        fetch(`${API_BASE}/api/sets-checklist?setId=${setId}`)
+          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+          .then(data => ({ setId, data }))
+      )
+    )
+      .then(results => {
+        const merged = mergeChecklists(results);
+        // Attach display name so downstream consumers get the right header
+        merged.set = { ...merged.set, name: activeSetName };
+        setChecklist(merged);
+        setLoadingChecklist(false);
+      })
       .catch(e => { setChecklistError(e.message); setLoadingChecklist(false); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSetId]);
 
-  // Reset to select phase and reload checklist when set changes
+  // Reset to select phase and reload checklist when set selection changes
   useEffect(() => {
     setPhase('select');
     fetchChecklist();
@@ -1164,6 +1290,7 @@ export default function BreakTracker({ user, onClose, onSignUpPrompt, onSaveBrea
               onNewBreak={() => { tracker.clearAll(); setPhase('select'); }}
               breakInfo={breakInfo}
               activeSetId={activeSetId}
+              activeCollections={activeCollections}
               user={user}
               onSignUpPrompt={onSignUpPrompt}
               onSaveBreak={onSaveBreak}

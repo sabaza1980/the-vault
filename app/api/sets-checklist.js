@@ -115,6 +115,7 @@ export default async function handler(req, res) {
       type: s.type || null,
       isAuto: s.isAuto || false,
       isInsert: s.isInsert || false,
+      isStub: s._stub === true,
       league: s.league || 'NBA',
       exclusive: s.exclusive || null,
       parallels: s.parallels || [],
