@@ -37,23 +37,38 @@ function processChecklist(data) {
         ? card.player.split(' / ').map(n => n.trim())
         : [card.player];
 
-      const teamName = card.team || 'Unknown';
+      // Split teams for multi-player cards when teams differ (e.g. "Team A / Team B")
+      const rawTeamNames = (playerNames.length > 1 && card.team?.includes(' / '))
+        ? card.team.split(' / ').map(n => n.trim())
+        : null;
 
-      // Update team map
-      if (!teamMap.has(teamName)) {
-        teamMap.set(teamName, {
-          name: teamName,
-          league: subset.league || 'NBA',
-          totalVariants: 0,
-          playerSlugs: new Set(),
-        });
-      }
-      const t = teamMap.get(teamName);
-      t.totalVariants += variantsPerCard;
+      // Track which teams we've incremented totalVariants for this card (avoid double-count)
+      const teamsUpdatedThisCard = new Set();
 
-      for (const pName of playerNames) {
+      for (let i = 0; i < playerNames.length; i++) {
+        const pName = playerNames[i];
+        const teamName = rawTeamNames
+          ? (rawTeamNames[i] || rawTeamNames[rawTeamNames.length - 1])
+          : (card.team || 'Unknown');
         const slug = toSlug(pName);
 
+        // Update team map
+        if (!teamMap.has(teamName)) {
+          teamMap.set(teamName, {
+            name: teamName,
+            league: subset.league || 'NBA',
+            totalVariants: 0,
+            playerSlugs: new Set(),
+          });
+        }
+        const t = teamMap.get(teamName);
+        if (!teamsUpdatedThisCard.has(teamName)) {
+          t.totalVariants += variantsPerCard;
+          teamsUpdatedThisCard.add(teamName);
+        }
+        t.playerSlugs.add(slug);
+
+        // Update player map
         if (!playerMap.has(slug)) {
           playerMap.set(slug, {
             name: pName,
@@ -68,8 +83,6 @@ function processChecklist(data) {
         p.totalVariants += variantsPerCard;
         if (!p.team) p.team = teamName;
         if (card.isRC) p.isRC = true;
-
-        t.playerSlugs.add(slug);
       }
     }
   }
@@ -116,10 +129,12 @@ export default async function handler(req, res) {
       isAuto: s.isAuto || false,
       isInsert: s.isInsert || false,
       isStub: s._stub === true,
+      isMultiPlayer: s.isMultiPlayer || false,
       league: s.league || 'NBA',
       exclusive: s.exclusive || null,
       parallels: s.parallels || [],
       versions: s.versions || [],
+      versionTiers: s.versionTiers || [],
     }));
 
     return res.status(200).json({

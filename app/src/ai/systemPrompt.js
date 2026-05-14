@@ -416,6 +416,62 @@ When possible and helpful, also:
 
 ---
 
+SET KNOWLEDGE — 2025-26 TOPPS NBA HOOPS BASKETBALL
+
+Brand history:
+- NBA Hoops is the oldest continuously produced NBA trading card brand, originating with SkyBox International in 1989-90
+- It passed through Fleer/SkyBox and Upper Deck before Panini acquired the NBA licence
+- 2025-26 is the first Topps-branded NBA Hoops release following Topps reclaiming the NBA licence
+- The 1989-90 design callback is a deliberate tribute; Hoops 1989 Signatures auto cards feature that original set's layout
+
+Set stats:
+- 300-card base set (base numbers #1–270 for veterans and stars; #271–300 for 2025 draft class rookies)
+- 27 subsets total; 29 parallels across the two rainbow streams plus shared low-numbered cards
+- 5 configurations: Hobby, Jumbo, Value, Hanger, Fanatics Blaster
+
+Parallel streams — critical distinction:
+- Hobby and Jumbo boxes contain the PIXEL BURST rainbow stream: Pixel Burst (base), Yellow /199, Green & Blue /99, Gold & Green /50
+- Value, Hanger, and Fanatics Blaster contain the LIGHT BURST rainbow stream: Light Burst (base), Teal /199, Blue & Yellow /99, Red & Orange /50, Purple & Blue /25
+- A Pixel Burst parallel cannot come from a Value/Hanger/Fanatics pack; a Light Burst cannot come from Hobby/Jumbo — this matters a great deal when evaluating or authenticating single cards
+
+Configuration-exclusive parallels:
+- Green Hoops: Value packs only
+- Orange Hoops: Hanger packs only — yields 2 per pack (ratio 2:1). Do not display this as a 1-in-N; it should be shown as 2 per pack
+- Fanatics Parallel: Fanatics Blaster only — guaranteed 1 per box
+
+Shared low-numbered parallels (available from Hobby and Jumbo only):
+- Orange /25, Red /10, Blue /5, Black /1, Superfractor 1/1
+
+Key insert subsets and how they differ:
+- Hoops Tribute, Arena Action, Fast Break, Slam Dunk, Triple Double, Court Vision, All-Star Selections, Top of the Key: standard inserts with Gold /50, Red /25, Black /10, Blue /5, Superfractor 1/1 parallels
+- Class of 2025: rookie-focused insert — all 11 cards feature 2025 draft class players
+- Historic Moments, Franchise Players, Highlight Reel, Stat Leaders: veteran-focused inserts
+- Rising Stars: mixed insert bridging rookies and young veterans
+- Back-to-Back: short set of 5 multi-time award winners
+
+Finals Pursuit — version tier insert (not a parallel set):
+- Cards are assigned to exactly one of seven ascending tiers: Bronze > Silver > Gold > Emerald > Sapphire > Ruby > Championship
+- There are NO parallels of Finals Pursuit cards; the tier IS the version
+- Pull rates increase in rarity by tier: Bronze is pack-odds; Championship is case-level
+- Do NOT describe Finals Pursuit cards as "parallels of each other" — they are different inserts at different rarity tiers
+
+Multi-player autograph subsets:
+- Hoops Rookie Duals: two 2025 draft class rookies per card; player and team fields are /-separated
+- Hoops Rookie Triples: three 2025 draft class rookies per card
+- Hoops Rookie Veteran Duals: one 2025 rookie + one all-time legend; the five pairings are Cooper Flagg/Dirk Nowitzki, Dylan Harper/Tim Duncan, Ace Bailey/Larry Bird, VJ Edgecombe/Isiah Thomas, Tre Johnson/Shaquille O'Neal
+- When discussing a dual or triple auto, reference both/all players — do not flatten to one
+
+Hoops 1989 Signatures:
+- Auto subset using the 1989-90 SkyBox design layout
+- Includes modern stars (LeBron, Curry, Durant, Jokic, Giannis, Cooper Flagg) alongside authentic signers from the original 1989-90 NBA Hoops class (David Robinson, Hakeem Olajuwon, Magic Johnson, Larry Bird, Charles Barkley, Clyde Drexler, Karl Malone, Patrick Ewing, Isiah Thomas, John Stockton, Dominique Wilkins)
+- Card numbers use the 89S- prefix
+
+Key 2025 rookies in this set:
+- Cooper Flagg (Washington Wizards, #1 pick), Dylan Harper (San Antonio Spurs), Ace Bailey (Charlotte Hornets), VJ Edgecombe (Detroit Pistons), Tre Johnson (New Orleans Pelicans), Carter Bryant (Utah Jazz), Noa Essengue (Sacramento Kings), Khaman Maluach (Dallas Mavericks), Labaron Philon (Memphis Grizzlies), Kasparas Jakucionis (Chicago Bulls), Egor Demin (Portland Trail Blazers)
+- Cooper Flagg is the clear chase rookie across all configurations
+
+---
+
 TRUTHFULNESS RULES
 These are non-negotiable:
 - Never invent card details, player/character information, collection counts, grades, or population data

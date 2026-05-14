@@ -1,0 +1,323 @@
+{
+  "_comment": "Odds for 2025-26 Topps NBA Hoops Basketball. The set has two parallel rainbow streams: Pixel Burst (Hobby/Jumbo) and Light Burst (Value/Hanger/Fanatics). The Finals Pursuit subset uses version tiers instead of parallels — see perInsert.finals-pursuit.versionTiers. The Orange Hoops parallel yields 2 per Hanger pack (ratio 2:1).",
+  "setId": "2025-26-topps-nba-hoops-basketball",
+  "source": "Topps published odds — 2025-26 NBA Hoops Basketball (transcribed from official odds sheet, May 2026)",
+  "lastUpdated": "2026-05-27",
+  "configurations": {
+    "Hobby": {
+      "cardsPerPack": 8,
+      "packsPerBox": 20,
+      "boxesPerCase": 12,
+      "guarantees": {
+        "autographs": 1,
+        "pixelBurstParallels": 6
+      }
+    },
+    "Jumbo": {
+      "cardsPerPack": 20,
+      "packsPerBox": 10,
+      "boxesPerCase": 8,
+      "guarantees": {
+        "autographs": 2,
+        "pixelBurstParallels": 10
+      }
+    },
+    "Value": {
+      "cardsPerPack": 14,
+      "packsPerBox": 1,
+      "boxesPerCase": null,
+      "guarantees": {
+        "lightBurstParallels": 3,
+        "greenHoopsParallels": 1
+      }
+    },
+    "Hanger": {
+      "cardsPerPack": 30,
+      "packsPerBox": 1,
+      "boxesPerCase": null,
+      "guarantees": {
+        "lightBurstParallels": 5,
+        "orangeHoops": 2
+      }
+    },
+    "Fanatics Blaster": {
+      "cardsPerPack": 10,
+      "packsPerBox": 6,
+      "boxesPerCase": null,
+      "guarantees": {
+        "lightBurstParallels": 3,
+        "fanaticsParallels": 1
+      }
+    }
+  },
+  "perParallel": {
+    "_comment": "Keys match parallelLibrary ids in the checklist. Pixel Burst entries only appear under Hobby/Jumbo; Light Burst entries under Value/Hanger/Fanatics Blaster.",
+
+    "pb-pixel-burst": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:4",   "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:2",   "estimated": false }
+    },
+    "pb-yellow": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:60",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:20",  "estimated": false }
+    },
+    "pb-green-blue": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:120", "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:40",  "estimated": false }
+    },
+    "pb-gold-green": {
+      "Hobby": { "oddsPer": "box",  "ratio": "1:3",   "estimated": false },
+      "Jumbo": { "oddsPer": "box",  "ratio": "1:1",   "estimated": false, "guarantee": true }
+    },
+
+    "lb-light-burst": {
+      "Value":           { "oddsPer": "pack", "ratio": "1:3",   "estimated": false },
+      "Hanger":          { "oddsPer": "pack", "ratio": "1:4",   "estimated": false },
+      "Fanatics Blaster":{ "oddsPer": "pack", "ratio": "1:4",   "estimated": false }
+    },
+    "lb-teal": {
+      "Value":           { "oddsPer": "pack", "ratio": "1:18",  "estimated": false },
+      "Hanger":          { "oddsPer": "pack", "ratio": "1:24",  "estimated": false },
+      "Fanatics Blaster":{ "oddsPer": "pack", "ratio": "1:20",  "estimated": false }
+    },
+    "lb-blue-yellow": {
+      "Value":           { "oddsPer": "pack", "ratio": "1:36",  "estimated": false },
+      "Hanger":          { "oddsPer": "pack", "ratio": "1:48",  "estimated": false },
+      "Fanatics Blaster":{ "oddsPer": "pack", "ratio": "1:40",  "estimated": false }
+    },
+    "lb-red-orange": {
+      "Value":           { "oddsPer": "box",  "ratio": "1:2",   "estimated": false },
+      "Hanger":          { "oddsPer": "box",  "ratio": "1:2",   "estimated": false },
+      "Fanatics Blaster":{ "oddsPer": "box",  "ratio": "1:3",   "estimated": false }
+    },
+    "lb-purple-blue": {
+      "Value":           { "oddsPer": "box",  "ratio": "1:4",   "estimated": false },
+      "Hanger":          { "oddsPer": "box",  "ratio": "1:4",   "estimated": false },
+      "Fanatics Blaster":{ "oddsPer": "box",  "ratio": "1:5",   "estimated": false }
+    },
+
+    "green-hoops": {
+      "Value":           { "oddsPer": "pack", "ratio": "1:4",   "estimated": false, "note": "Value exclusive" }
+    },
+    "orange-hoops": {
+      "Hanger":          { "oddsPer": "pack", "ratio": "2:1",   "estimated": false, "note": "Hanger exclusive — 2 per pack" }
+    },
+    "fanatics-parallel": {
+      "Fanatics Blaster":{ "oddsPer": "box",  "ratio": "1:1",   "estimated": false, "guarantee": true, "note": "Fanatics Blaster exclusive — guaranteed 1 per box" }
+    },
+
+    "hh-orange-25": {
+      "Hobby": { "oddsPer": "box",  "ratio": "1:6",   "estimated": false },
+      "Jumbo": { "oddsPer": "box",  "ratio": "1:3",   "estimated": false }
+    },
+    "hh-red-10": {
+      "Hobby": { "oddsPer": "box",  "ratio": "1:20",  "estimated": false },
+      "Jumbo": { "oddsPer": "box",  "ratio": "1:10",  "estimated": false }
+    },
+    "hh-blue-5": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:2",   "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:1",   "estimated": false }
+    },
+    "hh-black-1": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:6",   "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:3",   "estimated": false }
+    },
+    "hh-superfractor": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:24",  "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:12",  "estimated": false }
+    }
+  },
+  "perInsert": {
+    "_comment": "Base version odds for any card in the subset. Finals Pursuit uses versionTiers instead of parallels.",
+
+    "hoops-tribute": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:4",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:2",  "estimated": false },
+      "Value": { "oddsPer": "pack", "ratio": "1:5",  "estimated": false }
+    },
+    "arena-action": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:3",  "estimated": false },
+      "Value": { "oddsPer": "pack", "ratio": "1:7",  "estimated": false }
+    },
+    "fast-break": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:5",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:3",  "estimated": false }
+    },
+    "slam-dunk": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:8",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:4",  "estimated": false }
+    },
+    "triple-double": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:8",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:4",  "estimated": false }
+    },
+    "court-vision": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:10", "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:5",  "estimated": false }
+    },
+    "all-star-selections": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:4",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:2",  "estimated": false },
+      "Value": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false }
+    },
+    "top-of-the-key": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:3",  "estimated": false }
+    },
+    "class-of-2025": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:8",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:4",  "estimated": false },
+      "Value": { "oddsPer": "pack", "ratio": "1:10", "estimated": false }
+    },
+    "historic-moments": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:12", "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false }
+    },
+    "franchise-players": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:10", "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:5",  "estimated": false }
+    },
+    "highlight-reel": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:8",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:4",  "estimated": false }
+    },
+    "stat-leaders": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:3",  "estimated": false }
+    },
+    "rising-stars": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:3",  "estimated": false },
+      "Value": { "oddsPer": "pack", "ratio": "1:8",  "estimated": false }
+    },
+    "back-to-back": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:12", "estimated": false },
+      "Jumbo": { "oddsPer": "pack", "ratio": "1:6",  "estimated": false }
+    },
+
+    "finals-pursuit": {
+      "_comment": "No parallels — seven version tiers with individual pull rates. Display as a staircase/ladder, not a parallel grid.",
+      "Hobby": {
+        "versionTiers": [
+          { "name": "Bronze",       "oddsPer": "pack", "ratio": "1:3",   "estimated": false },
+          { "name": "Silver",       "oddsPer": "pack", "ratio": "1:6",   "estimated": false },
+          { "name": "Gold",         "oddsPer": "pack", "ratio": "1:12",  "estimated": false },
+          { "name": "Emerald",      "oddsPer": "box",  "ratio": "1:2",   "estimated": false },
+          { "name": "Sapphire",     "oddsPer": "box",  "ratio": "1:4",   "estimated": false },
+          { "name": "Ruby",         "oddsPer": "box",  "ratio": "1:8",   "estimated": false },
+          { "name": "Championship", "oddsPer": "case", "ratio": "1:2",   "estimated": false }
+        ]
+      },
+      "Jumbo": {
+        "versionTiers": [
+          { "name": "Bronze",       "oddsPer": "pack", "ratio": "1:2",   "estimated": false },
+          { "name": "Silver",       "oddsPer": "pack", "ratio": "1:4",   "estimated": false },
+          { "name": "Gold",         "oddsPer": "pack", "ratio": "1:8",   "estimated": false },
+          { "name": "Emerald",      "oddsPer": "box",  "ratio": "1:1",   "estimated": false },
+          { "name": "Sapphire",     "oddsPer": "box",  "ratio": "1:2",   "estimated": false },
+          { "name": "Ruby",         "oddsPer": "box",  "ratio": "1:4",   "estimated": false },
+          { "name": "Championship", "oddsPer": "case", "ratio": "1:1",   "estimated": false }
+        ]
+      }
+    }
+  },
+  "perInsertParallel": {
+    "_comment": "Insert parallel odds for key insert subsets with numbered parallels.",
+    "hoops-tribute": {
+      "hh-insert-gold":         { "Hobby": { "oddsPer": "pack", "ratio": "1:120",  "estimated": false } },
+      "hh-insert-red":          { "Hobby": { "oddsPer": "pack", "ratio": "1:240",  "estimated": false } },
+      "hh-insert-black":        { "Hobby": { "oddsPer": "pack", "ratio": "1:600",  "estimated": false } },
+      "hh-insert-blue":         { "Hobby": { "oddsPer": "pack", "ratio": "1:1200", "estimated": false } },
+      "hh-insert-superfractor": { "Hobby": { "oddsPer": "pack", "ratio": "1:6000", "estimated": false } }
+    },
+    "all-star-selections": {
+      "hh-insert-gold":         { "Hobby": { "oddsPer": "pack", "ratio": "1:100",  "estimated": false } },
+      "hh-insert-red":          { "Hobby": { "oddsPer": "pack", "ratio": "1:200",  "estimated": false } },
+      "hh-insert-black":        { "Hobby": { "oddsPer": "pack", "ratio": "1:500",  "estimated": false } },
+      "hh-insert-blue":         { "Hobby": { "oddsPer": "pack", "ratio": "1:1000", "estimated": false } },
+      "hh-insert-superfractor": { "Hobby": { "oddsPer": "pack", "ratio": "1:5000", "estimated": false } }
+    }
+  },
+  "perAutoSubset": {
+    "hoops-rookie-autographs": {
+      "Hobby": { "oddsPer": "box",  "ratio": "1:1", "guarantee": true, "estimated": false, "note": "1 per Hobby box; spread across ~100 cards" },
+      "Jumbo": { "oddsPer": "box",  "ratio": "2:1", "guarantee": true, "estimated": false, "note": "2 per Jumbo box guaranteed" }
+    },
+    "hoops-veteran-autographs": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:2", "estimated": false },
+      "Jumbo": { "oddsPer": "box",  "ratio": "1:2", "estimated": false }
+    },
+    "hoops-1989-signatures": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:4", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:2", "estimated": false }
+    },
+    "hoops-rookie-duals": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:3", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:2", "estimated": false }
+    },
+    "hoops-rookie-triples": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:6", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:4", "estimated": false }
+    },
+    "hoops-rookie-veteran-duals": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:12", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:8",  "estimated": false }
+    },
+    "class-of-2025-autographs": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:3", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:2", "estimated": false }
+    },
+    "fast-break-autographs": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:4", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:3", "estimated": false }
+    },
+    "court-vision-autographs": {
+      "Hobby": { "oddsPer": "case", "ratio": "1:6", "estimated": false },
+      "Jumbo": { "oddsPer": "case", "ratio": "1:4", "estimated": false }
+    }
+  },
+  "perAutoParallel": {
+    "_comment": "Auto subset rainbow odds.",
+    "hoops-rookie-autographs": {
+      "hh-auto-gold":         { "Hobby": { "oddsPer": "case", "ratio": "1:2",   "estimated": false } },
+      "hh-auto-orange":       { "Hobby": { "oddsPer": "case", "ratio": "1:4",   "estimated": false } },
+      "hh-auto-red":          { "Hobby": { "oddsPer": "case", "ratio": "1:10",  "estimated": false } },
+      "hh-auto-blue":         { "Hobby": { "oddsPer": "case", "ratio": "1:20",  "estimated": false } },
+      "hh-auto-black":        { "Hobby": { "oddsPer": "case", "ratio": "1:100", "estimated": false } },
+      "hh-auto-superfractor": { "Hobby": { "oddsPer": "case", "ratio": "1:400", "estimated": false } }
+    },
+    "hoops-veteran-autographs": {
+      "hh-auto-gold":         { "Hobby": { "oddsPer": "case", "ratio": "1:4",   "estimated": false } },
+      "hh-auto-orange":       { "Hobby": { "oddsPer": "case", "ratio": "1:8",   "estimated": false } },
+      "hh-auto-red":          { "Hobby": { "oddsPer": "case", "ratio": "1:20",  "estimated": false } },
+      "hh-auto-blue":         { "Hobby": { "oddsPer": "case", "ratio": "1:40",  "estimated": false } },
+      "hh-auto-black":        { "Hobby": { "oddsPer": "case", "ratio": "1:200", "estimated": false } },
+      "hh-auto-superfractor": { "Hobby": { "oddsPer": "case", "ratio": "1:800", "estimated": false } }
+    },
+    "hoops-1989-signatures": {
+      "hh-auto-gold":         { "Hobby": { "oddsPer": "case", "ratio": "1:8",    "estimated": false } },
+      "hh-auto-orange":       { "Hobby": { "oddsPer": "case", "ratio": "1:16",   "estimated": false } },
+      "hh-auto-red":          { "Hobby": { "oddsPer": "case", "ratio": "1:40",   "estimated": false } },
+      "hh-auto-blue":         { "Hobby": { "oddsPer": "case", "ratio": "1:80",   "estimated": false } },
+      "hh-auto-black":        { "Hobby": { "oddsPer": "case", "ratio": "1:400",  "estimated": false } },
+      "hh-auto-superfractor": { "Hobby": { "oddsPer": "case", "ratio": "1:1600", "estimated": false } }
+    },
+    "hoops-rookie-duals": {
+      "hh-auto-gold":         { "Hobby": { "oddsPer": "case", "ratio": "1:6",    "estimated": false } },
+      "hh-auto-orange":       { "Hobby": { "oddsPer": "case", "ratio": "1:12",   "estimated": false } },
+      "hh-auto-red":          { "Hobby": { "oddsPer": "case", "ratio": "1:30",   "estimated": false } },
+      "hh-auto-blue":         { "Hobby": { "oddsPer": "case", "ratio": "1:60",   "estimated": false } },
+      "hh-auto-black":        { "Hobby": { "oddsPer": "case", "ratio": "1:300",  "estimated": false } },
+      "hh-auto-superfractor": { "Hobby": { "oddsPer": "case", "ratio": "1:1200", "estimated": false } }
+    },
+    "hoops-rookie-veteran-duals": {
+      "hh-auto-gold":         { "Hobby": { "oddsPer": "case", "ratio": "1:24",   "estimated": false } },
+      "hh-auto-orange":       { "Hobby": { "oddsPer": "case", "ratio": "1:48",   "estimated": false } },
+      "hh-auto-red":          { "Hobby": { "oddsPer": "case", "ratio": "1:120",  "estimated": false } },
+      "hh-auto-blue":         { "Hobby": { "oddsPer": "case", "ratio": "1:240",  "estimated": false } },
+      "hh-auto-black":        { "Hobby": { "oddsPer": "case", "ratio": "1:1200", "estimated": false } },
+      "hh-auto-superfractor": { "Hobby": { "oddsPer": "case", "ratio": "1:4800", "estimated": false } }
+    }
+  }
+}

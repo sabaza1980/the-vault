@@ -11,6 +11,7 @@ const COLLECTIONS = [
   { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
   { id: '2025-26-topps-cosmic-chrome-basketball', name: '2025-26 Topps Cosmic Chrome Basketball' },
   { id: '2025-26-topps-midnight-basketball', name: '2025-26 Topps Midnight Basketball' },
+  { id: '2025-26-topps-nba-hoops-basketball', name: '2025-26 Topps NBA Hoops Basketball' },
 ];
 const BREAK_TYPES = ['PYT', 'PYP', 'Random Team'];
 const PLATFORMS = ['Whatnot', 'Fanatics'];

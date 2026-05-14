@@ -47,18 +47,25 @@ export default async function handler(req, res) {
     let totalVariants = 0;
 
     for (const subset of subsets) {
-      // For insert-versions subsets (e.g. Planetary Pursuits), each version IS the variant
+      // For insert-versions or version-tier subsets (e.g. Finals Pursuit), each tier IS the variant
       let allVariants;
-      if (subset.type === 'insert-versions' && subset.versions && subset.versions.length > 0) {
-        allVariants = subset.versions.map(v => ({
-          id: `version-${toSlug(v)}`,
-          name: v,
-          shortName: v,
-          printRun: null,
-          color: null,
-          exclusive: null,
-          isBase: false,
-        }));
+      const hasTiers =
+        (subset.type === 'insert-versions' && subset.versions?.length > 0) ||
+        subset.versionTiers?.length > 0;
+      if (hasTiers) {
+        const tierList = subset.versionTiers?.length > 0 ? subset.versionTiers : subset.versions;
+        allVariants = tierList.map(v => {
+          const name = typeof v === 'string' ? v : v.name;
+          return {
+            id: `version-${toSlug(name)}`,
+            name,
+            shortName: name,
+            printRun: (typeof v === 'object' && v.printRun) || null,
+            color: null,
+            exclusive: null,
+            isBase: false,
+          };
+        });
       } else {
         const parallels = (subset.parallels || []).map(pId => {
           const pDef = parallelLibrary[pId] || {};
