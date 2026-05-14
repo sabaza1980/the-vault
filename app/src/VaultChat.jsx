@@ -215,15 +215,35 @@ export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessi
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const systemPromptRef = useRef(null);
+  const checklistCtxRef = useRef("");
 
   const persona = personaId ? getPersona(personaId) : null;
   const hasCollection = cards && cards.length > 0;
+
+  // Fetch compact checklist data once on mount so Toppsy/PJ can answer
+  // "what cards does [player] have in [set]?" questions.
+  useEffect(() => {
+    const url = `${API_BASE}/api/sets-ai-context`;
+    fetch(url)
+      .then(r => r.ok ? r.text() : "")
+      .then(text => {
+        checklistCtxRef.current = text || "";
+        // If a persona is already active, rebuild the system prompt with the
+        // fresh checklist data (handles race where user picked persona before fetch)
+        if (personaId) {
+          const collectionCtx = cards && cards.length > 0 ? buildCollectionContext(cards) : "";
+          systemPromptRef.current = buildSystemPrompt(personaId, collectionCtx, checklistCtxRef.current);
+        }
+      })
+      .catch(() => { /* non-fatal */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Rebuild system prompt when persona or collection changes
   useEffect(() => {
     if (!personaId) return;
     const collectionCtx = hasCollection ? buildCollectionContext(cards) : "";
-    systemPromptRef.current = buildSystemPrompt(personaId, collectionCtx);
+    systemPromptRef.current = buildSystemPrompt(personaId, collectionCtx, checklistCtxRef.current);
   }, [personaId, cards, hasCollection]);
 
   // Auto-scroll messages

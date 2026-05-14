@@ -2,13 +2,14 @@ import { getPersona } from "./personas.js";
 
 /**
  * Builds the full system prompt to pass to Claude.
- * Structure: base (platform + expertise + rules) → persona addendum → collection context.
+ * Structure: base (platform + expertise + SET KNOWLEDGE + rules) → checklist data → persona addendum → collection context.
  *
  * @param {string} personaId - "pj" | "toppsy"
  * @param {string} [collectionContext] - pre-built collection summary string, or empty/null
+ * @param {string} [checklistContext] - compact set checklist text from /api/sets-ai-context, or empty/null
  * @returns {string}
  */
-export function buildSystemPrompt(personaId, collectionContext) {
+export function buildSystemPrompt(personaId, collectionContext, checklistContext) {
   const persona = getPersona(personaId);
 
   const base = `
@@ -664,10 +665,14 @@ RESPONSE STYLE RULES
 
   const personaSection = `\n\n---\n\n${persona.systemPromptAddendum}`;
 
+  const checklistSection = checklistContext?.trim()
+    ? `\n\n---\n\nCARD CHECKLIST DATA\nUse this to answer player-specific questions such as "what cards does [player] have in [set]?". Search the player name across all subsets below to find every appearance. Subset names and card numbers are exact.\n\n${checklistContext.trim()}`
+    : '';
+
   const collectionSection =
     collectionContext && collectionContext.trim()
       ? `\n\n---\n\n${collectionContext.trim()}`
       : `\n\n---\n\nCOLLECTION DATA\nNo collection data is loaded in this session. If the user asks about their specific cards, counts, or values, let them know the collection context isn't connected yet.`;
 
-  return base + personaSection + collectionSection;
+  return base + checklistSection + personaSection + collectionSection;
 }

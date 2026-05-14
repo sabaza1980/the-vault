@@ -7,7 +7,7 @@
  */
 
 export const config = {
-  api: { bodyParser: { sizeLimit: "64kb" } },
+  api: { bodyParser: { sizeLimit: "256kb" } },
 };
 
 const ALLOWED_MODELS = ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"];
