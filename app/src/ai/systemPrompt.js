@@ -416,6 +416,121 @@ When possible and helpful, also:
 
 ---
 
+SET KNOWLEDGE — 2025-26 BOWMAN BASKETBALL
+
+Brand context:
+- Bowman Basketball is Topps' premier prospect and rookie-focused basketball product, mirroring Bowman Chrome's dominant role in baseball
+- Each card exists in two physical formats: a traditional paper version and a Chrome refractor version — both are in the same set and count as separate collectibles
+- The paper/Chrome dual format is a key distinguishing feature; when someone asks about a Bowman card, always clarify which format (paper or chrome) they are referring to
+- 5 configurations: Hobby, Jumbo, Mega, Value, Breaker's Delight
+- Released April 22 2026 (Hobby/Jumbo/Value); Mega released May 7 2026
+
+Set structure:
+- 200 NBA base cards (paper) + 200 matching Chrome base cards + 100 prospects (paper) + 100 prospects Chrome = 600 card-format combinations for base alone
+- Chrome prospect autographs (CPA) are the premier rookie/prospect chase — these are Bowman Basketball's equivalent of the coveted Bowman Chrome Prospect Auto in baseball
+- Red Rookie Variations: SP variations with a red-foil design, numbered to a lower print run
+- Etched in Glass: a premium die-cut subset with its own parallel rainbow
+- Retrofractor Variations: classic refractor-style throwback design on RC/prospect cards
+
+Key auto subsets:
+- Chrome Prospect Autographs (CPA): highest demand; all 2025 draft class rookies plus top college prospects
+- Chrome Autographs: NBA veteran and established star autos
+- Retrofractor Autographs: premium throwback auto subset
+- Future Script, Buzz Factor, Opening Statement, Timeless Touch: insert/auto hybrid subsets
+- Paper Prospect Retail Autographs, Paper RV Retail Autographs: retail-exclusive signed paper cards
+- Bowman Dual Autographs: two signers per card (treated as multi-player)
+
+Insert subsets:
+- Talent Tracker, Gen Next, Very Important Prospects, Bowman Verified, ROY Favorites: prospect-focused inserts
+- Hobby Stars, Young Kings, Rockstar Rookies, Greatness Loading: hobbyist-targeted inserts
+- Mega Rookies, Mega Prospects: Mega configuration exclusive inserts
+- Spotlights (NBA + NIL), Crystallized (NBA + NIL), Anime (NBA + NIL), GPK (NBA + NIL): themed art insert pairs that include both NBA players and NIL college stars
+
+Parallel systems:
+- Paper parallels (apply to paper base/prospects): Purple Pattern /199, Pink /175, Blue /150, Green /99 (retail), Yellow /75, Gold /50, Orange /25 (Hobby), Black /10 (Hobby), Red /5, Platinum 1/1
+- Chrome parallels (apply to chrome base/prospects): Refractor /499, Speckle /299, Purple /250, Fuchsia /199, Blue /150, Blue X-Fractor /150 (Hobby), Blue Geometric /150 (Breaker's Delight), Aqua X-Fractor /125, Floorboard /125 (Jumbo), Steel Metal /100, Mini-Diamond (unnumbered, Hobby — guaranteed 1 per box), Green /99 (Retail), Yellow /75, Yellow X-Fractor /75 (Hobby/Jumbo), Gold /50, Orange /25 (Hobby), Black /1, Red /5, Superfractor 1/1
+- Mega exclusives: Mojo Refractor (unnumbered), Fuchsia Mojo /299, Burgundy Mojo /275, Purple Mojo /250, Pink Mojo /199, Navy Mojo /175, Blue Mojo /150, Aqua Mojo /125, Green Mojo /99, Yellow Mojo /75, Gold Mojo /50
+- Breaker's Delight exclusives: Geometric (unnumbered), Blue Geometric /150, Green Geometric /99, Gold Geometric /50
+- Value exclusive: Lava Refractor /399, Green Refractor /99, Green Shimmer /99, Reptilian Green /99
+- Reptilian variants are foil-texture parallels at matched print runs (e.g. Reptilian Blue /150 mirrors Blue Refractor /150)
+- A paper card and its Chrome counterpart are completely different collectibles — they are NOT parallels of each other
+
+Key 2025 rookies:
+- Cooper Flagg (Washington Wizards), Dylan Harper (San Antonio Spurs), Ace Bailey (Charlotte Hornets), VJ Edgecombe (Detroit Pistons), Tre Johnson (New Orleans Pelicans), Carter Bryant (Utah Jazz), Noa Essengue (Sacramento Kings), Khaman Maluach (Dallas Mavericks/Phoenix Suns in Cosmic Chrome/Bowman), Labaron Philon (Memphis Grizzlies), Kasparas Jakucionis (Chicago Bulls), Egor Demin (Portland Trail Blazers)
+
+---
+
+SET KNOWLEDGE — 2025-26 TOPPS COSMIC CHROME BASKETBALL
+
+Brand context:
+- Cosmic Chrome is a Hobby-only (plus First Day Issue variant) premium chrome product with a full space/astronomy naming theme across every parallel and insert
+- 2 configurations: Hobby and First Day Issue (FDI)
+- 200-card base set; released April 29 2026
+- One of Topps' most parallel-dense products — nearly every parallel and insert has published Topps odds; very few values are estimated
+
+Parallel rainbow (all refractor-based, space-themed names):
+- Refractor (unnumbered), Nucleus (unnumbered), White Hole (unnumbered), Aqua Equinox /199, Purple Nebula /150, Blue Moon /99, Green Space Dust /75, Gold Interstellar /50, Orange Galactic /25, FDI-1 /12 (First Day Issue exclusive), Black Eclipse /10, Red Flare /5, Superfractor 1/1, Lunar (SSP — unnumbered, very short print)
+- Pink /1 exists as a true one-of-one in select insert subsets (Starfractor, Re-Entry, Geocentric, First Light); it does not appear in the base set rainbow
+- FDI parallels (/12) can ONLY come from First Day Issue boxes — not from Hobby boxes
+
+Insert subsets:
+- Galaxy Greats: veteran stars; approximately 1:6 packs in Hobby
+- Extraterrestrial Talent: 1:8 packs
+- Propulsion: 1:8 packs
+- Space Walk: 1:13 packs
+- Starfractor: short print, approximately 1:609 packs (numbered insert with its own parallels down to Pink /1)
+- Re-Entry: 1:871 packs
+- Geocentric: super short print, 1:1109 packs
+- First Light: super short print, 1:1109 packs
+- Hyper-Nova: SSP — 1:201 packs
+- Cosmic Dust: SSP — 1:793 packs
+- Planetary Pursuit: premium insert
+
+Auto subsets:
+- Cosmic Chrome Autographs (main rookie/veteran auto set)
+- Cosmic Chrome Autographs II (second series)
+- Singularity Signatures
+- Alien Autographs
+- Electro-Static Signatures
+- First Flight Signatures
+
+Odds context:
+- Topps published precise per-pack odds for this product; nearly all ratios in the database are real, not estimated
+- The Lunar parallel is unnumbered but genuine SSP — pulls around 1:764 packs
+- Black Eclipse /10 is approximately 1:832 packs; Red Flare /5 is 1:1664; Superfractor 1/1 is 1:8319
+
+---
+
+SET KNOWLEDGE — 2025-26 TOPPS MIDNIGHT BASKETBALL
+
+Brand context:
+- Midnight Basketball is a Topps mid-tier chrome product with a night/darkness theme across all parallels and inserts
+- 2 configurations: Hobby and Collector
+- 100-card base set (tighter/smaller set than Cosmic Chrome or Hoops); released May 20 2026
+- Odds are estimated at time of writing — Topps had not yet published official odds when the set launched
+
+Parallel rainbow (all refractor-based, night-themed names):
+- Refractor (unnumbered), Moonbeam (unnumbered), Silver Lunar /199, Blue Dusk /150, Purple Twilight /99, Gold Nocturne /50, Orange Ember /25 (Hobby exclusive), Red Crimson /10, Black Void /5, Superfractor 1/1
+- No FDI or configuration-exclusive variants outside Orange Ember /25 (Hobby only)
+
+Insert subsets:
+- Night Owls, Moonfall, Insomnia, Daydreamers, Nightshade, Dreamland, Night Vision, Twilight — all insert odds TBD (pending Topps publication)
+
+Auto subsets:
+- Rookie Jersey Autographs (RJA): premium auto-relic — the key rookie chase for this product
+- Stroke of Midnight: base rookie/vet auto
+- Midnight Sun Signatures: premium auto subset
+- Dark Matter: auto subset
+- Midnight Oil Marks: auto-relic
+- Horizon: auto subset
+- Dark Marks: base auto subset
+
+Important caveats:
+- All insert and auto odds in the database for Midnight are estimated/TBD — do not quote specific pack odds for inserts as if confirmed
+- When discussing Midnight, flag that official odds may now be available if the user has more current data than the app
+
+---
+
 SET KNOWLEDGE — 2025-26 TOPPS NBA HOOPS BASKETBALL
 
 Brand history:
