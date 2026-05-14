@@ -602,7 +602,9 @@ function CardSlot({ appearance, player, tracker }) {
           {card.isDualAuto && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(100,181,246,0.1)', color: '#64b5f6', border: '1px solid rgba(100,181,246,0.25)', fontWeight: 700 }}>DUAL</span>}
           {subset.isAuto && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 3, background: 'rgba(240,192,64,0.1)', color: '#f0c040', border: '1px solid rgba(240,192,64,0.25)', fontWeight: 700 }}>AUTO</span>}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--tg)' }}>#{card.number} · {variants.length} var{variants.length !== 1 ? 's' : ''}</div>
+        <div style={{ fontSize: 10, color: 'var(--tg)' }}>
+          #{card.number}{card.player.includes(' / ') ? ` · ${card.player}` : ''} · {variants.length} var{variants.length !== 1 ? 's' : ''}
+        </div>
       </div>
 
       {/* Recorded hits */}
