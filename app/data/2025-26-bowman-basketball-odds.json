@@ -64,155 +64,481 @@
   "perParallel": {
     "_comment": "Keys match parallelLibrary ids in the main checklist. Each parallel may have different odds across configurations.",
     "chrome-refractor": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:6", "estimated": false },
-      "Jumbo": { "oddsPer": "pack", "ratio": "1:2", "estimated": false }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:6",
+        "estimated": false
+      },
+      "Jumbo": {
+        "oddsPer": "pack",
+        "ratio": "1:2",
+        "estimated": false
+      }
     },
     "chrome-purple": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:48", "estimated": true },
-      "Jumbo": { "oddsPer": "pack", "ratio": "1:16", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:48",
+        "estimated": true
+      },
+      "Jumbo": {
+        "oddsPer": "pack",
+        "ratio": "1:16",
+        "estimated": true
+      }
     },
     "chrome-blue": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:80", "estimated": true },
-      "Jumbo": { "oddsPer": "pack", "ratio": "1:27", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:80",
+        "estimated": true
+      },
+      "Jumbo": {
+        "oddsPer": "pack",
+        "ratio": "1:27",
+        "estimated": true
+      }
     },
     "chrome-gold": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:4", "estimated": true },
-      "Jumbo": { "oddsPer": "box", "ratio": "1:2", "estimated": true }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:4",
+        "estimated": true
+      },
+      "Jumbo": {
+        "oddsPer": "box",
+        "ratio": "1:2",
+        "estimated": true
+      }
     },
     "chrome-orange": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:9", "estimated": true }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:9",
+        "estimated": true
+      }
     },
     "chrome-black": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:24", "estimated": true }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:24",
+        "estimated": true
+      }
     },
     "chrome-red": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:5", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:5",
+        "estimated": true
+      }
     },
     "chrome-superfractor": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:48", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:48",
+        "estimated": true
+      }
     },
     "chrome-mini-diamond": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:1", "guarantee": true, "estimated": false }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:1",
+        "guarantee": true,
+        "estimated": false
+      }
     },
     "chrome-mojo": {
-      "Mega": { "oddsPer": "pack", "ratio": "scattered", "estimated": false }
+      "Mega": {
+        "oddsPer": "pack",
+        "ratio": "scattered",
+        "estimated": false
+      }
     },
     "chrome-fuchsia-mojo": {
-      "Mega": { "oddsPer": "case", "ratio": "1:2", "estimated": true }
+      "Mega": {
+        "oddsPer": "case",
+        "ratio": "1:2",
+        "estimated": true
+      }
     },
     "chrome-rose-gold-mojo": {
-      "Mega": { "oddsPer": "case", "ratio": "1:N", "estimated": true, "note": "1/1 — exists once per print run" }
+      "Mega": {
+        "oddsPer": "case",
+        "ratio": "1:N",
+        "estimated": true,
+        "note": "1/1 — exists once per print run"
+      }
     },
     "chrome-firefractor": {
-      "Value": { "oddsPer": "case", "ratio": "1:N", "estimated": true, "note": "/3 only in Value boxes" }
+      "Value": {
+        "oddsPer": "case",
+        "ratio": "1:N",
+        "estimated": true,
+        "note": "/3 only in Value boxes"
+      }
     },
     "chrome-geometric": {
-      "BreakerDelight": { "oddsPer": "box", "ratio": "1:1", "guarantee": true, "estimated": false, "note": "Breaker's Delight exclusive — guaranteed 3 per box" }
+      "BreakerDelight": {
+        "oddsPer": "box",
+        "ratio": "1:1",
+        "guarantee": true,
+        "estimated": false,
+        "note": "Breaker's Delight exclusive — guaranteed 3 per box"
+      }
     },
     "paper-blue": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:1", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:1",
+        "estimated": true
+      }
     },
     "paper-gold": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:5", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:5",
+        "estimated": true
+      }
     },
     "paper-red": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:25", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:25",
+        "estimated": true
+      }
     },
     "paper-platinum": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:N", "estimated": true, "note": "1/1 — exists once per print run" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:N",
+        "estimated": true,
+        "note": "1/1 — exists once per print run"
+      }
     }
   },
   "perInsert": {
     "_comment": "For inserts (and autographs), odds are typically published per pack or per box across the whole insert set, not per card. The app divides by insert size when computing per-card odds.",
     "talent-tracker": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:8", "estimated": true },
-      "Jumbo": { "oddsPer": "pack", "ratio": "1:3", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:8",
+        "estimated": true
+      },
+      "Jumbo": {
+        "oddsPer": "pack",
+        "ratio": "1:3",
+        "estimated": true
+      }
     },
     "gen-next": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:12", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:12",
+        "estimated": true
+      }
     },
     "very-important-prospects": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:12", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:12",
+        "estimated": true
+      }
     },
     "bowman-verified": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:16", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:16",
+        "estimated": true
+      }
     },
     "roy-favorites": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:24", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:24",
+        "estimated": true
+      }
     },
     "hobby-stars": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:24", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:24",
+        "estimated": true
+      }
     },
     "young-kings": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:12", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:12",
+        "estimated": true
+      }
     },
     "rockstar-rookies": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:16", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:16",
+        "estimated": true
+      }
     },
     "greatness-loading": {
-      "Hobby": { "oddsPer": "pack", "ratio": "1:20", "estimated": true }
+      "Hobby": {
+        "oddsPer": "pack",
+        "ratio": "1:20",
+        "estimated": true
+      }
     },
     "spotlights-nba": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:2", "estimated": true, "note": "Case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:2",
+        "estimated": true,
+        "note": "Case hit"
+      }
     },
     "spotlights-nil": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:4", "estimated": true, "note": "Case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:4",
+        "estimated": true,
+        "note": "Case hit"
+      }
     },
     "crystallized-nba": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:1", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:1",
+        "estimated": true
+      }
     },
     "crystallized-nil": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:2", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:2",
+        "estimated": true
+      }
     },
     "anime-nba": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:6", "estimated": true }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:6",
+        "estimated": true
+      }
     },
     "anime-nil": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:1", "estimated": true }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:1",
+        "estimated": true
+      }
     },
     "gpk-nba": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:3", "estimated": true, "note": "Case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:3",
+        "estimated": true,
+        "note": "Case hit"
+      }
     },
     "gpk-nil": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:6", "estimated": true, "note": "Case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:6",
+        "estimated": true,
+        "note": "Case hit"
+      }
     },
     "mega-rookies": {
-      "Mega": { "oddsPer": "box", "ratio": "1:1", "guarantee": true, "estimated": false }
+      "Mega": {
+        "oddsPer": "box",
+        "ratio": "1:1",
+        "guarantee": true,
+        "estimated": false
+      }
     },
     "mega-prospects": {
-      "Mega": { "oddsPer": "box", "ratio": "1:1", "guarantee": true, "estimated": false }
+      "Mega": {
+        "oddsPer": "box",
+        "ratio": "1:1",
+        "guarantee": true,
+        "estimated": false
+      }
     }
   },
   "perAutoSubset": {
     "_comment": "Autograph subsets also have published per-card-rarity ladders. We derive per-card odds from print run + auto-per-box guarantees.",
     "chrome-prospect-autographs": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:1", "guarantee": true, "note": "1 NCAA auto guaranteed per Hobby box; spread across the 101-card prospect auto checklist" },
-      "Jumbo": { "oddsPer": "box", "ratio": "2:1", "guarantee": true }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:1",
+        "guarantee": true,
+        "note": "1 NCAA auto guaranteed per Hobby box; spread across the 101-card prospect auto checklist"
+      },
+      "Jumbo": {
+        "oddsPer": "box",
+        "ratio": "2:1",
+        "guarantee": true
+      }
     },
     "chrome-autographs": {
-      "Hobby": { "oddsPer": "box", "ratio": "1:1", "guarantee": true, "note": "1 NBA auto guaranteed per Hobby box; spread across the 98-card NBA auto checklist" },
-      "Jumbo": { "oddsPer": "box", "ratio": "2:1", "guarantee": true }
+      "Hobby": {
+        "oddsPer": "box",
+        "ratio": "1:1",
+        "guarantee": true,
+        "note": "1 NBA auto guaranteed per Hobby box; spread across the 98-card NBA auto checklist"
+      },
+      "Jumbo": {
+        "oddsPer": "box",
+        "ratio": "2:1",
+        "guarantee": true
+      }
     },
     "future-script": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:2", "estimated": true, "note": "Hobby exclusive case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:2",
+        "estimated": true,
+        "note": "Hobby exclusive case hit"
+      }
     },
     "buzz-factor": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:2", "estimated": true, "note": "Hobby exclusive case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:2",
+        "estimated": true,
+        "note": "Hobby exclusive case hit"
+      }
     },
     "opening-statement": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:3", "estimated": true, "note": "Hobby exclusive case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:3",
+        "estimated": true,
+        "note": "Hobby exclusive case hit"
+      }
     },
     "timeless-touch": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:3", "estimated": true, "note": "Hobby exclusive case hit" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:3",
+        "estimated": true,
+        "note": "Hobby exclusive case hit"
+      }
     },
     "bowman-dual-autographs": {
-      "Hobby": { "oddsPer": "case", "ratio": "1:N", "estimated": true, "note": "Each card /10 — extreme case-hit rarity" }
+      "Hobby": {
+        "oddsPer": "case",
+        "ratio": "1:N",
+        "estimated": true,
+        "note": "Each card /10 — extreme case-hit rarity"
+      }
     },
     "paper-prospect-retail-autographs": {
-      "Value": { "oddsPer": "case", "ratio": "1:N", "estimated": true, "note": "Retail-only; rare" }
+      "Value": {
+        "oddsPer": "case",
+        "ratio": "1:N",
+        "estimated": true,
+        "note": "Retail-only; rare"
+      }
     },
     "paper-rv-retail-autographs": {
-      "Value": { "oddsPer": "case", "ratio": "1:N", "estimated": true, "note": "Retail-only; rare" }
+      "Value": {
+        "oddsPer": "case",
+        "ratio": "1:N",
+        "estimated": true,
+        "note": "Retail-only; rare"
+      }
+    }
+  },
+  "breakPricingGuidance": {
+    "_comment": "Multi-config break pricing. Hobby and Jumbo confirmed. BreakerDelight case price unconfirmed — AI must not quote revenue targets for it.",
+    "multiConfig": true,
+    "breakRelevantConfigs": ["Hobby", "Jumbo", "BreakerDelight"],
+    "autoStructure": "Dual auto per box. Hobby: 1 NBA + 1 NCAA. Jumbo: 2 NBA + 2 NCAA. BreakerDelight: 2 NBA + 1 NIL. NCAA autos (college prospects) typically lower value than NBA star autos unless elite program (e.g. Indiana Hoosiers prospects).",
+    "topPlayers": [
+      "Cooper Flagg",
+      "Victor Wembanyama",
+      "Dylan Harper",
+      "Ace Bailey",
+      "Kon Knueppel",
+      "LeBron James",
+      "Shai Gilgeous-Alexander",
+      "Luka Dončić"
+    ],
+    "evFramework": {
+      "step1": "Pull 30-day sold comps on eBay for each team's key cards (top parallel, RC auto if applicable).",
+      "step2": "Sum the EV across all cards a buyer would realistically pull from their team allocation.",
+      "step3": "Set spot price = EV × (1 - breaker_margin). A fair spot is one where buyer EV ≥ spot price at breakeven, breaker earns margin.",
+      "step4": "Premium teams (Dallas w/ Flagg, SA w/ Wemby) can be priced at 2-4× average because buyers will pay a scarcity premium for the highest-demand cards.",
+      "step5": "Validate: sum of all spot prices must ≥ revenue target. If not, raise lowest-demand spots.",
+      "breakevenMultiplier": 1.15
+    },
+    "Hobby": {
+      "caseCost": 7000,
+      "boxesPerCase": 12,
+      "cardsPerCase": 1920,
+      "autosPerCase": 24,
+      "marginTarget": 0.15,
+      "revenueTarget": 8050,
+      "costPerAutoAtBreakeven": 292,
+      "caseNote": "12-box Hobby case. 24 total autos per case (12 NBA + 12 NCAA). 1 NBA + 1 NCAA auto per box.",
+      "pytPricing": {
+        "_comment": "PYT = Pick Your Team. 30 spots (one per NBA team). Revenue target: $8,050. Avg spot: $268.",
+        "avgSpotPrice": 268,
+        "examples": [
+          { "team": "Dallas Mavericks", "price": 700, "reason": "Luka Dončić + Cooper Flagg RC" },
+          { "team": "San Antonio Spurs", "price": 600, "reason": "Victor Wembanyama" },
+          { "team": "Brooklyn Nets", "price": 500, "reason": "Dylan Harper RC" },
+          { "team": "OKC Thunder", "price": 450, "reason": "Shai Gilgeous-Alexander" },
+          { "team": "Indiana Hoosiers (NCAA)", "price": 400, "reason": "Top NCAA prospect autos" },
+          { "team": "Boston Celtics", "price": 375, "reason": "Tatum + Brown" },
+          { "team": "Golden State Warriors", "price": 350, "reason": "Stephen Curry" },
+          { "team": "LA Lakers", "price": 325, "reason": "LeBron + AD" },
+          { "team": "All other teams (avg)", "price": 200, "reason": "Revenue fills to $8,050 target" }
+        ]
+      },
+      "randomBreak": { "spotsRecommended": 30, "spotPrice": 275, "totalRevenue": 8250 },
+      "pypGuidance": {
+        "methodology": "Assign each player a demand weight; scale weights so total = revenue target; round to nearest $25; absorb rounding diff into top player.",
+        "topPlayerPremium": "Top player (e.g. Cooper Flagg) should be 15-20× the lowest-demand spot.",
+        "averageSpotAtCost": 268
+      },
+      "scalingNote": "For multi-case breaks, multiply all revenue targets by number of cases. Margin logic stays the same."
+    },
+    "Jumbo": {
+      "caseCost": 8000,
+      "boxesPerCase": 8,
+      "autosPerCase": 32,
+      "marginTarget": 0.15,
+      "revenueTarget": 9200,
+      "costPerAutoAtBreakeven": 250,
+      "caseNote": "8-box Jumbo case. 32 total autos per case (16 NBA + 16 NCAA). 2 NBA + 2 NCAA autos per box.",
+      "pytPricing": {
+        "_comment": "PYT = Pick Your Team. 30 spots. Revenue target: $9,200. Avg spot: $307.",
+        "avgSpotPrice": 307,
+        "examples": [
+          { "team": "Dallas Mavericks", "price": 800, "reason": "Luka Dončić + Cooper Flagg RC" },
+          { "team": "San Antonio Spurs", "price": 700, "reason": "Victor Wembanyama" },
+          { "team": "Brooklyn Nets", "price": 575, "reason": "Dylan Harper RC" },
+          { "team": "OKC Thunder", "price": 525, "reason": "Shai Gilgeous-Alexander" },
+          { "team": "Indiana Hoosiers (NCAA)", "price": 450, "reason": "Top NCAA prospect autos" },
+          { "team": "Boston Celtics", "price": 425, "reason": "Tatum + Brown" },
+          { "team": "All other teams (avg)", "price": 230, "reason": "Revenue fills to $9,200 target" }
+        ]
+      },
+      "randomBreak": { "spotsRecommended": 30, "spotPrice": 325, "totalRevenue": 9750 },
+      "scalingNote": "For multi-case breaks, multiply all revenue targets by number of cases. Margin logic stays the same."
+    },
+    "BreakerDelight": {
+      "casePriceUSD": null,
+      "priceUnconfirmed": true,
+      "estimatedCaseRange": "$3,500–$4,500",
+      "boxesPerCase": 6,
+      "autosPerCase": 18,
+      "marginTarget": 0.15,
+      "revenueTarget": null,
+      "costPerAutoAtBreakeven": null,
+      "caseNote": "6-box BreakerDelight case. Approx 18 autos (12 NBA + 6 NIL). Case price unconfirmed — AI must ask breaker for actual cost paid before calculating any revenue targets or spot prices.",
+      "pytPricing": null,
+      "randomBreak": null
     }
   }
 }

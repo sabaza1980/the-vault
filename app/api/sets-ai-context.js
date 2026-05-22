@@ -44,48 +44,87 @@ function buildSetText(data) {
 }
 
 /**
+ * Builds a pricing text block for a single confirmed config.
+ */
+function buildConfigBlock(configName, cfg) {
+  const lines = [];
+  if (cfg.priceUnconfirmed || cfg.casePriceUSD === null || cfg.caseCost === null) {
+    lines.push(
+      `  [${configName}] ⚠️ PRICE UNCONFIRMED` +
+      (cfg.estimatedCaseRange ? ` (estimated ${cfg.estimatedCaseRange})` : '') +
+      ` | ${cfg.boxesPerCase}-box | ${cfg.autosPerCase} autos/case` +
+      ` | Revenue target: CANNOT CALCULATE — AI must ask breaker for actual cost paid before pricing.`
+    );
+    return lines.join('\n');
+  }
+  lines.push(
+    `  [${configName}] Case cost: $${cfg.caseCost} | ${cfg.autosPerCase} autos/case | ` +
+    `${Math.round((cfg.marginTarget || 0.15) * 100)}% margin → $${cfg.revenueTarget} revenue target | ` +
+    `Cost/auto: $${cfg.costPerAutoAtBreakeven}`
+  );
+  if (cfg.caseNote) lines.push(`  NOTE: ${cfg.caseNote}`);
+  if (cfg.pytPricing) {
+    const pyt = cfg.pytPricing;
+    const examples = (pyt.examples || []).map(e => `${e.team} $${e.price}`).join(', ');
+    lines.push(`  PYT avg: $${pyt.avgSpotPrice}/spot | Examples: ${examples}`);
+  }
+  if (cfg.randomBreak) {
+    const rb = cfg.randomBreak;
+    lines.push(`  Random: ${rb.spotsRecommended} spots × $${rb.spotPrice} = $${rb.totalRevenue}`);
+  }
+  return lines.join('\n');
+}
+
+/**
  * Builds a compact break pricing block from a single odds file.
+ * Handles both flat pricing (Topps Three, Cosmic Chrome, Midnight) and
+ * multi-config pricing (Bowman, Hoops — keyed by configuration name).
  * Reads entirely from the JSON — no hardcoded prices here.
  */
 function buildBreakPricingText(setId, data) {
   const g = data.breakPricingGuidance;
-  if (!g || !g.caseCost) return null;
+  if (!g) return null;
 
   const setName = data.setName || setId;
   const oddsUnit = data.oddsUnit || 'per-pack';
   const firstConfig = Object.values(data.configurations || {})[0] || {};
-  const boxesPerCase = firstConfig.boxesPerCase || g.boxesPerCase || '?';
 
   // Check whether a checklist exists for this set
   const hasChecklist = (() => {
     try { readFileSync(join(DATA_DIR, `${setId}-checklist.json`)); return true; } catch { return false; }
   })();
 
-  const lines = [`--- ${setName.toUpperCase()} ---`];
+  const checklistNote = hasChecklist ? '' : ' | ⚠️ NO CHECKLIST YET — player/card queries unavailable';
+  const lines = [`--- ${setName.toUpperCase()} ---`, `Odds unit: ${oddsUnit}${checklistNote}`];
 
-  const checklistNote = hasChecklist ? '' : ' | ⚠️ NO CHECKLIST YET — player/card queries unavailable for this set';
-  lines.push(`${boxesPerCase}-box case | odds unit: ${oddsUnit}${checklistNote}`);
-  lines.push(
-    `Case cost: $${g.caseCost} | ${g.autosPerCase} autos/case | ` +
-    `${Math.round((g.marginTarget || 0.15) * 100)}% margin → $${g.revenueTarget} revenue target | ` +
-    `Cost/auto at breakeven: $${g.costPerAutoAtBreakeven}`
-  );
-
-  if (g.caseNote) {
-    lines.push(`NOTE: ${g.caseNote}`);
-  }
-
-  if (g.pytPricing) {
-    const pyt = g.pytPricing;
-    const examples = (pyt.examples || [])
-      .map(e => `${e.team} $${e.price} (${e.reason})`)
-      .join(', ');
-    lines.push(`PYT avg spot: $${pyt.avgSpotPrice}/30 teams | ${examples}`);
-  }
-
-  if (g.randomBreak) {
-    const rb = g.randomBreak;
-    lines.push(`Random: ${rb.spotsRecommended} spots × $${rb.spotPrice} = $${rb.totalRevenue}`);
+  if (g.multiConfig) {
+    // Multi-config set (Bowman, Hoops) — one sub-block per break-relevant config
+    lines.push(`⚠️ MULTI-CONFIG: AI must ask which box configuration before quoting any prices.`);
+    if (g.autoStructure) lines.push(`Auto structure: ${g.autoStructure}`);
+    for (const configName of (g.breakRelevantConfigs || [])) {
+      const cfg = g[configName];
+      if (cfg) lines.push(buildConfigBlock(configName, cfg));
+    }
+  } else {
+    // Flat / uniform pricing (Topps Three, Cosmic Chrome, Midnight)
+    if (!g.caseCost) return null;
+    const boxesPerCase = firstConfig.boxesPerCase || g.boxesPerCase || '?';
+    lines.push(`${boxesPerCase}-box case`);
+    lines.push(
+      `Case cost: $${g.caseCost} | ${g.autosPerCase} autos/case | ` +
+      `${Math.round((g.marginTarget || 0.15) * 100)}% margin → $${g.revenueTarget} revenue target | ` +
+      `Cost/auto at breakeven: $${g.costPerAutoAtBreakeven}`
+    );
+    if (g.caseNote) lines.push(`NOTE: ${g.caseNote}`);
+    if (g.pytPricing) {
+      const pyt = g.pytPricing;
+      const examples = (pyt.examples || []).map(e => `${e.team} $${e.price} (${e.reason})`).join(', ');
+      lines.push(`PYT avg spot: $${pyt.avgSpotPrice}/30 teams | ${examples}`);
+    }
+    if (g.randomBreak) {
+      const rb = g.randomBreak;
+      lines.push(`Random: ${rb.spotsRecommended} spots × $${rb.spotPrice} = $${rb.totalRevenue}`);
+    }
   }
 
   return lines.join('\n');
@@ -144,25 +183,42 @@ export default async function handler(req, res) {
     // ── 3. Auto-value ranking (derived from pricing data, not hardcoded) ─────
     const rankingLines = [];
     if (pricingBlocks.length > 0) {
-      // Re-parse to build ranking
+      const seenForRanking = new Set();
       const ranked = [];
       for (const filename of oddsFiles) {
         try {
           const data = JSON.parse(readFileSync(join(DATA_DIR, filename), 'utf8'));
           const g = data.breakPricingGuidance;
-          if (!g || !g.costPerAutoAtBreakeven) continue;
+          if (!g) continue;
           const setId = data.setId || filename.replace('-odds.json', '');
-          if (ranked.some(r => r.setId === setId)) continue;
-          ranked.push({ setId, name: data.setName || setId, costPerAuto: g.costPerAutoAtBreakeven, autosPerCase: g.autosPerCase });
+          if (seenForRanking.has(setId)) continue;
+          seenForRanking.add(setId);
+
+          if (g.multiConfig) {
+            // Multi-config: add each confirmed config as a separate ranking entry
+            for (const configName of (g.breakRelevantConfigs || [])) {
+              const cfg = g[configName];
+              if (!cfg || !cfg.costPerAutoAtBreakeven) continue;
+              ranked.push({
+                setId: `${setId}:${configName}`,
+                name: `${data.setName || setId} (${configName})`,
+                costPerAuto: cfg.costPerAutoAtBreakeven,
+                autosPerCase: cfg.autosPerCase
+              });
+            }
+          } else {
+            if (!g.costPerAutoAtBreakeven) continue;
+            ranked.push({ setId, name: data.setName || setId, costPerAuto: g.costPerAutoAtBreakeven, autosPerCase: g.autosPerCase });
+          }
         } catch (_) {}
       }
       ranked.sort((a, b) => a.costPerAuto - b.costPerAuto);
       if (ranked.length > 1) {
-        rankingLines.push('Auto value ranking (best cost/auto → worst):');
+        rankingLines.push('Auto value ranking — best cost/auto to worst (lower = better value for buyers):');
         ranked.forEach((r, i) => {
           rankingLines.push(`  ${i + 1}. ${r.name}: $${r.costPerAuto}/auto (${r.autosPerCase} autos/case)`);
         });
-        rankingLines.push('NOTE: Cosmic Chrome value is in numbered parallels/SSPs, NOT autos. Do not rank it as an auto product.');
+        rankingLines.push('NOTE: Cosmic Chrome value is in numbered parallels/SSPs, NOT autos. Do not treat it as an auto product.');
       }
     }
 

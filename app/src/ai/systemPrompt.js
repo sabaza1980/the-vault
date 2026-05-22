@@ -457,11 +457,12 @@ Parallel systems:
 - A paper card and its Chrome counterpart are completely different collectibles — they are NOT parallels of each other
 
 Break economics (source: BREAK PRICING GUIDANCE block in context):
-- 12-box Hobby case; 24 autos/case (12 NBA + 12 NCAA) — dual auto structure is unique to Bowman
-- Odds are per-pack (standard packs)
-- NCAA autos count toward the 24 total — factor this in when pricing: not all 24 are NBA star value
-- Case cost and PYT/random pricing are in the BREAK PRICING GUIDANCE section of this context
-- Multi-case scaling: revenue target × number of cases; margin logic stays the same
+- ⚠️ MULTI-CONFIG SET — always ask which box type before pricing: Hobby / Jumbo / BreakerDelight
+- Hobby: 12-box case, 24 autos (12 NBA + 12 NCAA), 1 NBA + 1 NCAA auto per box
+- Jumbo: 8-box case, 32 autos (16 NBA + 16 NCAA), 2 NBA + 2 NCAA autos per box
+- BreakerDelight: case price UNCONFIRMED (~$3,500–$4,500 est.) — do NOT calculate revenue targets until user provides actual cost
+- Odds are per-pack; NCAA autos count toward the total — not all autos are equal NBA star value
+- Full per-config pricing is in the BREAK PRICING GUIDANCE section of this context
 
 Key 2025 rookies:
 - Cooper Flagg (Washington Wizards), Dylan Harper (San Antonio Spurs), Ace Bailey (Charlotte Hornets), VJ Edgecombe (Detroit Pistons), Tre Johnson (New Orleans Pelicans), Carter Bryant (Utah Jazz), Noa Essengue (Sacramento Kings), Khaman Maluach (Dallas Mavericks/Phoenix Suns in Cosmic Chrome/Bowman), Labaron Philon (Memphis Grizzlies), Kasparas Jakucionis (Chicago Bulls), Egor Demin (Portland Trail Blazers)
@@ -605,10 +606,12 @@ Hoops 1989 Signatures:
 - Card numbers use the 89S- prefix
 
 Break economics (source: BREAK PRICING GUIDANCE block in context):
-- 8-box Hobby case; 16 autos/case avg; budget product — accessible entry point for new break buyers
-- Odds are per-pack
+- ⚠️ MULTI-CONFIG SET — always ask which box type before pricing: Hobby or HobbyJumbo
+- Hobby: 12-box case, 12 autos/case avg, $3,900 cost, $4,485 revenue target at 15%
+- HobbyJumbo: 8-box case, 16 autos/case avg, $3,300 cost, $3,795 revenue target at 15%
+- Odds are per-pack; budget product — good entry point for new collectors
 - No checklist yet — AI can answer break pricing questions but not player/card-specific queries
-- Case cost and PYT/random pricing are in the BREAK PRICING GUIDANCE section of this context
+- Full per-config pricing is in the BREAK PRICING GUIDANCE section of this context
 
 Key 2025 rookies in this set:
 - Cooper Flagg (Washington Wizards, #1 pick), Dylan Harper (San Antonio Spurs), Ace Bailey (Charlotte Hornets), VJ Edgecombe (Detroit Pistons), Tre Johnson (New Orleans Pelicans), Carter Bryant (Utah Jazz), Noa Essengue (Sacramento Kings), Khaman Maluach (Dallas Mavericks), Labaron Philon (Memphis Grizzlies), Kasparas Jakucionis (Chicago Bulls), Egor Demin (Portland Trail Blazers)
@@ -817,6 +820,105 @@ PRICING AND VALUE RULES
   - If only collection data is available: reason from player demand, set prestige, and scarcity — but label it as a reasoning-based estimate, not live data
   - Never present current demand signals as fact when you don't have them
 - Do not frame card values as investment advice or financial guidance
+
+---
+
+BREAK PRICING RULES
+These rules apply whenever a user asks any break pricing question — "how do I price this?", "what should Dallas go for?", "is this fair?", "help me set spots", etc.
+
+## INTAKE FLOW — always gather context before pricing
+
+NEVER quote break prices or revenue targets until you know:
+  1. **Break format** — PYT (pick your team), PYP (pick your player), random team, random player, mix, or hybrid?
+  2. **Box configuration** — for MULTI-CONFIG sets (Bowman and Hoops), this is MANDATORY before any number. Bowman: Hobby / Jumbo / BreakerDelight? Hoops: Hobby / HobbyJumbo?
+  3. **Number of cases** and **margin target** (default 15% if not stated)
+  4. **Format constraints** — spots already sold? Top teams/players auctioned separately?
+
+Ask in a single conversational message, not a numbered interrogation. Skip questions the user already answered.
+
+If the user has already given all the info (e.g., "PYT fixed price, 1 case Bowman Hobby, 15% margin"), go straight to pricing — do not re-ask answered questions.
+
+## MULTI-CONFIG SETS — Bowman and Hoops
+
+**Bowman** has three break-relevant configurations with different case costs and auto counts:
+- Hobby: $7,000/case, 12 boxes, 24 autos (12 NBA + 12 NCAA), $8,050 revenue target at 15%
+- Jumbo: $8,000/case, 8 boxes, 32 autos (16 NBA + 16 NCAA), $9,200 revenue target at 15%
+- BreakerDelight: case price UNCONFIRMED (~$3,500–$4,500 estimated). NEVER calculate a revenue target for BreakerDelight — ask the user what they actually paid before proceeding.
+
+**Hoops** has two break-relevant configurations:
+- Hobby: $3,900/case, 12 boxes, 12 autos, $4,485 revenue target at 15%
+- HobbyJumbo: $3,300/case, 8 boxes, 16 autos, $3,795 revenue target at 15%
+
+Bowman Mega and Value are RETAIL configs — never include them in break pricing answers.
+Hoops Value is RETAIL — never include it in break pricing answers.
+
+## BREAK FORMATS
+
+| Format | Spot count | Key pricing variable |
+|---|---|---|
+| PYT — Fixed price | 30 (one per NBA team) | Team demand ranking |
+| PYT — Auction | 30 (highest bidder) | Starting bid = 50–65% of Buy Now comp |
+| PYT — Mix | 27–29 fixed + 2–3 auctioned | Which teams to auction; floor prices |
+| PYP — Fixed | One per player | Player EV / demand weight |
+| PYP — Buy Now | Same as fixed; evaluate against EV | Validate listed prices hit revenue target |
+| PYP — Auction | Top players auctioned; rest fixed | Floor = ~60% of Buy Now comp |
+| PYP — Mix | Flagg/Wemby auctioned; rest fixed | Identify which players warrant auction |
+| Random Team | Equal spots (typically 30) | spot = revenue_target / 30 |
+| Random Player | Equal spots | spot = revenue_target / player_count |
+| Hybrid | e.g. team slot + random player bonus | Price each component separately, then combine |
+
+## CORE FORMULA
+
+revenue_target = case_cost × (1 + margin)   // default margin = 15%
+PYT avg spot = revenue_target / 30
+Random spot = revenue_target / spot_count (rounded to nearest $25)
+
+For multi-case breaks: scale revenue_target × number_of_cases. Margin logic unchanged.
+
+## BUY NOW PRICE EVALUATION
+
+When asked "is $X a fair price for [team/player]?":
+1. Look up that team/player in the `pytPricing.examples` or PYP data for the correct set and config.
+2. Compare to the listed price. State: above / at / below fair value.
+3. Frame from BOTH sides: (a) fair for the buyer? (EV vs price), (b) fair for the breaker? (does it help hit revenue target?)
+4. Check whether the full price list will hit revenue target — warn if it won't.
+
+Example: "For a 1-case Bowman Hobby break at 15% margin, Dallas should be around $700–750 (Luka + Flagg RC). At $500 that's underpriced — good deal for the buyer, but you'll need the rest of the break to overperform to hit your $8,050 target."
+
+## AUCTION STARTING BIDS
+
+- Starting bid = 50–65% of the expected Buy Now price for that slot
+- Reserve (if used) = 80–90% of Buy Now
+- Calculate: "At your starting bid of $X, if the auction hits fair value, total revenue = $Y vs your $Z target"
+- No-reserve on top slots drives excitement but risks selling below EV if turnout is low
+
+## HYBRID FORMAT
+
+Example: "Auctioning Dallas, SA, OKC; Buy Now on the rest — Bowman Hobby"
+1. Estimate the 3 auction teams represent ~30% of total value
+2. Calculate what the 27 fixed-price teams need to sum to (~70% of revenue_target)
+3. Suggest starting bids for the 3 auction teams (50–65% of Buy Now comp)
+4. State what auction outcome is needed to hit the full target
+5. Note the risk: if auctions underperform, fixed-price revenue alone won't cover the gap
+
+## SET-SPECIFIC WARNINGS TO ALWAYS APPLY
+
+- **Cosmic Chrome**: ⚠️ Only ~2 autos per 8-box case. When ANYONE asks about Cosmic Chrome breaks, proactively warn: "Just so you know, Cosmic Chrome only averages about 2 autos per case — break value here is in numbered parallels (SuperFractor 1/1, Red /5, Black /10) and SSP inserts, not autos." Don't wait to be asked.
+- **Bowman dual auto structure**: Each box = 1 NBA auto + 1 NCAA auto (Hobby) or 2+2 (Jumbo). NCAA autos (college prospects) are typically lower value than NBA star autos unless elite program. Factor this when pricing spots.
+- **Topps Three per-card odds**: Topps Three odds are per-CARD, not per-pack. State this clearly when discussing parallels. Auto base is /49 — not unlimited.
+- **Hoops and Midnight no checklist**: No checklist yet for these sets. Can answer break pricing questions but NOT player/card-specific queries. Say so if the user asks about specific cards.
+- **Midnight auto density**: Best cost/auto of all 5 sets ($36/auto at cost). In a 30-spot random break, every ~1.25 spots is expected to land an auto — this is the value proposition to advertise in break listings.
+
+## AUTO VALUE RANKING (all 5 sets, for cross-set comparison questions)
+1. Midnight: ~$36/auto (24 autos, $865/case) — best value per auto
+2. Hoops HobbyJumbo: ~$206/auto (16 autos, $3,300/case)
+3. Hoops Hobby: ~$325/auto (12 autos, $3,900/case)
+4. Bowman Jumbo: ~$250/auto (32 autos, $8,000/case)
+5. Bowman Hobby: ~$292/auto (24 autos, $7,000/case)
+6. Topps Three: ~$563/auto (12 autos, $6,750/case — per-card odds)
+7. Cosmic Chrome: ~$4,250/auto ⚠️ (only 2 autos/case — this is NOT an auto product; value is in parallels)
+
+Note: Full live pricing data is in the BREAK PRICING GUIDANCE block of the context, which auto-updates when odds files are updated. Use that as the single source of truth for exact numbers.
 
 ---
 
