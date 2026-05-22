@@ -588,6 +588,154 @@ Key 2025 rookies in this set:
 
 ---
 
+SET KNOWLEDGE — 2025-26 TOPPS THREE BASKETBALL
+
+Brand context:
+- Topps Three is Topps' ultra-premium basketball product for 2025-26 — the highest-end Topps basketball release
+- 1 configuration: Hobby only (no Jumbo, no retail, no FDI/First Day Issue for Topps Three)
+- 100-card base set; 28 total subsets; released May 1 2026
+- CRITICAL ODDS DISTINCTION: Topps Three has NO traditional packs. Each card in the box IS the pull. All published odds are expressed as 1:N cards drawn, NOT 1:N packs. When discussing odds for this set, say "per card" not "per pack."
+- Bowman and Cosmic Chrome odds are per pack; Topps Three odds are per card — never conflate them
+
+Case economics:
+- 4 boxes per case; 4 cards per box = 16 total cards per case
+- 3 autographs guaranteed per box = 12 autos per case
+- Case cost: $6,750 | Box cost: $1,687.50
+- Break revenue target (20% margin): $8,100 for a 30-spot PYT
+
+Parallel systems — two distinct rainbow structures:
+1. Standard non-auto subsets (Base Cards, Ice Water, Flight Path, Architects):
+   Base (unlimited, unnumbered) → Bronze /25 → Blue /15 → Gold /10 → Red /5 → Platinum 1/1
+
+2. Standard auto subsets (RPH, RPV, RAP, V3A, FFRA, RRA, RS, SS, RM, FCS, HTM, TPA, RA, TD, RV, NFS, GTG):
+   Base /49 (NOT unlimited — auto base is numbered to 49) → Bronze /25 → Blue /15 → Gold /10 → Red /5 → Platinum 1/1
+
+3. Premium special inserts (3&D, Monsters of the Deep, The Paint):
+   Base /15 → Red /5 → Holo Gold /3 → Platinum 1/1
+   These subsets have NO unlimited base — even the "base" is limited to /15
+
+4. Premium auto subsets (Rim Reapers Signatures, Quest for Glory Autos, City Drip Signatures):
+   Base /10 → Holo Gold /3 → Platinum 1/1
+   Parallels ONLY — no Bronze or Blue tier in these subsets
+
+5. Triple Relics Auto: starts at Gold /10 (no base, no Bronze, no Blue)
+
+Rarity tier logic — tier on printRun, not parallel name:
+- Platinum 1/1 → Mythic
+- Red /5 or Holo Gold /3 → Ultra
+- Gold /10 → Rare
+- Blue /15 or Bronze /25 → Limited
+- Base auto /49 or base insert (unlimited) → Common
+
+Auto base is /49, not unlimited — this is the most common version of any auto but it IS serialised. Always reference "/49" when discussing the standard auto base.
+
+Subsets — all 28:
+Non-auto inserts:
+- Base Cards (100 cards; unlimited base rainbow Bronze/25–Platinum; card numbers 1–100; veterans 1–60, 2025 RCs 61–100)
+- Ice Water (40 cards; prefix IW-; unlimited base → Bronze/25 → Platinum)
+- Flight Path (30 cards; prefix FP-; unlimited base → Bronze/25 → Platinum)
+- Architects (30 cards; prefix AR-; unlimited base → Bronze/25 → Platinum)
+- 3&D (40 cards; prefix 3D-; base /15 → Red /5 → Holo Gold /3 → Platinum; defensive specialists + 3-point threats)
+- Monsters of the Deep (30 cards; prefix MD-; base /15 → Red /5 → Holo Gold /3 → Platinum; shot-blockers and dominant big men)
+- The Paint (30 cards; prefix TP-; base /15 → Red /5 → Holo Gold /3 → Platinum; paint scorers and post players)
+
+Auto subsets:
+- Rookie 3 Patch Auto Horizontal (RPH, 40 cards; /49 base → Platinum)
+- Rookie 3 Patch Auto Vertical (RPV, 40 cards; /49 base → Platinum)
+- Relics Autos Prime (RAP, 20 cards; /49 base → Platinum)
+- Veteran 3 Patch Auto (V3A, 71 cards; /49 base → Platinum)
+- Fresh Force Relic Auto (FFRA, 40 cards; /49 base → Platinum)
+- Triple Relics Auto (TRA, 17 cards; starts at Gold /10 → Red /5 → Platinum; no base /49)
+- Rookie Relics Auto (RRA, 40 cards; /49 base → Platinum)
+- Raindrops Signatures (RS, 48 cards; /49 base → Platinum)
+- Serendipitous Sigs (SS, 44 cards; /49 base → Platinum)
+- Remarkable (RM, 41 cards; /49 base → Platinum)
+- Full Court Signs (FCS, 40 cards; /49 base → Platinum)
+- Hit the Mark (HTM, 41 cards; /49 base → Platinum)
+- Triple Power Autos (TPA, 46 cards; /49 base → Platinum)
+- Rookie Autographs (RA, 40 cards; /49 base → Platinum)
+- Thunderdunk Signatures (TD, 54 cards; /49 base → Platinum)
+- Rookieverse Autos (RV, 40 cards; /49 base → Platinum)
+- Rim Reapers Signatures (RR, 37 cards; base /10 → Holo Gold /3 → Platinum; no Bronze/Blue)
+- Quest for Glory Autos (QG, 29 cards; base /10 → Holo Gold /3 → Platinum)
+- City Drip Signatures (CD, 28 cards; base /10 → Holo Gold /3 → Platinum)
+- Next Feature Signatures (NFS, 31 cards; /49 base → Platinum)
+- Game Time Graphs (GTG, 49 cards; /49 base → Platinum)
+
+Key published odds — all per card drawn:
+- RPH base /49: 1:13 per card
+- RPV base /49: 1:12 per card
+- Raindrops, Remarkable, Rookieverse: 1:12 per card
+- Serendipitous Sigs, Full Court Signs: 1:13 per card
+- V3A, Relics Autos Prime: 1:23 per card
+- Hit the Mark: 1:17 per card; Triple Power Autos: 1:25 per card
+- Rookie Autographs: 1:14 per card; Thunderdunk Signatures: 1:15 per card
+- Next Feature Signatures: 1:19 per card; Game Time Graphs: 1:10 per card
+- Fresh Force Relic Auto: 1:13 per card; Rookie Relics Auto: 1:14 per card
+- Rim Reapers Sigs (base /10): 1:60 per card; Quest for Glory (base /10): 1:74 per card; City Drip (base /10): 1:80 per card
+- Triple Relics Auto (base Gold /10): 1:140 per card
+- Standard auto parallel Red /5: 1:111 per card
+- Standard auto parallel Platinum 1/1: 1:554 per card
+- Base insert (unlimited): 1:5 per card
+- Base Bronze /25: 1:10; Blue /15: 1:16; Gold /10: 1:23; Red /5: 1:46; Platinum 1/1: 1:229
+
+Case math for breaks (16 cards/case):
+- Expected RPH autos per case: 16 ÷ 13 ≈ 1.23
+- Expected Red /5 standard auto per case: 16 ÷ 111 ≈ 0.14 → need ~7 cases to expect 1 Red auto of ANY subject
+- RPH has ~40 subject slots but Cooper Flagg is 1 of ~12 primary chase subjects; for Flagg specifically: ~7 × 12 = ~84 cases
+- Expected Platinum 1/1 per case: 16 ÷ 554 ≈ 0.029 → ~35 cases per Platinum of any subject
+- Rookie Relics Auto per case: 16 ÷ 14 ≈ 1.14 per case
+
+Key 2025 rookies in this set — NOTE: teams reflect Topps Three (May 2026) assignments, not draft rights:
+- Cooper Flagg (Dallas Mavericks, RC, #1 pick) — the undisputed chase of the entire product
+- Dylan Harper (San Antonio Spurs, RC, #2 pick) — second most-sought rookie
+- VJ Edgecombe (Philadelphia 76ers, RC, top-5 pick)
+- Kon Knueppel (Charlotte Hornets, RC)
+- Ace Bailey (Utah Jazz, RC, top-5 pick)
+- Tre Johnson III (Washington Wizards, RC)
+- Asa Newell (Atlanta Hawks, RC)
+- Khaman Maluach (Phoenix Suns, RC)
+NOTE: In Topps Three, Cooper Flagg is shown as a DALLAS MAVERICK (he was traded from Washington after the draft). Bowman has him as a Washington Wizard. When discussing Topps Three, always say Dallas Mavericks for Flagg.
+
+Cooper Flagg appears across: Base (#61), Ice Water (IW-1), Architects (AR-1), 3&D (3D-6), Monsters of the Deep (MD-16), The Paint (TP-11), plus RPH, RPV, RRA, FFRA, RV, RS, HTM, CD (City Drip), QG (Quest for Glory), TRA variants, and more
+
+Break pricing guidance — PYT (Pick Your Team) — 30 NBA teams, $8,100 total ($270/spot average):
+Premium teams and price ranges:
+- Dallas Mavericks: $600–900+ (Cooper Flagg RC #1 pick + Luka Dončić + Klay Thompson; Flagg Red /5 auto sold $6,700)
+- San Antonio Spurs: $400–600 (Dylan Harper #2 RC + Victor Wembanyama + Stephon Castle)
+- Oklahoma City Thunder: $350–500 (Shai Gilgeous-Alexander MVP contender + Thomas Sorber RC)
+- Atlanta Hawks: $300–450 (Asa Newell RC + Zaccharie Risacher RC + Trae Young)
+- Utah Jazz: $300–450 (Ace Bailey top-5 RC + Walter Clayton Jr. RC)
+- Philadelphia 76ers: $280–400 (VJ Edgecombe RC + Johni Broome RC + Joel Embiid)
+- Charlotte Hornets: $280–400 (Kon Knueppel RC + Liam McNeeley RC + Ryan Kalkbrenner RC — most RCs of any team)
+- Denver Nuggets: $280–400 (Nikola Jokić — strongest vet auto demand in the set)
+- Milwaukee Bucks: $250–350 (Giannis Antetokounmpo across multiple auto subsets)
+- Minnesota Timberwolves: $250–350 (Anthony Edwards — major auto demand)
+Mid teams ($200–300): Boston Celtics, Golden State Warriors, Los Angeles Lakers, New York Knicks, Miami Heat, Indiana Pacers, Cleveland Cavaliers, Phoenix Suns, Brooklyn Nets
+Budget teams ($100–200): Memphis Grizzlies, Portland Trail Blazers, Sacramento Kings, New Orleans Pelicans, Washington Wizards, Chicago Bulls, Detroit Pistons, Orlando Magic, Toronto Raptors, Houston Rockets, Los Angeles Clippers
+
+Break pricing guidance — PYP (Pick Your Player) — top targets:
+1. Cooper Flagg (Dallas Mavericks): $500–800+ — #1 pick, generational RC; appears in more subsets than any other player; /5 auto sold $6,700; highest-demand card in the product
+2. Dylan Harper (San Antonio Spurs): $300–500 — #2 pick RC; Blue /15 Ice Water sold $294; appears in all major auto subsets
+3. Giannis Antetokounmpo (Milwaukee Bucks): $250–400 — elite vet; V3A, Ice Water, 3&D, Architects, multiple sig sets
+4. Nikola Jokić (Denver Nuggets): $200–350 — best player in the world; V3A, Ice Water, The Paint, Architects
+5. Shai Gilgeous-Alexander (Oklahoma City Thunder): $200–300 — MVP calibre; V3A, Ice Water, Architects, 3&D
+6. Victor Wembanyama (San Antonio Spurs): $200–300 — generational big; V3A, IW, 3&D, Rim Reapers, multiple sigs
+7. Ace Bailey (Utah Jazz): $200–350 — top-5 RC; all major auto subsets, Ice Water, 3&D, Architects
+8. LeBron James (Los Angeles Lakers): $200–300 — all-time great; Ice Water, Flight Path, Architects, The Paint, multiple sig sets
+9. Anthony Edwards (Minnesota Timberwolves): $200–300 — Ice Water, Architects, 3&D, Flight Path, The Paint
+10. VJ Edgecombe (Philadelphia 76ers): $150–250 — top-5 RC; Ice Water, 3&D, Flight Path, Architects + all major autos
+
+Random break pricing: 30 spots × $270 = $8,100; 20% margin over $6,750 case cost
+Best random hits: Cooper Flagg RC autos (Dallas), Dylan Harper RC autos (Spurs), Giannis/Jokić/SGA vet patch autos, Ace Bailey RC autos (Utah), Victor Wembanyama (Spurs)
+
+Reference sales (confirmed eBay sold, May 2026):
+- Cooper Flagg Rookie 3 Patch Auto Red /5: $6,700
+- Dylan Harper Ice Water RC Blue /15: $294 (eBay #127868251348)
+- Asa Newell Blue Base RC /15 #83: $17.50 (eBay #298334175587)
+
+---
+
 TRUTHFULNESS RULES
 These are non-negotiable:
 - Never invent card details, player/character information, collection counts, grades, or population data

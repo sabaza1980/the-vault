@@ -1,0 +1,206 @@
+{
+  "_comment": "Odds transcribed from the Beckett listing for 2025-26 Topps Cosmic Chrome Basketball. Topps publishes per-pack odds for nearly every parallel and insert, so almost nothing here is estimated.",
+  "setId": "2025-26-topps-cosmic-chrome-basketball",
+  "source": "Topps published odds (transcribed from Beckett article, March 2026)",
+  "lastUpdated": "2026-04-29",
+  "configurations": {
+    "Hobby": {
+      "cardsPerPack": 4,
+      "packsPerBox": 20,
+      "boxesPerCase": 12
+    },
+    "FirstDayIssue": {
+      "cardsPerPack": 4,
+      "packsPerBox": 20,
+      "boxesPerCase": null,
+      "guarantees": {
+        "fdiParallels": 2
+      }
+    }
+  },
+  "perParallel": {
+    "_comment": "Base parallel rainbow — odds apply to ANY card in the base set at this parallel. Divide by 200 to get per-card odds.",
+    "cc-refractor":         { "Hobby": { "oddsPer": "pack", "ratio": "1:10",     "estimated": false } },
+    "cc-nucleus":           { "Hobby": { "oddsPer": "pack", "ratio": "1:20",     "estimated": false } },
+    "cc-white-hole":        { "Hobby": { "oddsPer": "pack", "ratio": "1:126",    "estimated": false } },
+    "cc-aqua-equinox":      { "Hobby": { "oddsPer": "pack", "ratio": "1:42",     "estimated": false } },
+    "cc-purple-nebula":     { "Hobby": { "oddsPer": "pack", "ratio": "1:56",     "estimated": false } },
+    "cc-blue-moon":         { "Hobby": { "oddsPer": "pack", "ratio": "1:85",     "estimated": false } },
+    "cc-green-space-dust":  { "Hobby": { "oddsPer": "pack", "ratio": "1:111",    "estimated": false } },
+    "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:167",    "estimated": false } },
+    "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:333",    "estimated": false } },
+    "cc-fdi-1":             { "FirstDayIssue": { "oddsPer": "pack", "ratio": "1:662", "estimated": false, "note": "FDI exclusive — /12" } },
+    "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:832",    "estimated": false } },
+    "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:1664",   "estimated": false } },
+    "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:8319",   "estimated": false } },
+    "cc-lunar":             { "Hobby": { "oddsPer": "pack", "ratio": "1:764",    "estimated": false } },
+    "cc-pink":              { "Hobby": { "oddsPer": "pack", "ratio": "1:33100",  "estimated": false, "note": "Pink /1 — odds vary by insert subset; this is the Starfractor/Re-Entry rate. Geocentric/First Light fall at 1:54,787." } }
+  },
+  "perInsert": {
+    "_comment": "Insert subset odds — for the BASE version of any card in the subset. Parallels listed at perInsertParallel below if needed.",
+    "galaxy-greats":             { "Hobby": { "oddsPer": "pack", "ratio": "1:6",     "estimated": false } },
+    "extraterrestrial-talent":   { "Hobby": { "oddsPer": "pack", "ratio": "1:8",     "estimated": false } },
+    "propulsion":                { "Hobby": { "oddsPer": "pack", "ratio": "1:8",     "estimated": false } },
+    "space-walk":                { "Hobby": { "oddsPer": "pack", "ratio": "1:13",    "estimated": false } },
+    "starfractor":               { "Hobby": { "oddsPer": "pack", "ratio": "1:609",   "estimated": false } },
+    "re-entry":                  { "Hobby": { "oddsPer": "pack", "ratio": "1:871",   "estimated": false } },
+    "geocentric":                { "Hobby": { "oddsPer": "pack", "ratio": "1:1109",  "estimated": false } },
+    "first-light":               { "Hobby": { "oddsPer": "pack", "ratio": "1:1109",  "estimated": false } },
+    "hyper-nova":                { "Hobby": { "oddsPer": "pack", "ratio": "1:201",   "estimated": false, "rarity": "SSP" } },
+    "cosmic-dust":               { "Hobby": { "oddsPer": "pack", "ratio": "1:793",   "estimated": false, "rarity": "SSP" } }
+  },
+  "perInsertParallel": {
+    "_comment": "Subset-specific parallel odds where Topps publishes them separately (mostly Galaxy Greats, ET, Propulsion, Space Walk).",
+    "galaxy-greats": {
+      "cc-refractor":         { "Hobby": { "oddsPer": "pack", "ratio": "1:36",     "estimated": false } },
+      "cc-aqua-equinox":      { "Hobby": { "oddsPer": "pack", "ratio": "1:239",    "estimated": false } },
+      "cc-purple-nebula":     { "Hobby": { "oddsPer": "pack", "ratio": "1:317",    "estimated": false } },
+      "cc-blue-moon":         { "Hobby": { "oddsPer": "pack", "ratio": "1:480",    "estimated": false } },
+      "cc-green-space-dust":  { "Hobby": { "oddsPer": "pack", "ratio": "1:634",    "estimated": false } },
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:951",    "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1901",   "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:4743",   "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:9458",   "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:46730",  "estimated": false } }
+    },
+    "extraterrestrial-talent": {
+      "cc-refractor":         { "Hobby": { "oddsPer": "pack", "ratio": "1:50",     "estimated": false } },
+      "cc-aqua-equinox":      { "Hobby": { "oddsPer": "pack", "ratio": "1:335",    "estimated": false } },
+      "cc-purple-nebula":     { "Hobby": { "oddsPer": "pack", "ratio": "1:444",    "estimated": false } },
+      "cc-blue-moon":         { "Hobby": { "oddsPer": "pack", "ratio": "1:673",    "estimated": false } },
+      "cc-green-space-dust":  { "Hobby": { "oddsPer": "pack", "ratio": "1:888",    "estimated": false } },
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:1331",   "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2662",   "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:6648",   "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:13240",  "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:66200",  "estimated": false } }
+    },
+    "propulsion": {
+      "cc-refractor":         { "Hobby": { "oddsPer": "pack", "ratio": "1:50",     "estimated": false } },
+      "cc-aqua-equinox":      { "Hobby": { "oddsPer": "pack", "ratio": "1:335",    "estimated": false } },
+      "cc-purple-nebula":     { "Hobby": { "oddsPer": "pack", "ratio": "1:444",    "estimated": false } },
+      "cc-blue-moon":         { "Hobby": { "oddsPer": "pack", "ratio": "1:673",    "estimated": false } },
+      "cc-green-space-dust":  { "Hobby": { "oddsPer": "pack", "ratio": "1:888",    "estimated": false } },
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:1331",   "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2662",   "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:6648",   "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:13240",  "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:66200",  "estimated": false } }
+    },
+    "space-walk": {
+      "cc-refractor":          { "Hobby": { "oddsPer": "pack", "ratio": "1:83",     "estimated": false } },
+      "cc-aqua-equinox":       { "Hobby": { "oddsPer": "pack", "ratio": "1:558",    "estimated": false } },
+      "cc-purple-nebula":      { "Hobby": { "oddsPer": "pack", "ratio": "1:740",    "estimated": false } },
+      "cc-green-space-dust-99":{ "Hobby": { "oddsPer": "pack", "ratio": "1:1478",   "estimated": false } },
+      "cc-blue-moon-75":       { "Hobby": { "oddsPer": "pack", "ratio": "1:1120",   "estimated": false } },
+      "cc-gold-interstellar":  { "Hobby": { "oddsPer": "pack", "ratio": "1:2216",   "estimated": false } },
+      "cc-orange-galactic":    { "Hobby": { "oddsPer": "pack", "ratio": "1:4426",   "estimated": false } },
+      "cc-black-eclipse":      { "Hobby": { "oddsPer": "pack", "ratio": "1:11034",  "estimated": false } },
+      "cc-red-flare":          { "Hobby": { "oddsPer": "pack", "ratio": "1:22067",  "estimated": false } },
+      "cc-superfractor":       { "Hobby": { "oddsPer": "pack", "ratio": "1:105920", "estimated": false } }
+    },
+    "starfractor": {
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1331",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:3324",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:6648",  "estimated": false } },
+      "cc-pink":              { "Hobby": { "oddsPer": "pack", "ratio": "1:33100", "estimated": false } }
+    },
+    "re-entry": {
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1331",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:3324",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:6648",  "estimated": false } },
+      "cc-pink":              { "Hobby": { "oddsPer": "pack", "ratio": "1:33100", "estimated": false } }
+    },
+    "geocentric": {
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2216",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:5536",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:11034", "estimated": false } },
+      "cc-pink":              { "Hobby": { "oddsPer": "pack", "ratio": "1:54787", "estimated": false } }
+    },
+    "first-light": {
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2216",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:5536",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:11034", "estimated": false } },
+      "cc-pink":              { "Hobby": { "oddsPer": "pack", "ratio": "1:54787", "estimated": false } }
+    }
+  },
+  "perAutoSubset": {
+    "cosmic-chrome-autographs": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:383", "estimated": false, "note": "Spread across 48 cards" }
+    },
+    "cosmic-chrome-autographs-ii": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:31776", "estimated": false, "note": "Ultra-rare 2-card subset (Jokić, SGA)" }
+    },
+    "singularity-signatures": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:331", "estimated": false }
+    },
+    "alien-autographs": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:1235", "estimated": false }
+    },
+    "electro-static-signatures": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:805", "estimated": false }
+    },
+    "first-flight-signatures": {
+      "Hobby": { "oddsPer": "pack", "ratio": "1:678", "estimated": false }
+    }
+  },
+  "perAutoParallel": {
+    "_comment": "Auto subset rainbow odds. CCA II uses a separate, much rarer ladder.",
+    "cosmic-chrome-autographs": {
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:915",   "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1360",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:3290",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:6566",  "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:32425", "estimated": false } }
+    },
+    "cosmic-chrome-autographs-ii": {
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:31776",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:79440",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:158880", "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:794400", "estimated": false } }
+    },
+    "singularity-signatures": {
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:798",   "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1356",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:3395",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:6849",  "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:34540", "estimated": false } }
+    },
+    "alien-autographs": {
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:1143",  "estimated": false, "note": "Article lists Gold rarer than base — preserve as published" } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2113",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:4981",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:9993",  "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:51252", "estimated": false } }
+    },
+    "electro-static-signatures": {
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:1685",  "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2684",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:5296",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:10664", "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:52960", "estimated": false } }
+    },
+    "first-flight-signatures": {
+      "cc-gold-interstellar": { "Hobby": { "oddsPer": "pack", "ratio": "1:1689",  "estimated": false } },
+      "cc-orange-galactic":   { "Hobby": { "oddsPer": "pack", "ratio": "1:2204",  "estimated": false } },
+      "cc-black-eclipse":     { "Hobby": { "oddsPer": "pack", "ratio": "1:5479",  "estimated": false } },
+      "cc-red-flare":         { "Hobby": { "oddsPer": "pack", "ratio": "1:10958", "estimated": false } },
+      "cc-superfractor":      { "Hobby": { "oddsPer": "pack", "ratio": "1:54787", "estimated": false } }
+    }
+  },
+  "perVersion": {
+    "_comment": "Planetary Pursuit has 10 versions per card (Sun through Pluto), each with its own pull rate.",
+    "planetary-pursuit": {
+      "Sun":     { "Hobby": { "oddsPer": "pack", "ratio": "1:80",    "estimated": false } },
+      "Mercury": { "Hobby": { "oddsPer": "pack", "ratio": "1:328",   "estimated": false } },
+      "Venus":   { "Hobby": { "oddsPer": "pack", "ratio": "1:640",   "estimated": false } },
+      "Earth":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1281",  "estimated": false } },
+      "Mars":    { "Hobby": { "oddsPer": "pack", "ratio": "1:2400",  "estimated": false } },
+      "Jupiter": { "Hobby": { "oddsPer": "pack", "ratio": "1:4800",  "estimated": false } },
+      "Saturn":  { "Hobby": { "oddsPer": "pack", "ratio": "1:7984",  "estimated": false } },
+      "Uranus":  { "Hobby": { "oddsPer": "pack", "ratio": "1:16049", "estimated": false } },
+      "Neptune": { "Hobby": { "oddsPer": "pack", "ratio": "1:23027", "estimated": false } },
+      "Pluto":   { "Hobby": { "oddsPer": "pack", "ratio": "1:29423", "estimated": false } }
+    }
+  }
+}

@@ -8,8 +8,9 @@ import { useTrackerState } from './useTrackerState.js';
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 const COLLECTIONS = [
-  { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
+  { id: '2025-26-topps-three-basketball', name: '2025-26 Topps Three Basketball' },
   { id: '2025-26-topps-cosmic-chrome-basketball', name: '2025-26 Topps Cosmic Chrome Basketball' },
+  { id: '2025-26-bowman-basketball', name: '2025-26 Bowman Basketball' },
   { id: '2025-26-topps-midnight-basketball', name: '2025-26 Topps Midnight Basketball' },
   { id: '2025-26-topps-nba-hoops-basketball', name: '2025-26 Topps NBA Hoops Basketball' },
 ];

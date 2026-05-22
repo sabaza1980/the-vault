@@ -1,0 +1,980 @@
+{
+  "_comment": "Odds transcribed from the official 2025-26 Topps Three Basketball Odds PDF. Both Hobby and FDI configurations share identical odds.",
+  "setId": "2025-26-topps-three-basketball",
+  "source": "Topps published odds (official Odds PDF, 2025-26 Topps Three Basketball)",
+  "lastUpdated": "2026-05-22",
+  "configurations": {
+    "Hobby": {
+      "cardsPerBox": 4,
+      "packsPerBox": null,
+      "boxesPerCase": 4,
+      "caseCostUSD": 6750,
+      "boxCostUSD": 1687.5,
+      "guarantees": {
+        "autographs": 3,
+        "note": "3 autographs per box guaranteed — mix of Patch Autos, Relic Autos, and Signature cards"
+      }
+    },
+    "FDI": {
+      "cardsPerBox": 4,
+      "packsPerBox": null,
+      "boxesPerCase": null,
+      "guarantees": {
+        "autographs": 3
+      },
+      "notes": "First Day Issue — identical odds to Hobby"
+    }
+  },
+  "parallelPrintRuns": {
+    "_comment": "Definitive print run reference for each parallel tier",
+    "t3-base": {
+      "name": "Base",
+      "printRun": null,
+      "note": "Unlimited (unnumbered) for base set and standard inserts"
+    },
+    "t3-bronze": {
+      "name": "Bronze",
+      "printRun": 25
+    },
+    "t3-blue": {
+      "name": "Blue",
+      "printRun": 15,
+      "note": "Confirmed via eBay sales (Asa Newell Blue Base RC /15, Dylan Harper Ice Water Blue RC /15)"
+    },
+    "t3-gold": {
+      "name": "Gold",
+      "printRun": 10
+    },
+    "t3-red": {
+      "name": "Red",
+      "printRun": 5,
+      "note": "Confirmed via eBay sales (Cooper Flagg auto Red /5 sold $6,700)"
+    },
+    "t3-platinum": {
+      "name": "Platinum",
+      "printRun": 1,
+      "note": "One-of-One"
+    },
+    "t3-auto-49": {
+      "name": "Base",
+      "printRun": 49,
+      "note": "Base auto parallel — numbered /49. Used for standard auto subsets only."
+    },
+    "t3-holo-gold": {
+      "name": "Holo Gold",
+      "printRun": 3,
+      "note": "Holo Gold — used in Rim Reapers, City Drip, Quest for Glory, 3&D, Monsters, Paint"
+    },
+    "t3-base-15": {
+      "name": "Base",
+      "printRun": 15,
+      "note": "Base parallel for 3&D, Monsters of the Deep, The Paint"
+    },
+    "t3-base-10": {
+      "name": "Base",
+      "printRun": 10,
+      "note": "Base parallel for Rim Reapers, City Drip, Quest for Glory"
+    }
+  },
+  "perParallel": {
+    "_comment": "Odds per card drawn (not per pack — Topps Three has no traditional packs). Hobby odds = FDI odds.",
+    "t3-base": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:5",
+        "estimated": false
+      }
+    },
+    "t3-bronze": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:10",
+        "estimated": false
+      }
+    },
+    "t3-blue": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:16",
+        "estimated": false
+      }
+    },
+    "t3-gold": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:23",
+        "estimated": false
+      }
+    },
+    "t3-red": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:46",
+        "estimated": false
+      }
+    },
+    "t3-platinum": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:229",
+        "estimated": false
+      }
+    }
+  },
+  "perInsert": {
+    "ice-water": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:12",
+        "estimated": false
+      }
+    },
+    "flight-path": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:16",
+        "estimated": false
+      }
+    },
+    "architects": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:16",
+        "estimated": false
+      }
+    },
+    "three-and-d": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:39",
+        "estimated": false
+      }
+    },
+    "monsters-of-the-deep": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:51",
+        "estimated": false
+      }
+    },
+    "the-paint": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:39",
+        "estimated": false
+      }
+    }
+  },
+  "perInsertParallel": {
+    "ice-water": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:23",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:39",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:58",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:115",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:568",
+          "estimated": false
+        }
+      }
+    },
+    "flight-path": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:31",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:51",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:77",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:153",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:764",
+          "estimated": false
+        }
+      }
+    },
+    "architects": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:31",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:51",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:77",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:153",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:764",
+          "estimated": false
+        }
+      }
+    },
+    "three-and-d": {
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:39",
+          "estimated": false
+        }
+      },
+      "t3-holo-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:191",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:568",
+          "estimated": false
+        }
+      }
+    },
+    "monsters-of-the-deep": {
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:153",
+          "estimated": false
+        }
+      },
+      "t3-holo-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:255",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:764",
+          "estimated": false
+        }
+      }
+    },
+    "the-paint": {
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:153",
+          "estimated": false
+        }
+      },
+      "t3-holo-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:255",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:764",
+          "estimated": false
+        }
+      }
+    }
+  },
+  "perAutoSubset": {
+    "_comment": "Odds for the BASE (unnumbered /49) version of each auto subset",
+    "rookie-3-patch-auto-horizontal": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:13",
+        "estimated": false
+      }
+    },
+    "rookie-3-patch-auto-vertical": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:12",
+        "estimated": false
+      }
+    },
+    "relics-autos-prime": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:23",
+        "estimated": false
+      }
+    },
+    "veteran-3-patch-auto": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:23",
+        "estimated": false
+      }
+    },
+    "raindrops-signatures": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:12",
+        "estimated": false
+      }
+    },
+    "serendipitous-sigs": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:13",
+        "estimated": false
+      }
+    },
+    "remarkable": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:12",
+        "estimated": false
+      }
+    },
+    "full-court-signs": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:13",
+        "estimated": false
+      }
+    },
+    "hit-the-mark": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:17",
+        "estimated": false
+      }
+    },
+    "triple-power-autos": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:25",
+        "estimated": false
+      }
+    },
+    "rookie-autographs": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:14",
+        "estimated": false
+      }
+    },
+    "thunderdunk-signatures": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:15",
+        "estimated": false
+      }
+    },
+    "rookieverse-autos": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:12",
+        "estimated": false
+      }
+    },
+    "rim-reapers-signatures": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:60",
+        "estimated": false,
+        "note": "Base is #/10"
+      }
+    },
+    "quest-for-glory-autos": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:74",
+        "estimated": false,
+        "note": "Base is #/10"
+      }
+    },
+    "city-drip-signatures": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:80",
+        "estimated": false,
+        "note": "Base is #/10"
+      }
+    },
+    "next-feature-signatures": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:19",
+        "estimated": false
+      }
+    },
+    "game-time-graphs": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:10",
+        "estimated": false
+      }
+    },
+    "fresh-force-relic-auto": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:13",
+        "estimated": false
+      }
+    },
+    "triple-relics-auto": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:140",
+        "estimated": false,
+        "note": "Parallels start at Gold #/10"
+      }
+    },
+    "rookie-relics-auto": {
+      "Hobby": {
+        "oddsPer": "card",
+        "ratio": "1:14",
+        "estimated": false
+      }
+    }
+  },
+  "perAutoParallel": {
+    "_comment": "Parallel odds for auto subsets (Bronze through Platinum). Same ratios apply to RPH, RPV, RA, RRA, FFR, RV, RS, etc.",
+    "standard": {
+      "t3-auto-49": "_note: this IS the base auto — see perAutoSubset",
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:23",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:37",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:56",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:111",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:554",
+          "estimated": false
+        }
+      }
+    },
+    "veteran-3-patch-auto": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:19",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:22",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:32",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:63",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:321",
+          "estimated": false
+        }
+      }
+    },
+    "thunderdunk-signatures": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:22",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:28",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:42",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:82",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:418",
+          "estimated": false
+        }
+      }
+    },
+    "rim-reapers-holo-platinum": {
+      "t3-holo-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:202",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:615",
+          "estimated": false
+        }
+      }
+    },
+    "quest-for-glory-holo-platinum": {
+      "t3-holo-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:246",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:764",
+          "estimated": false
+        }
+      }
+    },
+    "city-drip-holo-platinum": {
+      "t3-holo-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:264",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:791",
+          "estimated": false
+        }
+      }
+    },
+    "game-time-graphs": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:19",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:31",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:46",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:91",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:452",
+          "estimated": false
+        }
+      }
+    },
+    "next-feature-signatures": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:29",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:48",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:72",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:143",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:714",
+          "estimated": false
+        }
+      }
+    },
+    "remarkable": {
+      "t3-bronze": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:22",
+          "estimated": false
+        }
+      },
+      "t3-blue": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:37",
+          "estimated": false
+        }
+      },
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:54",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:111",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:554",
+          "estimated": false
+        }
+      }
+    },
+    "triple-relics-auto": {
+      "t3-gold": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:140",
+          "estimated": false
+        }
+      },
+      "t3-red": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:281",
+          "estimated": false
+        }
+      },
+      "t3-platinum": {
+        "Hobby": {
+          "oddsPer": "card",
+          "ratio": "1:1302",
+          "estimated": false
+        }
+      }
+    }
+  },
+  "breakPricingGuidance": {
+    "_comment": "Guidance for break pricing — case cost $6750, need 20% margin = $8100 revenue target",
+    "caseCost": 6750,
+    "marginTarget": 0.2,
+    "revenueNeeded": 8100,
+    "cardsPerCase": 16,
+    "autosPerCase": 12,
+    "pyt30Teams": {
+      "avgSpotPrice": 270,
+      "premiumTeams": {
+        "Dallas Mavericks": {
+          "range": "$600-900+",
+          "reason": "Cooper Flagg — generational RC, #1 pick 2025 draft; Ice Water, Architects, base RC, multiple auto subsets. /5 autos sold $6700."
+        },
+        "San Antonio Spurs": {
+          "range": "$400-600",
+          "reason": "Dylan Harper #2 pick + Victor Wembanyama. Multiple RC auto subsets. Harper Ice Water Blue /15 sold $294."
+        },
+        "Oklahoma City Thunder": {
+          "range": "$350-500",
+          "reason": "Shai Gilgeous-Alexander (MVP contender) + Thomas Sorber RC + Alex Caruso"
+        },
+        "Atlanta Hawks": {
+          "range": "$300-450",
+          "reason": "Asa Newell RC + Zaccharie Risacher RC + Trae Young. Newell Blue /15 sold $17.50 — mid but multiple RCs adds depth."
+        },
+        "Utah Jazz": {
+          "range": "$300-450",
+          "reason": "Ace Bailey (top-5 pick RC) + Walter Clayton Jr. RC + multiple veteran autos"
+        },
+        "Philadelphia 76ers": {
+          "range": "$280-400",
+          "reason": "VJ Edgecombe RC (top-5 pick) + Johni Broome RC + Joel Embiid"
+        },
+        "Charlotte Hornets": {
+          "range": "$280-400",
+          "reason": "Kon Knueppel RC + Liam McNeeley RC + Ryan Kalkbrenner RC — most RCs in any team"
+        },
+        "Denver Nuggets": {
+          "range": "$280-400",
+          "reason": "Nikola Jokić (best player in world) high demand on vet autos"
+        },
+        "Milwaukee Bucks": {
+          "range": "$250-350",
+          "reason": "Giannis Antetokounmpo across multiple vet auto subsets"
+        },
+        "Minnesota Timberwolves": {
+          "range": "$250-350",
+          "reason": "Anthony Edwards — young star, massive auto demand"
+        }
+      },
+      "midTeams": [
+        "Boston Celtics",
+        "Golden State Warriors",
+        "Los Angeles Lakers",
+        "New York Knicks",
+        "Miami Heat",
+        "Indiana Pacers",
+        "Cleveland Cavaliers",
+        "Phoenix Suns",
+        "Brooklyn Nets"
+      ],
+      "midRange": "$200-300",
+      "budgetTeams": [
+        "Memphis Grizzlies",
+        "Portland Trail Blazers",
+        "Sacramento Kings",
+        "New Orleans Pelicans",
+        "Washington Wizards",
+        "Chicago Bulls",
+        "Detroit Pistons",
+        "Orlando Magic",
+        "Toronto Raptors",
+        "Houston Rockets",
+        "Los Angeles Clippers"
+      ],
+      "budgetRange": "$100-200"
+    },
+    "pypGuidance": {
+      "topTargets": [
+        {
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "spotRange": "$500-800+",
+          "reason": "#1 pick, generational RC, appears in Ice Water, 3&D, Monsters, Paint, Architects, RPH, RPV, RA, RRA, FFR, RV, RS, HM, TD, CD, QG, TRA-CDA, TRA-CKK, TRA-CLA, TRA-JPC. /5 auto traded at $6,700."
+        },
+        {
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "spotRange": "$300-500",
+          "reason": "#2 pick RC, appears in all major auto subsets + Ice Water, Architects. Blue /15 sold $294."
+        },
+        {
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks",
+          "spotRange": "$250-400",
+          "reason": "Elite vet, appears in V3A, Ice Water, 3&D, Architects, multiple sig sets"
+        },
+        {
+          "player": "Nikola Jokić",
+          "team": "Denver Nuggets",
+          "spotRange": "$200-350",
+          "reason": "Best player, V3A, Ice Water, The Paint, Architects"
+        },
+        {
+          "player": "Shai Gilgeous-Alexander",
+          "team": "Oklahoma City Thunder",
+          "spotRange": "$200-300",
+          "reason": "MVP season, V3A, Ice Water, Architects, 3&D"
+        },
+        {
+          "player": "Anthony Edwards",
+          "team": "Minnesota Timberwolves",
+          "spotRange": "$200-300",
+          "reason": "Young star face, Ice Water, Architects, 3&D, The Paint"
+        },
+        {
+          "player": "Victor Wembanyama",
+          "team": "San Antonio Spurs",
+          "spotRange": "$200-300",
+          "reason": "Generational big man, V3A, IW, 3&D, Rim Reapers, multiple sigs"
+        },
+        {
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "spotRange": "$200-350",
+          "reason": "Top-5 pick RC, appears in all major auto subsets, Ice Water, 3&D, Architects"
+        },
+        {
+          "player": "LeBron James",
+          "team": "Los Angeles Lakers",
+          "spotRange": "$200-300",
+          "reason": "All-time great, appears in Ice Water, Flight Path, Architects, The Paint, multiple sig sets"
+        },
+        {
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers",
+          "spotRange": "$150-250",
+          "reason": "Top-5 pick RC, Ice Water, 3&D, Flight Path, Architects, all major auto subsets"
+        }
+      ]
+    },
+    "randomBreakGuidance": {
+      "spotsToSell": 30,
+      "pricePerSpot": 270,
+      "totalRevenue": 8100,
+      "margin": "20% over $6750 case cost",
+      "bestRandomHits": [
+        "Cooper Flagg RC autos (Dallas)",
+        "Dylan Harper RC autos (SA Spurs)",
+        "Giannis/Jokić/SGA vet patch autos",
+        "Ace Bailey RC autos (Utah)",
+        "Victor Wembanyama autos (SA Spurs)"
+      ]
+    }
+  },
+  "referenceSales": [
+    {
+      "card": "Cooper Flagg Rookie 3 Patch Auto Red /5",
+      "price": 6700,
+      "date": "2026-05",
+      "source": "eBay",
+      "notes": "Confirmed /5 Red parallel auto"
+    },
+    {
+      "card": "Dylan Harper Ice Water RC Blue /15 Spurs",
+      "price": 294,
+      "date": "2026-05",
+      "source": "eBay",
+      "itemId": "127868251348"
+    },
+    {
+      "card": "Asa Newell Blue Base RC /15 #83",
+      "price": 17.5,
+      "date": "2026-05",
+      "source": "eBay",
+      "itemId": "298334175587"
+    }
+  ]
+}
