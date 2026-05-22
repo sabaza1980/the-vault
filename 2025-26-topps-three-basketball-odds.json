@@ -1,6 +1,7 @@
 {
   "_comment": "Odds transcribed from the official 2025-26 Topps Three Basketball Odds PDF. Both Hobby and FDI configurations share identical odds.",
   "setId": "2025-26-topps-three-basketball",
+  "oddsUnit": "per-card",
   "source": "Topps published odds (official Odds PDF, 2025-26 Topps Three Basketball)",
   "lastUpdated": "2026-05-22",
   "configurations": {
@@ -952,7 +953,25 @@
         "Ace Bailey RC autos (Utah)",
         "Victor Wembanyama autos (SA Spurs)"
       ]
-    }
+    },
+    "revenueTarget": 8100,
+    "costPerAutoAtBreakeven": 562,
+    "pytPricing": {
+      "avgSpotPrice": 270
+    },
+    "randomBreak": {
+      "spotsRecommended": 30,
+      "spotPrice": 275
+    },
+    "evFramework": {
+      "_comment": "Topps Three: per-card odds (oddsUnit=per-card). No traditional packs. Each card in box IS the product.",
+      "step1": "Pull 30-day sold comps for each player's parallel variants (base /49, Bronze /25, Blue /15, Gold /10, Red /5, Platinum 1/1).",
+      "step2": "EV = sum of (card_value × pull_probability) across all parallels the buyer would land from their allocation.",
+      "step3": "At 16 cards/case: buyer EV per card ≈ total_case_EV / 16. Premium player cards skew EV heavily.",
+      "step4": "Auto base is /49 (NOT unlimited). Platinum 1/1 = Mythic. Red /5 = Ultra. These carry highest EV.",
+      "step5": "For PYP: scale player weights to revenue target. Use 140-spot model for 5-case breaks (see Topps3-PYP-Pricing.xlsx)."
+    },
+    "scalingNote": "Multi-case breaks: multiply revenue target by case count. 5-case break = $38,812 target (15% margin)."
   },
   "referenceSales": [
     {

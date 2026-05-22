@@ -456,6 +456,13 @@ Parallel systems:
 - Reptilian variants are foil-texture parallels at matched print runs (e.g. Reptilian Blue /150 mirrors Blue Refractor /150)
 - A paper card and its Chrome counterpart are completely different collectibles — they are NOT parallels of each other
 
+Break economics (source: BREAK PRICING GUIDANCE block in context):
+- 12-box Hobby case; 24 autos/case (12 NBA + 12 NCAA) — dual auto structure is unique to Bowman
+- Odds are per-pack (standard packs)
+- NCAA autos count toward the 24 total — factor this in when pricing: not all 24 are NBA star value
+- Case cost and PYT/random pricing are in the BREAK PRICING GUIDANCE section of this context
+- Multi-case scaling: revenue target × number of cases; margin logic stays the same
+
 Key 2025 rookies:
 - Cooper Flagg (Washington Wizards), Dylan Harper (San Antonio Spurs), Ace Bailey (Charlotte Hornets), VJ Edgecombe (Detroit Pistons), Tre Johnson (New Orleans Pelicans), Carter Bryant (Utah Jazz), Noa Essengue (Sacramento Kings), Khaman Maluach (Dallas Mavericks/Phoenix Suns in Cosmic Chrome/Bowman), Labaron Philon (Memphis Grizzlies), Kasparas Jakucionis (Chicago Bulls), Egor Demin (Portland Trail Blazers)
 
@@ -500,6 +507,14 @@ Odds context:
 - The Lunar parallel is unnumbered but genuine SSP — pulls around 1:764 packs
 - Black Eclipse /10 is approximately 1:832 packs; Red Flare /5 is 1:1664; Superfractor 1/1 is 1:8319
 
+Break economics (source: BREAK PRICING GUIDANCE block in context):
+- ⚠️ CRITICAL: Cosmic Chrome averages only ~2 autos per 8-box case. This is NOT an auto-focused product.
+- Primary break value is in numbered parallels (SuperFractor 1/1, Red Flare /5, Black Eclipse /10, Orange /25, Gold /50) and SSP inserts
+- Odds are per-pack
+- ALWAYS warn buyers expecting autos: Cosmic Chrome breaks are parallel/insert chases, not auto chases
+- Cost per auto at breakeven is very high (see BREAK PRICING GUIDANCE block); parallel hits are the real value driver
+- Case cost and PYT/random pricing are in the BREAK PRICING GUIDANCE section of this context
+
 ---
 
 SET KNOWLEDGE — 2025-26 TOPPS MIDNIGHT BASKETBALL
@@ -525,6 +540,13 @@ Auto subsets:
 - Midnight Oil Marks: auto-relic
 - Horizon: auto subset
 - Dark Marks: base auto subset
+
+Break economics (source: BREAK PRICING GUIDANCE block in context):
+- 8-box Hobby case; 24 autos/case (3 per box guaranteed) — best auto-per-dollar value of all 5 sets
+- 7 cards/box (1 pack of 7); budget entry product; great for high-spot-count random or PYT breaks
+- Odds are per-pack
+- No checklist yet — AI can answer break pricing questions but not player/card-specific queries
+- Case cost and PYT/random pricing are in the BREAK PRICING GUIDANCE section of this context
 
 Important caveats:
 - All insert and auto odds in the database for Midnight are estimated/TBD — do not quote specific pack odds for inserts as if confirmed
@@ -581,6 +603,12 @@ Hoops 1989 Signatures:
 - Auto subset using the 1989-90 SkyBox design layout
 - Includes modern stars (LeBron, Curry, Durant, Jokic, Giannis, Cooper Flagg) alongside authentic signers from the original 1989-90 NBA Hoops class (David Robinson, Hakeem Olajuwon, Magic Johnson, Larry Bird, Charles Barkley, Clyde Drexler, Karl Malone, Patrick Ewing, Isiah Thomas, John Stockton, Dominique Wilkins)
 - Card numbers use the 89S- prefix
+
+Break economics (source: BREAK PRICING GUIDANCE block in context):
+- 8-box Hobby case; 16 autos/case avg; budget product — accessible entry point for new break buyers
+- Odds are per-pack
+- No checklist yet — AI can answer break pricing questions but not player/card-specific queries
+- Case cost and PYT/random pricing are in the BREAK PRICING GUIDANCE section of this context
 
 Key 2025 rookies in this set:
 - Cooper Flagg (Washington Wizards, #1 pick), Dylan Harper (San Antonio Spurs), Ace Bailey (Charlotte Hornets), VJ Edgecombe (Detroit Pistons), Tre Johnson (New Orleans Pelicans), Carter Bryant (Utah Jazz), Noa Essengue (Sacramento Kings), Khaman Maluach (Dallas Mavericks), Labaron Philon (Memphis Grizzlies), Kasparas Jakucionis (Chicago Bulls), Egor Demin (Portland Trail Blazers)
