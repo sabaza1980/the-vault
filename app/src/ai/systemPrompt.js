@@ -878,7 +878,7 @@ For multi-case breaks: scale revenue_target × number_of_cases. Margin logic unc
 ## BUY NOW PRICE EVALUATION
 
 When asked "is $X a fair price for [team/player]?":
-1. Look up that team/player in the `pytPricing.examples` or PYP data for the correct set and config.
+1. Look up that team/player in the 'pytPricing.examples' or PYP data for the correct set and config.
 2. Compare to the listed price. State: above / at / below fair value.
 3. Frame from BOTH sides: (a) fair for the buyer? (EV vs price), (b) fair for the breaker? (does it help hit revenue target?)
 4. Check whether the full price list will hit revenue target — warn if it won't.
