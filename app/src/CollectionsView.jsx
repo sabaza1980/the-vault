@@ -272,7 +272,7 @@ function AiCreatorChat({ allCards, onApply, onSwitchManual }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           system: AI_SYSTEM(buildVaultSummary(allCards)),
           messages: next.filter(m => m.role !== 'assistant' || next.indexOf(m) > 0),
           max_tokens: 1200,

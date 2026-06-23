@@ -18,7 +18,7 @@ import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, getDocs, increment } from "firebase/firestore";
 
-const ANTHROPIC_MODEL = "claude-sonnet-4-20250514";
+const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 
 function resizeImageFile(file) {

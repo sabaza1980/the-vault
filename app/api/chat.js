@@ -10,7 +10,7 @@ export const config = {
   api: { bodyParser: { sizeLimit: "256kb" } },
 };
 
-const ALLOWED_MODELS = ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"];
+const ALLOWED_MODELS = ["claude-sonnet-4-6", "claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"];
 const DEFAULT_MAX_TOKENS = 2000;
 const MAX_TOKENS_CEILING = 2500;
 

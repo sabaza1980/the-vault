@@ -5,7 +5,7 @@ import { buildSystemPrompt } from "./ai/systemPrompt.js";
 import { buildCollectionContext } from "./ai/collectionContext.js";
 import AdGateModal from "./AdGateModal.jsx";
 
-const CHAT_MODEL = "claude-sonnet-4-20250514";
+const CHAT_MODEL = "claude-sonnet-4-6";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 
 // ─────────────────────────────────────────────────────────────────────────────
