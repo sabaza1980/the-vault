@@ -2,7 +2,6 @@
 import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { Capacitor } from '@capacitor/core';
-import AdGateModal from './AdGateModal.jsx';
 import { useTrackerState } from './useTrackerState.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '';
@@ -723,7 +722,6 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, activeSe
   const cardRef = useRef();
   const [screenshotting, setScreenshotting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
-  const [adGate, setAdGate] = useState(null); // null | 'csv' | 'screenshot'
   const [breakSaved, setBreakSaved] = useState(false);
 
   // Auto-save break when summary opens
@@ -832,37 +830,14 @@ function BreakSummaryModal({ hits, targetedPlayers, setName, breakInfo, activeSe
     }
   }, []);
 
-  // ── Ad-gated export triggers ────────────────────────────────────────────────
+  // ── Export triggers (ads removed — direct download on every platform) ────────
   const handleExportClick = useCallback((type) => {
-    if (!Capacitor.isNativePlatform()) {
-      // Web: no ad gate, download directly
-      if (type === 'csv') downloadCSV();
-      if (type === 'screenshot') downloadScreenshot();
-      return;
-    }
-    setAdGate(type);
-  }, [downloadCSV, downloadScreenshot]);
-
-  const handleAdWatched = useCallback(() => {
-    const type = adGate;
-    setAdGate(null);
     if (type === 'csv') downloadCSV();
     if (type === 'screenshot') downloadScreenshot();
-  }, [adGate, downloadCSV, downloadScreenshot]);
+  }, [downloadCSV, downloadScreenshot]);
 
   return (
     <>
-    {adGate && (
-      <AdGateModal
-        title="Unlock Export"
-        description="Watch a short ad to download your break summary."
-        rewardLine={adGate === 'csv' ? 'Download CSV' : 'Save Image'}
-        isDismissable
-        onWatched={handleAdWatched}
-        onUpgrade={() => setAdGate(null)}
-        onDismiss={() => setAdGate(null)}
-      />
-    )}
     <div style={{
       position: 'fixed', inset: 0, zIndex: 600,
       background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',

@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { AdMob } from "@capacitor-community/admob";
 import { useAuth } from "./AuthContext";
 import LandingPage from "./LandingPage";
 import { useFirestoreSync } from "./useFirestoreSync";
@@ -1823,11 +1822,7 @@ export default function App() {
     if (refCode) localStorage.setItem('vault-ref-code', refCode);
   }, []);
 
-  // Initialize AdMob on native platforms
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    AdMob.initialize({ initializeForTesting: false }).catch(() => {});
-  }, []);
+  // Ads removed — AdMob is no longer initialized.
 
   // Detect share URL params — show public view without requiring auth
   useEffect(() => {

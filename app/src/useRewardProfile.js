@@ -141,16 +141,12 @@ export function useRewardProfile(user) {
   // Discard stale data if uid has changed (e.g., sign out then sign in as different user)
   const profile = (user && rawProfile?._uid === user.uid) ? rawProfile : null;
 
-  const effectiveLimit = profile
-    ? profile.freeLimit + profile.cardCredits
-    : FREE_LIMIT;
-
-  const isPro = profile?.tier === 'pro';
-
-  /** True if the collection value breakdown is currently unlocked */
-  const isValueUnlocked = profile?.valueUnlockExpiresAt
-    ? new Date(profile.valueUnlockExpiresAt) > new Date()
-    : false;
+  // ── Ads removed ─────────────────────────────────────────────────────────────
+  // Every user is treated as Pro with unlimited entitlements, so no ad gate is
+  // ever triggered (uploads, AI chat, and the value breakdown are always open).
+  const effectiveLimit = Infinity;
+  const isPro = true;
+  const isValueUnlocked = true;
 
   return {
     profile,
