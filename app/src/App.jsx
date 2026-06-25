@@ -10,6 +10,7 @@ import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
+import CardDetailModal from "./CardDetailModal";
 import AdGateModal from "./AdGateModal";
 import BreakTracker from "./BreakTracker";
 import BreaksView from "./BreaksView";
@@ -1755,6 +1756,7 @@ export default function App() {
   const [showChat, setShowChat] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
+  const [detailCard, setDetailCard] = useState(null); // WP-3: card open in CardDetailModal (strip taps)
   const [publicView, setPublicView] = useState(null); // null | { mode, card?, cards?, filterLabel? }
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
@@ -2892,7 +2894,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 const rarityColors = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#f44336" };
                 const rc = rarityColors[card.rarity] || "#555";
                 return (
-                  <div key={card.id} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5 }}>
+                  <div key={card.id} onClick={() => setDetailCard(card)} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5, cursor: "pointer" }}>
                     <div style={{ position: "relative", width: 90, height: 124, borderRadius: 10, overflow: "hidden", border: `1px solid ${rc}40`, boxShadow: `0 0 14px ${rc}18` }}>
                       <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       <div style={{
@@ -2930,7 +2932,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 const rarityColors = { Common: "#555", Uncommon: "#4caf50", Rare: "#2196f3", "Very Rare": "#9c27b0", "Ultra Rare": "#ff9800", Legendary: "#f44336" };
                 const rc = rarityColors[card.rarity] || "#555";
                 return (
-                  <div key={card.id} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5 }}>
+                  <div key={card.id} onClick={() => setDetailCard(card)} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5, cursor: "pointer" }}>
                     <div style={{ position: "relative", width: 90, height: 124, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(240,192,64,0.35)", boxShadow: `0 0 14px rgba(240,192,64,0.12), 0 0 6px ${rc}18` }}>
                       <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       <div style={{ position: "absolute", top: 3, right: 5, fontSize: 14, color: "#f0c040", textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}>★</div>
@@ -2958,7 +2960,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             </div>
             <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "thin", scrollbarColor: "rgba(33,150,243,0.2) transparent" }}>
               {cards.filter(c => c.isPC).map(card => (
-                <div key={card.id} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5 }}>
+                <div key={card.id} onClick={() => setDetailCard(card)} style={{ flexShrink: 0, width: 90, display: "flex", flexDirection: "column", gap: 5, cursor: "pointer" }}>
                   <div style={{ position: "relative", width: 90, height: 124, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(33,150,243,0.35)", boxShadow: "0 0 14px rgba(33,150,243,0.12)" }}>
                     <img src={card.imageUrl} alt={card.playerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     <div style={{ position: "absolute", bottom: 4, left: 5, background: "rgba(33,150,243,0.85)", borderRadius: 4, fontSize: 8, fontWeight: 800, color: "#fff", padding: "1px 5px", letterSpacing: 0.5 }}>PC</div>
@@ -3612,6 +3614,15 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         </div>
       )}
 
+      {detailCard && (
+        <CardDetailModal
+          card={cards.find(c => String(c.id) === String(detailCard.id)) || detailCard}
+          onUpdate={handleUpdate}
+          onShare={(card) => { setDetailCard(null); setShareModal({ mode: 'card', card, cards: null, filterLabel: null }); }}
+          onSell={(card) => { setDetailCard(null); handleSellCard(card); }}
+          onClose={() => setDetailCard(null)}
+        />
+      )}
       {shareModal && (
         <ShareModal
           mode={shareModal.mode}

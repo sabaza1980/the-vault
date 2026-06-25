@@ -329,6 +329,14 @@ verified against the canonical files directly. **Final verification = `npm run b
 machine with matching `node_modules` (i.e. Sherif's).** This makes large refactors (S1)
 something to land in a focused, build-tested step rather than bundled blindly.
 
+**2026-06-25 — WP-3 (tappable strips) wired:**
+- `src/App.jsx` — imported `CardDetailModal`; added `detailCard` state; added
+  `onClick={() => setDetailCard(card)}` + `cursor:pointer` to the Top 10 / Favourites / PC
+  strip cards (one `replace_all`, 3 sites); rendered `<CardDetailModal>` with a **live card
+  lookup** (`cards.find(byId) || detailCard`) so favourite/PC toggles reflect instantly.
+  Share/Sell route through existing `setShareModal`/`handleSellCard` (closing the detail
+  first). First visible change of the project.
+
 ## 7. Status tracker
 
 | WP | Req | Title | Phase | Est | Status |
@@ -336,7 +344,7 @@ something to land in a focused, build-tested step rather than bundled blindly.
 | WP-0 | — | Foundations (S1–S5) | 0 | M | ✅ Done — build green 2026-06-25 |
 | WP-1 | #4 | Header redesign + sizing | 1 | M–L | Not started |
 | WP-2 | #8 | Breaks web-only + Ask AI | 1 | S–M | Not started |
-| WP-3 | #3 | Tappable Top 10 / Favourites | 2 | S | Not started |
+| WP-3 | #3 | Tappable Top 10 / Favourites | 2 | S | Code done — awaiting `npm run build` + tap test |
 | WP-4 | #2 | Type sections horizontal scroll | 2 | S | Not started |
 | WP-7 | #1 | Share price toggle | 3 | S | Not started |
 | WP-5 | #5 | Fix & redesign pricing (SportsCardsPro + PriceCharting) | 4 | M–L | Not started |
