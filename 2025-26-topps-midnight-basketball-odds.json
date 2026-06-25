@@ -1,0 +1,111 @@
+{
+  "_comment": "Break pricing and odds reference for 2025-26 Topps Midnight Basketball. Checklist not yet available.",
+  "setId": "2025-26-topps-midnight-basketball",
+  "setName": "2025-26 Topps Midnight Basketball",
+  "source": "retailer-research-2026-05",
+  "lastUpdated": "2026-05-22",
+  "configurations": {
+    "Hobby": {
+      "casePriceUSD": 865,
+      "boxesPerCase": 8,
+      "packsPerBox": 1,
+      "cardsPerPack": 7,
+      "autosPerBoxAvg": 3
+    }
+  },
+  "oddsUnit": "per-pack",
+  "breakPricingGuidance": {
+    "_comment": "Break pricing guidance. All prices in USD. Based on single-case economics.",
+    "caseCost": 865,
+    "boxesPerCase": 8,
+    "cardsPerCase": 56,
+    "autosPerCase": 24,
+    "marginTarget": 0.15,
+    "revenueTarget": 995,
+    "costPerAutoAtBreakeven": 36,
+    "caseNote": "8-box hobby case. 24 autos/case (3/box guaranteed). Very affordable per-auto cost. Each box = 1 pack × 7 cards. Budget auto product — great for high-spot-count random or PYT breaks.",
+    "topPlayers": [
+      "Cooper Flagg",
+      "Victor Wembanyama",
+      "Dylan Harper",
+      "LeBron James",
+      "Luka Dončić",
+      "Giannis Antetokounmpo",
+      "Stephen Curry",
+      "Shai Gilgeous-Alexander"
+    ],
+    "pytPricing": {
+      "_comment": "PYT = Pick Your Team. 30 spots (one per NBA team). Revenue target: $995. Avg spot: $33.",
+      "avgSpotPrice": 33,
+      "examples": [
+        {
+          "team": "Dallas Mavericks",
+          "price": 75,
+          "reason": "Luka Dončić + Cooper Flagg RC"
+        },
+        {
+          "team": "San Antonio Spurs",
+          "price": 75,
+          "reason": "Victor Wembanyama"
+        },
+        {
+          "team": "Brooklyn Nets",
+          "price": 50,
+          "reason": "Dylan Harper RC"
+        },
+        {
+          "team": "OKC Thunder",
+          "price": 50,
+          "reason": "Shai Gilgeous-Alexander"
+        },
+        {
+          "team": "Boston Celtics",
+          "price": 50,
+          "reason": "Tatum + Brown"
+        },
+        {
+          "team": "Golden State Warriors",
+          "price": 50,
+          "reason": "Stephen Curry"
+        },
+        {
+          "team": "LA Lakers",
+          "price": 50,
+          "reason": "LeBron + AD"
+        },
+        {
+          "team": "Milwaukee Bucks",
+          "price": 25,
+          "reason": "Giannis"
+        },
+        {
+          "team": "All other teams (avg)",
+          "price": 25,
+          "reason": "Revenue fills to $995 target"
+        }
+      ]
+    },
+    "randomBreak": {
+      "_comment": "Random break — equal spots. 30 spots at $25/spot = $750.",
+      "spotsRecommended": 30,
+      "spotPrice": 25,
+      "totalRevenue": 750
+    },
+    "pypGuidance": {
+      "_comment": "Pick Your Player. Spot count = number of featured players. Price each spot proportional to player card EV.",
+      "methodology": "Assign each player a demand weight; scale weights so total = revenue target; round to nearest $25; absorb rounding diff into top player.",
+      "topPlayerPremium": "Top player (e.g. Cooper Flagg) should be 15-20× the lowest-demand spot.",
+      "averageSpotAtCost": 33
+    },
+    "scalingNote": "For multi-case breaks, multiply all revenue targets by number of cases. Margin logic stays the same.",
+    "evFramework": {
+      "_comment": "How to price individual spots against card comps (EV analysis).",
+      "step1": "Pull 30-day sold comps on eBay for each team's key cards (top parallel, RC auto if applicable).",
+      "step2": "Sum the EV across all cards a buyer would realistically pull from their team allocation.",
+      "step3": "Set spot price = EV × (1 - breaker_margin). A fair spot is one where buyer EV ≥ spot price at breakeven, breaker earns margin.",
+      "step4": "Premium teams (Dallas w/ Flagg, SA w/ Wemby) can be priced at 2-4× average because buyers will pay a scarcity premium for the highest-demand cards.",
+      "step5": "Validate: sum of all spot prices must ≥ revenue target. If not, raise lowest-demand spots.",
+      "breakevenMultiplier": 1.15
+    }
+  }
+}

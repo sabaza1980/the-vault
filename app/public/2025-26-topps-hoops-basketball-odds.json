@@ -1,0 +1,105 @@
+{
+  "_comment": "Break pricing and odds reference for 2025-26 Topps NBA Hoops Basketball. Checklist not yet available.",
+  "setId": "2025-26-topps-hoops-basketball",
+  "setName": "2025-26 Topps NBA Hoops Basketball",
+  "source": "retailer-research-2026-05",
+  "lastUpdated": "2026-05-22",
+  "configurations": {
+    "Hobby": {
+      "casePriceUSD": 3300,
+      "boxesPerCase": 8,
+      "packsPerBox": 10,
+      "cardsPerPack": 20,
+      "autosPerBoxAvg": 2
+    }
+  },
+  "oddsUnit": "per-pack",
+  "breakPricingGuidance": {
+    "_comment": "Break pricing guidance. All prices in USD. Based on single-case economics.",
+    "caseCost": 3300,
+    "boxesPerCase": 8,
+    "cardsPerCase": 1600,
+    "autosPerCase": 16,
+    "marginTarget": 0.15,
+    "revenueTarget": 3795,
+    "costPerAutoAtBreakeven": 206,
+    "caseNote": "8-box hobby jumbo case (Hobby Jumbo configuration). 16 autos/case avg. Budget-friendly product. Released May 14, 2026. Good entry-level break product with strong collector base.",
+    "topPlayers": [
+      "Cooper Flagg",
+      "Victor Wembanyama",
+      "Dylan Harper",
+      "LeBron James",
+      "Luka Dončić",
+      "Giannis Antetokounmpo",
+      "Stephen Curry",
+      "Shai Gilgeous-Alexander"
+    ],
+    "pytPricing": {
+      "_comment": "PYT = Pick Your Team. 30 spots (one per NBA team). Revenue target: $3,795. Avg spot: $126.",
+      "avgSpotPrice": 126,
+      "examples": [
+        {
+          "team": "Dallas Mavericks",
+          "price": 300,
+          "reason": "Luka Dončić + Cooper Flagg RC"
+        },
+        {
+          "team": "San Antonio Spurs",
+          "price": 275,
+          "reason": "Victor Wembanyama"
+        },
+        {
+          "team": "Brooklyn Nets",
+          "price": 225,
+          "reason": "Dylan Harper RC"
+        },
+        {
+          "team": "OKC Thunder",
+          "price": 200,
+          "reason": "Shai Gilgeous-Alexander"
+        },
+        {
+          "team": "Boston Celtics",
+          "price": 175,
+          "reason": "Tatum + Brown"
+        },
+        {
+          "team": "Golden State Warriors",
+          "price": 175,
+          "reason": "Stephen Curry"
+        },
+        {
+          "team": "LA Lakers",
+          "price": 150,
+          "reason": "LeBron + AD"
+        },
+        {
+          "team": "Milwaukee Bucks",
+          "price": 150,
+          "reason": "Giannis"
+        },
+        {
+          "team": "All other teams (avg)",
+          "price": 100,
+          "reason": "Revenue fills to $3,795 target"
+        }
+      ]
+    },
+    "randomBreak": {
+      "_comment": "Random break — equal spots. 30 spots at $125/spot = $3,750.",
+      "spotsRecommended": 30,
+      "spotPrice": 125,
+      "totalRevenue": 3750
+    },
+    "scalingNote": "For multi-case breaks, multiply all revenue targets by number of cases. Margin logic stays the same.",
+    "evFramework": {
+      "_comment": "How to price individual spots against card comps (EV analysis).",
+      "step1": "Pull 30-day sold comps on eBay for each team's key cards (top parallel, RC auto if applicable).",
+      "step2": "Sum the EV across all cards a buyer would realistically pull from their team allocation.",
+      "step3": "Set spot price = EV × (1 - breaker_margin). A fair spot is one where buyer EV ≥ spot price at breakeven, breaker earns margin.",
+      "step4": "Premium teams (Dallas w/ Flagg, SA w/ Wemby) can be priced at 2-4× average because buyers will pay a scarcity premium for the highest-demand cards.",
+      "step5": "Validate: sum of all spot prices must ≥ revenue target. If not, raise lowest-demand spots.",
+      "breakevenMultiplier": 1.15
+    }
+  }
+}
