@@ -412,6 +412,51 @@ something to land in a focused, build-tested step rather than bundled blindly.
   Quick Filters" block. Sort / view / Bundle / contextual Share now wrap to a controls line
   beneath the swipe row. Inserts & Subsets unchanged.
 
+**2026-06-25 — WP-5 design locked (pricing engine + unified card display):**
+- **Source priority = Option 1:** real SportsCardsPro/PriceCharting comp becomes THE value
+  (AI estimate only a labeled fallback). Fetch lazily (on add + when viewed), cache on the
+  card, add a **Refresh** (per-card) and **Refresh all prices** button. Retire the
+  eBay-average path (`fetchEbaySales` — dead Finding API / asking-price listings).
+  - Note: pricing API calls are covered by Sherif's paid subscription (no per-call $);
+    real constraint is the 1 req/sec rate limit (latency) + possible monthly quota by tier.
+    The per-use $ cost is the Anthropic identify call, which is separate.
+- **Matching fixes:** progressive query relaxation (full → drop parallel → drop # →
+  name+year+set → name+year), sanitize the verbose AI parallel before querying, verify the
+  match (player/year) instead of blind `products[0]`, and pick the **grade-appropriate**
+  price (PSA10→psa10 etc., raw→loose) using the card's grade fields.
+- **No-comp / new-card states:** "Pricing…" while fetching; real green value when found;
+  **amber "AI estimate · no comp"** fallback (never $0) with refresh/refine; truly-empty →
+  "No value yet" + refresh. Comp vs estimate always visually distinct.
+- **Unified detail:** the list "expanded view" and the strip bottom-sheet modal become ONE
+  component (a card looks identical however opened). Collapsed list row now shows the price +
+  source line.
+- **Detail layout (approved):** hero (front, with **Front/Back flip** when a back image
+  exists) → name + set → **price box** (big value + source/condition/recency + refresh) →
+  condition/card#/confidence grid → **About this card (Live) at top, expanded** → collapsed
+  Condition notes + Back of card → actions. Collapsed row gets a two-sided badge when a back
+  image exists.
+- **FUTURE (not now):** add AI grading advice + graded comps into the Condition section.
+
+**2026-06-25 — WP-5 REFRAMED: identification first (WP-5a), then pricing (WP-5b).**
+- Root problem surfaced via a KD auto: the Claude scan **hallucinates** set/year/serial
+  (it let web search supply fields the image didn't show). Pricing is meaningless on
+  hallucinated identity. So identification must be fixed first.
+- **Decision (Sherif): add Ximilar Collectibles Recognition API** — image → real structured
+  identity (`set`, `set_code`, `series`, `card_number`, `year`, `rarity`, `full_name`) by
+  matching against an actual card catalog, not OCR-and-guess. Endpoints: `/v2/sport_id`,
+  `/v2/tcg_id`, `/v2/slab_id`, `/v2/analyze` (all-in-one). Can also return `price_stats`
+  (overall/graded/ungraded). Considered eBay `searchByImage` (gated/experimental, returns
+  listing titles) and Claude-only hardening (won't crack hard new cards) — both secondary.
+- **Built:** `app/api/ximilar.js` proxy (auth `Authorization: Token <XIMILAR_API_KEY>`;
+  POST `{records:[{_base64}], rotate, price_stats, slab_id, slab_grade}`; normalizes
+  `records[]._objects[]._identification.best_match`). Syntax-checked.
+- **PREREQUISITE (Sherif):** create a Ximilar account at app.ximilar.com, get the API token,
+  add `XIMILAR_API_KEY` to Vercel env + `app/.env.local`; pick a pricing tier (usage-based
+  credits per call).
+- **Next:** wire Ximilar into the scan as the identity source (map → card schema; Claude kept
+  for About/condition narrative + non-card fallback), add per-field confidence, then WP-5b
+  pricing consumes the confirmed identity (SportsCardsPro comp, or Ximilar `price_stats`).
+
 ## 7. Status tracker
 
 | WP | Req | Title | Phase | Est | Status |
