@@ -29,10 +29,11 @@ function Badge({ label, color }) {
   );
 }
 
-export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClose }) {
+export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClose, onRefreshPrice }) {
   const [zoomed, setZoomed] = useState(false);
   const [confirming, setConfirming] = useState(false); // WP-5a L3: confirm unverified cards
   const [draft, setDraft] = useState({});
+  const [refreshing, setRefreshing] = useState(false);  // WP-5b: re-pricing in progress
 
   // Close on Escape.
   useEffect(() => {
@@ -169,17 +170,40 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
           {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
         </div>
 
-        {/* Estimated value */}
-        {ev > 0 && (
-          <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--bf)" }}>
-            <div style={{ fontSize: 38, fontWeight: 800, color: "#4caf50", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1 }}>
-              ${ev.toFixed(2)}
+        {/* Price box (WP-5b): value + source / condition / recency + refresh */}
+        {(() => {
+          const isEstimate = card.priceSource === "AI estimate";
+          const priceColor = ev <= 0 ? "var(--tf)" : isEstimate ? "#f0c040" : "#4caf50";
+          const meta = ev <= 0
+            ? "No market comp yet — tap refresh"
+            : isEstimate
+              ? "AI estimate · no market comp"
+              : `Market comp · ${card.priceSource || "Ximilar"}${card.priceCondition ? ` · ${card.priceCondition}` : ""}${card.priceVolume ? ` · ${card.priceVolume} sale${card.priceVolume === 1 ? "" : "s"}` : ""}${card.priceAsOf ? ` · ${card.priceAsOf}` : ""}`;
+          return (
+            <div style={{ marginTop: 16, paddingTop: 14, borderTop: "1px solid var(--bf)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 38, fontWeight: 800, color: priceColor, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, lineHeight: 1 }}>
+                  {ev > 0 ? `$${ev.toFixed(2)}` : "—"}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--tg)", letterSpacing: 0.4, marginTop: 4 }}>{refreshing ? "Refreshing price…" : meta}</div>
+              </div>
+              {onRefreshPrice && (
+                <button
+                  onClick={async () => { if (refreshing) return; setRefreshing(true); try { await onRefreshPrice(card); } finally { setRefreshing(false); } }}
+                  disabled={refreshing}
+                  aria-label="Refresh price"
+                  title="Refresh price"
+                  style={{ flexShrink: 0, width: 36, height: 36, borderRadius: "50%", background: "var(--gbg)", border: "1px solid var(--gb)", color: "var(--gc)", cursor: refreshing ? "default" : "pointer", opacity: refreshing ? 0.5 : 1, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                    <polyline points="21 3 21 9 15 9" />
+                  </svg>
+                </button>
+              )}
             </div>
-            <div style={{ fontSize: 10, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, marginTop: 3 }}>
-              Est. value{card.priceSource ? ` · ${card.priceSource}` : ""}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Confirm flow — for cards image recognition couldn't verify (WP-5a L3) */}
         {card.confidenceLevel === "Low" && !confirming && (

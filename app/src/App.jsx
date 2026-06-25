@@ -2288,6 +2288,31 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
   }, []);
 
   const handleSellCard = useCallback((card) => setSellModalCards([card]), []);
+
+  // WP-5b: re-price a single card from its stored image via Ximilar (used by the
+  // detail Refresh button and Refresh-all). Backfills cards added before pricing existed.
+  const handleRefreshPrice = useCallback(async (card) => {
+    if (!card?.imageUrl) return false;
+    try {
+      const xr = await fetch(`${API_BASE}/api/ximilar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: card.imageUrl, priceStats: true }),
+      });
+      if (!xr.ok) return false;
+      const xd = await xr.json();
+      const xPrice = xd?.found ? pickXimilarPrice(xd.priceStats, card.isGraded) : null;
+      if (!xPrice) return false;
+      handleUpdate(card.id, {
+        estimatedValue: xPrice.value,
+        priceSource: "Ximilar",
+        priceCondition: card.isGraded ? "graded" : "ungraded",
+        priceVolume: xPrice.volume ?? null,
+        priceAsOf: xPrice.asOf ?? null,
+      });
+      return true;
+    } catch (e) { console.warn("[refresh price] failed", e); return false; }
+  }, [handleUpdate]);
   const handleBundleToggle = useCallback((id) => setBundleCardIds(prev => {
     const next = new Set(prev);
     next.has(String(id)) ? next.delete(String(id)) : next.add(String(id));
@@ -3705,6 +3730,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           onUpdate={handleUpdate}
           onShare={(card) => { setDetailCard(null); setShareModal({ mode: 'card', card, cards: null, filterLabel: null }); }}
           onSell={(card) => { setDetailCard(null); handleSellCard(card); }}
+          onRefreshPrice={handleRefreshPrice}
           onClose={() => setDetailCard(null)}
         />
       )}
