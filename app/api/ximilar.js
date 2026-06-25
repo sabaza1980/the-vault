@@ -44,15 +44,22 @@ function normalize(data) {
     subcategory: best.subcategory ?? null,       // e.g. "Basketball", "Pokemon"
     side: tags.includes('back') ? 'back' : 'front',
     identity: {
-      name: best.name ?? null,                   // player / character
+      name: best.name ?? null,                              // player / character
       fullName: best.full_name ?? null,
-      set: best.set ?? null,
+      set: best.set ?? best.set_name ?? null,               // TCG "set" | sport "set_name"
       setCode: best.set_code ?? null,
-      series: best.series ?? null,
+      series: best.series ?? null,                          // TCG era (e.g. "Classic")
+      parallel: best.sub_set ?? null,                       // sport parallel/subset (e.g. "Red")
+      team: best.team ?? null,                              // sport
+      cardType: best.card_type ?? null,                     // sport (e.g. "Rookie Card")
       cardNumber: best.card_number ?? null,
+      outOf: best.out_of ?? null,                           // set size → "4/102"
       year: best.year ?? null,
-      rarity: best.rarity ?? null,
-      subcategory: best.subcategory ?? null,
+      rarity: best.rarity ?? null,                          // TCG
+      edition: best.edition ?? null,                        // TCG "1st" — value signal
+      color: best.color ?? null,                            // TCG color
+      type: best.type ?? null,                              // Ximilar top type
+      subcategory: best.subcategory ?? null,                // Basketball / Pokemon / ...
     },
     priceStats: best.price_stats ?? null,        // overall/graded/ungraded min/max/mean (if requested)
     links: best.links ?? null,

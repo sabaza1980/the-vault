@@ -2024,6 +2024,31 @@ export default function App() {
       const mediaType = item.mediaType;
       const imageUrl = `data:${mediaType};base64,${base64}`;
 
+      // WP-5a: Ximilar identification FIRST — matches the card against a real catalog
+      // instead of OCR-and-guess. Its fields become ground truth for Claude (which then
+      // maps to our schema, assesses condition, and writes the narrative). Silent fallback
+      // to the Claude-only flow if Ximilar is unavailable or finds nothing.
+      let ximilarId = null;
+      try {
+        const xr = await fetch(`${API_BASE}/api/ximilar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ base64, priceStats: true }),
+        });
+        if (xr.ok) {
+          const xd = await xr.json();
+          if (xd?.found && xd.identity) ximilarId = xd;
+        }
+      } catch (e) { console.warn("[ximilar] scan lookup failed", e); }
+
+      const _idn = ximilarId?.identity;
+      const ximilarPreamble = _idn ? `━━━ CONFIRMED IDENTITY (image recognition) ━━━
+This item was matched against a real card catalog. Treat the following as GROUND TRUTH — do NOT change them, and do NOT web-search to re-identify the card:
+${_idn.name ? `• name/player: ${_idn.name}\n` : ""}${_idn.year ? `• year: ${_idn.year}\n` : ""}${_idn.set ? `• set: ${_idn.set}\n` : ""}${_idn.team ? `• team: ${_idn.team}\n` : ""}${_idn.parallel ? `• parallel/subset: ${_idn.parallel}\n` : ""}${_idn.series ? `• series/era: ${_idn.series}\n` : ""}${_idn.cardNumber ? `• card number: ${_idn.cardNumber}${_idn.outOf ? `/${_idn.outOf}` : ""}\n` : ""}${_idn.rarity ? `• rarity: ${_idn.rarity}\n` : ""}${_idn.edition ? `• edition: ${_idn.edition}\n` : ""}${_idn.cardType ? `• card type (e.g. rookie): ${_idn.cardType}\n` : ""}${_idn.subcategory ? `• category: ${_idn.subcategory}\n` : ""}
+Map these into the JSON schema correctly (brand / series / parallel / cardCategory must be consistent with the confirmed set). DO NOT override or "correct" them. Then focus your effort on: visual CONDITION assessment and the playerContext/about narrative. You MAY web-search ONLY for current market value — never to change the identity above.
+
+` : "";
+
       // Retry up to 3 times on 429 rate-limit errors with exponential backoff
       let response;
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -2046,7 +2071,7 @@ export default function App() {
                 { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
                 {
                   type: "text",
-                  text: `You are an expert collectibles authenticator. Analyse this image using this exact 3-step process:
+                  text: ximilarPreamble + `You are an expert collectibles authenticator. Analyse this image using this exact 3-step process:
 
 ━━━ STEP 1: VISUAL EXTRACTION ━━━
 Read EVERY piece of text and number visible on the card/item. Write down mentally:
