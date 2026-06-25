@@ -217,8 +217,12 @@ function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
 
 // ── Main modal ───────────────────────────────────────────────────────────────
 export default function ShareModal({ mode, card, cards, filterLabel, user, onClose, collectionId }) {
+  // Share preferences (WP-0 / S5). Stable reference via useState so the generate
+  // callback identity is steady. WP-7 adds the setter + a "include price" toggle
+  // and re-generates when it flips.
+  const [shareOptions] = useState({ includePrice: true });
   const { generate, share, previewUrl, capturing, generateError } = useShareCard({
-    card, cards, mode, filterLabel, user, collectionId,
+    card, cards, mode, filterLabel, user, collectionId, shareOptions,
   });
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [shareResult, setShareResult] = useState(null); // 'saved' | 'shared' | 'copied' | null

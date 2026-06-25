@@ -2509,6 +2509,21 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--scroll-track); }
         ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 3px; }
+        :root {
+          /* Sizing/design tokens (WP-0 / S2) — set to CURRENT values so there is no
+             visual change. The WP-1 header redesign and WP-4 sizing pass rewire inline
+             styles to reference these, then tune them in one place. */
+          --fs-title: 26px;       /* app title (header h1) */
+          --fs-stat: 20px;        /* header stats-strip numbers */
+          --fs-stat-lg: 28px;     /* collection-stats card numbers */
+          --fs-section: 9px;      /* section eyebrow labels (TOP 10, FAVOURITES) */
+          --card-w-strip: 90px;   /* Top 10 / Favourites / PC strip card width */
+          --card-h-strip: 124px;  /* strip card height */
+          --space-1: 4px; --space-2: 8px; --space-3: 12px;
+          --space-4: 16px; --space-5: 24px;
+          --radius-pill: 20px; --radius-card: 14px;
+          --tab-bar-h: 56px;      /* reserved for WP-1 bottom tab bar */
+        }
         [data-theme="dark"] {
           --bg:#07070f; --surface:#09090e; --card:#0e0e1c; --card2:#12121f;
           --input:#0d0d1a; --deep:#0a0a14;

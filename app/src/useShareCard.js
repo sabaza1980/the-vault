@@ -87,7 +87,7 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return drawn * lineH;
 }
 
-async function drawSingleCard(card) {
+async function drawSingleCard(card, shareOptions = { includePrice: true }) {
   // Wait for fonts but cap at 3s so slow CDN never blocks canvas generation
   await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]);
   const W = 1080, H = 1080;
@@ -193,7 +193,7 @@ async function drawSingleCard(card) {
   }
   if (badges.length > 0) ry += 56;
 
-  if (card.estimatedValue > 0) {
+  if (shareOptions.includePrice && card.estimatedValue > 0) {
     const ev = Number(card.estimatedValue);
     ry += 10;
     ctx.font = '400 84px "Bebas Neue", sans-serif';
@@ -224,7 +224,7 @@ async function drawSingleCard(card) {
   return canvas;
 }
 
-async function drawCollection(cards, filterLabel, user) {
+async function drawCollection(cards, filterLabel, user, shareOptions = { includePrice: true }) {
   await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]);
   const W = 1080, H = 1080;
   const canvas = document.createElement('canvas');
@@ -275,7 +275,7 @@ async function drawCollection(cards, filterLabel, user) {
   const statItems = [
     { value: String(cards.length), label: 'CARDS', color: '#ff6b35' },
     ...(rarePlus > 0 ? [{ value: String(rarePlus), label: 'RARE+', color: '#9c27b0' }] : []),
-    ...(totalValue > 0 ? [{ value: `$${totalValue.toFixed(0)}`, label: 'EST. VALUE', color: '#4caf50' }] : []),
+    ...((shareOptions.includePrice && totalValue > 0) ? [{ value: `$${totalValue.toFixed(0)}`, label: 'EST. VALUE', color: '#4caf50' }] : []),
   ];
   let sx = 60;
   for (const stat of statItems) {
@@ -353,7 +353,7 @@ function isMobile() {
   return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
 }
 
-export function useShareCard({ card, cards, mode, filterLabel, user, collectionId }) {
+export function useShareCard({ card, cards, mode, filterLabel, user, collectionId, shareOptions = { includePrice: true } }) {
   const [imageBlob, setImageBlob] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [capturing, setCapturing] = useState(false);
@@ -372,8 +372,8 @@ export function useShareCard({ card, cards, mode, filterLabel, user, collectionI
 
     try {
       const canvas = mode === 'card'
-        ? await drawSingleCard(card)
-        : await drawCollection(cards || [], filterLabel || null, user || null);
+        ? await drawSingleCard(card, shareOptions)
+        : await drawCollection(cards || [], filterLabel || null, user || null, shareOptions);
 
       return await new Promise((resolve) => {
         // JPEG is ~10× faster to encode than PNG for a 1080×1080 canvas
@@ -426,7 +426,7 @@ export function useShareCard({ card, cards, mode, filterLabel, user, collectionI
       setGenerateError(true);
       return null;
     }
-  }, [mode, card, cards, filterLabel, user]);
+  }, [mode, card, cards, filterLabel, user, shareOptions]);
 
   const share = useCallback(async (destination) => {
     const cardName = card?.playerName || 'Card';

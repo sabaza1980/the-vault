@@ -1,28 +1,10 @@
 // Primary: eBay Finding API — findCompletedItems (soldItemsOnly=true)
 // Fallback: eBay Browse API — live listings (if no sold data found)
+//
+// NOTE (WP-5): the Finding API sold-data path is being retired — eBay sunset it.
+// App-level token now comes from the shared helper (WP-0 / S4).
 
-let cachedToken = null;
-let tokenExpiry = 0;
-
-async function getBrowseToken() {
-  if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
-  const credentials = Buffer.from(
-    `${process.env.VITE_EBAY_CLIENT_ID}:${process.env.VITE_EBAY_CLIENT_SECRET}`
-  ).toString('base64');
-  const res = await fetch('https://api.ebay.com/identity/v1/oauth2/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${credentials}`,
-    },
-    body: 'grant_type=client_credentials&scope=https%3A%2F%2Fapi.ebay.com%2Foauth%2Fapi_scope',
-  });
-  if (!res.ok) throw new Error(`eBay auth failed: ${res.status}`);
-  const data = await res.json();
-  cachedToken = data.access_token;
-  tokenExpiry = Date.now() + (data.expires_in - 60) * 1000;
-  return cachedToken;
-}
+import { getBrowseToken } from './_ebay/token.js';
 
 async function findSoldItems(q) {
   const appId = process.env.VITE_EBAY_CLIENT_ID;
