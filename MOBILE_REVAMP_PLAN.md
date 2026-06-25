@@ -457,6 +457,33 @@ something to land in a focused, build-tested step rather than bundled blindly.
   for About/condition narrative + non-card fallback), add per-field confidence, then WP-5b
   pricing consumes the confirmed identity (SportsCardsPro comp, or Ximilar `price_stats`).
 
+**2026-06-25 — WP-5a identification: tested + staged fallback design.**
+Live testing of the Ximilar proxy (PowerShell against the deployed `/api/ximilar`):
+- Clean cataloged scans identify perfectly (Giannis 2013 Hoops #275 Red @0.92; Charizard Base
+  Set #4/102 1st Ed). Camera-quality scans work; downloaded glare-y web images don't.
+- Ximilar returns **`price_stats`** (graded / ungraded / overall + volume + dates) in the same
+  call → candidate value source for WP-5b (ungraded=raw, graded=graded), maybe replacing SCP.
+- Hard cases (brand-new boutique KD auto; PMG web image) return `best_match: null` →
+  Ximilar honestly says "no match" rather than guessing. Confirmed: it never lies; it abstains.
+
+**Staged identification fallback (the "L1→L2→L3" ladder):**
+- **L1 — Ximilar** (catalog recognition). Built; handles the bulk.
+- **L2 — Reference index (FUTURE, build only if miss-rate warrants):** a library of
+  card image→confirmed-identity, queried by visual similarity when L1 misses. Populated two
+  ways: **seeded** (new set drops → add sample images + checklist, extends the existing
+  Break-Selector/checklist workflow) and **harvested** (every user confirmation becomes a new
+  labeled reference → self-improving flywheel; new sets become recognizable after a few
+  confirms). Could be built on Ximilar's own custom visual-search-on-your-database feature.
+  NOT a fine-tuned model — that's too heavy.
+- **L3 — Hardened Claude + confirm (BUILT now):** when L1 (and later L2) miss, the scan prompt
+  switches to a read-only mode — never invent set/serial/year, null for illegible fields, web
+  search only to confirm read text, `confidenceLevel="Low"`. The `CardDetailModal` then shows a
+  "⚠ Couldn't verify this card" banner + inline confirm editor (writes back via `onUpdate`,
+  marks `Confirmed`). Verified (Ximilar) cards are marked `High`.
+- **Principle:** transparency + confirmation always on below the confidence threshold; build
+  L2 only after real-user miss-rate data justifies it. L3 confirmations are exactly the labeled
+  data L2 would later feed on.
+
 ## 7. Status tracker
 
 | WP | Req | Title | Phase | Est | Status |

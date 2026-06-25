@@ -2045,9 +2045,16 @@ export default function App() {
       const ximilarPreamble = _idn ? `━━━ CONFIRMED IDENTITY (image recognition) ━━━
 This item was matched against a real card catalog. Treat the following as GROUND TRUTH — do NOT change them, and do NOT web-search to re-identify the card:
 ${_idn.name ? `• name/player: ${_idn.name}\n` : ""}${_idn.year ? `• year: ${_idn.year}\n` : ""}${_idn.set ? `• set: ${_idn.set}\n` : ""}${_idn.team ? `• team: ${_idn.team}\n` : ""}${_idn.parallel ? `• parallel/subset: ${_idn.parallel}\n` : ""}${_idn.series ? `• series/era: ${_idn.series}\n` : ""}${_idn.cardNumber ? `• card number: ${_idn.cardNumber}${_idn.outOf ? `/${_idn.outOf}` : ""}\n` : ""}${_idn.rarity ? `• rarity: ${_idn.rarity}\n` : ""}${_idn.edition ? `• edition: ${_idn.edition}\n` : ""}${_idn.cardType ? `• card type (e.g. rookie): ${_idn.cardType}\n` : ""}${_idn.subcategory ? `• category: ${_idn.subcategory}\n` : ""}
-Map these into the JSON schema correctly (brand / series / parallel / cardCategory must be consistent with the confirmed set). DO NOT override or "correct" them. Then focus your effort on: visual CONDITION assessment and the playerContext/about narrative. You MAY web-search ONLY for current market value — never to change the identity above.
+Map these into the JSON schema correctly (brand / series / parallel / cardCategory must be consistent with the confirmed set). DO NOT override or "correct" them. Then focus your effort on: visual CONDITION assessment and the playerContext/about narrative. You MAY web-search ONLY for current market value — never to change the identity above. Since the identity is verified by image recognition, set "confidenceLevel" to "High".
 
-` : "";
+` : `━━━ IDENTITY NOT VERIFIED ━━━
+Image recognition could NOT match this card to a catalog — it may be a new, rare, or boutique product.
+Do NOT guess or invent the set, year, serial number, or parallel. Read ONLY what is clearly printed on the card.
+If a field is not legibly visible in the image, return it as null — never fabricate a plausible value to "fill in" a field.
+Use web search ONLY to CONFIRM text you actually read (e.g. the spelling of a printed set or insert name), never to supply fields the image does not show.
+Set "confidenceLevel" to "Low" and be conservative. A null field with Low confidence is far better than a confident wrong answer — the user will be asked to confirm.
+
+`;
 
       // Retry up to 3 times on 429 rate-limit errors with exponential backoff
       let response;

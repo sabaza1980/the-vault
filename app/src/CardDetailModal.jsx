@@ -31,6 +31,8 @@ function Badge({ label, color }) {
 
 export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClose }) {
   const [zoomed, setZoomed] = useState(false);
+  const [confirming, setConfirming] = useState(false); // WP-5a L3: confirm unverified cards
+  const [draft, setDraft] = useState({});
 
   // Close on Escape.
   useEffect(() => {
@@ -175,6 +177,51 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
             </div>
             <div style={{ fontSize: 10, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, marginTop: 3 }}>
               Est. value{card.priceSource ? ` · ${card.priceSource}` : ""}
+            </div>
+          </div>
+        )}
+
+        {/* Confirm flow — for cards image recognition couldn't verify (WP-5a L3) */}
+        {card.confidenceLevel === "Low" && !confirming && (
+          <div style={{ marginTop: 16, padding: "11px 13px", borderRadius: 12, background: "rgba(255,107,53,0.08)", border: "1px solid rgba(255,107,53,0.3)" }}>
+            <div style={{ fontSize: 12, color: "#ff6b35", fontWeight: 700, marginBottom: 4 }}>⚠ Couldn't verify this card</div>
+            <div style={{ fontSize: 11, color: "var(--tm)", lineHeight: 1.4, marginBottom: 9 }}>It may be a new or rare product we don't recognise yet. Confirm the details so the value is accurate.</div>
+            <button
+              onClick={() => { setDraft({ playerName: card.playerName || "", year: card.year || "", series: card.series || card.brand || "", cardNumber: card.cardNumber || "", parallel: card.parallel || "", serialNumber: card.serialNumber || "" }); setConfirming(true); }}
+              style={{ background: "#ff6b35", border: "none", borderRadius: 9, padding: "8px 14px", color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+            >Confirm details</button>
+          </div>
+        )}
+
+        {confirming && (
+          <div style={{ marginTop: 16, padding: 13, borderRadius: 12, background: "var(--surface)", border: "1px solid var(--b)" }}>
+            <div style={{ fontSize: 11, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, marginBottom: 10 }}>Confirm card details</div>
+            {[
+              { k: "playerName", label: "Player / name" },
+              { k: "year", label: "Year" },
+              { k: "series", label: "Set / series" },
+              { k: "cardNumber", label: "Card number" },
+              { k: "parallel", label: "Parallel" },
+              { k: "serialNumber", label: "Serial (e.g. 5/99)" },
+            ].map(({ k, label }) => (
+              <div key={k} style={{ marginBottom: 8 }}>
+                <label style={{ display: "block", fontSize: 10, color: "var(--tg)", marginBottom: 3 }}>{label}</label>
+                <input
+                  value={draft[k] ?? ""}
+                  onChange={e => setDraft(d => ({ ...d, [k]: e.target.value }))}
+                  style={{ width: "100%", padding: "8px 10px", background: "var(--input)", border: "1px solid var(--b)", borderRadius: 8, color: "var(--t)", fontSize: 13, outline: "none" }}
+                />
+              </div>
+            ))}
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button
+                onClick={() => { onUpdate?.(card.id, { ...draft, confidenceLevel: "Confirmed" }); setConfirming(false); }}
+                style={{ flex: 1, background: "linear-gradient(135deg, #ff6b35, #f7931e)", border: "none", borderRadius: 10, padding: 10, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >Save</button>
+              <button
+                onClick={() => setConfirming(false)}
+                style={{ flex: "0 0 auto", background: "var(--gbg)", border: "1px solid var(--gb)", borderRadius: 10, padding: "10px 16px", color: "var(--gc)", fontSize: 13, cursor: "pointer" }}
+              >Cancel</button>
             </div>
           </div>
         )}
