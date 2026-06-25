@@ -1,6 +1,8 @@
 # The Vault — Mobile Revamp Project Plan
 
-> Owner: Sherif · Drafted: 2026-06-25 · Status: Planning (no code written yet)
+> Owner: Sherif · Drafted: 2026-06-25 · Status: UI cluster shipped — **v1.10.0 live** on
+> app.myvaults.io (web) + Android release APK built (2026-06-25). Done: #1,#2,#3,#4,#8 + polish.
+> Next: Option B filters declutter, then WP-5 pricing, WP-6 live AI, WP-8 bulk listing.
 > Scope: 8 change requests covering navigation/layout, home interactions, sharing,
 > eBay pricing, live AI sourcing, and bulk marketplace listing.
 
@@ -401,6 +403,14 @@ something to land in a focused, build-tested step rather than bundled blindly.
   double-hash on card number.
 - `src/CardDetailModal.jsx` — same concise-name preference + 3-line clamp for long-name safety.
 - Note: filters-section declutter (Option B) chosen but NOT yet built — next.
+
+**2026-06-25 — Option B (filters declutter):**
+- `src/App.jsx` — replaced the wrapping category-chip block with a single `<HScroll>` row
+  holding the quick filters (All / ★ Faves / 🏆 PC) + attribute toggles (RC / AUTO / PATCH /
+  # / GRADED / INSERT) + a ✕ Clear; dropped the redundant category-name chips (the themed
+  rail already filters by category via the same `filter` state). Removed the separate "Sport
+  Quick Filters" block. Sort / view / Bundle / contextual Share now wrap to a controls line
+  beneath the swipe row. Inserts & Subsets unchanged.
 
 ## 7. Status tracker
 

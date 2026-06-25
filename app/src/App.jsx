@@ -3248,21 +3248,53 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 }}>×</button>
               )}
             </div>
-            <div style={{ display: "flex", gap: 5, flex: 1, flexWrap: "wrap" }}>
-              {categories.map(t => {
-                const isFav = t === "Favourites";
-                const isPC = t === "PC";
-                const activeColor = isFav ? "#f0c040" : isPC ? "#2196f3" : "#ff6b35";
-                return (
-                  <button key={t} onClick={() => setFilter(t)} style={{
-                    padding: "4px 12px", borderRadius: 20, border: "1px solid",
-                    borderColor: filter === t ? activeColor : "var(--b)",
-                    background: filter === t ? `${activeColor}15` : "transparent",
-                    color: filter === t ? activeColor : "var(--tm)",
-                    cursor: "pointer", fontSize: 12, fontWeight: 600
-                  }}>{isFav ? "★ Faves" : isPC ? "🏆 PC" : t}</button>
-                );
-              })}
+            {/* One swipe row: quick filters (All/Faves/PC) + attribute toggles.
+                Category filtering lives in the themed rail above (Option B). */}
+            <div style={{ width: "100%" }}>
+              <HScroll gap={6}>
+                {["All", "Favourites", "PC"].map(t => {
+                  const isFav = t === "Favourites";
+                  const isPC = t === "PC";
+                  const activeColor = isFav ? "#f0c040" : isPC ? "#2196f3" : "#ff6b35";
+                  const on = filter === t;
+                  return (
+                    <button key={t} onClick={() => setFilter(on ? "All" : t)} style={{
+                      flexShrink: 0, padding: "6px 13px", borderRadius: 18, border: "1px solid",
+                      borderColor: on ? activeColor : "var(--b)",
+                      background: on ? `${activeColor}15` : "transparent",
+                      color: on ? activeColor : "var(--tm)",
+                      cursor: "pointer", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap"
+                    }}>{isFav ? "★ Faves" : isPC ? "🏆 PC" : t}</button>
+                  );
+                })}
+                {[
+                  { key: "rookieOnly", label: "RC", title: "Rookie Cards Only" },
+                  { key: "autoOnly", label: "AUTO", title: "Autographs Only" },
+                  { key: "patchOnly", label: "PATCH", title: "Patch / Memorabilia Only" },
+                  { key: "numberedOnly", label: "#", title: "Numbered Cards Only" },
+                  { key: "gradedOnly", label: "GRADED", title: "Graded Only" },
+                  { key: "insertOnly", label: "INSERT", title: "Insert / Subset Only" },
+                ].map(({ key, label, title }) => {
+                  const active = sportFilters[key];
+                  return (
+                    <button key={key} title={title}
+                      onClick={() => setSportFilters(prev => ({ ...prev, [key]: !prev[key] }))}
+                      style={{
+                        flexShrink: 0, padding: "6px 12px", borderRadius: 18, border: "1px solid",
+                        borderColor: active ? "#ff6b35" : "var(--b)",
+                        background: active ? "#ff6b3520" : "transparent",
+                        color: active ? "#ff6b35" : "var(--td)",
+                        cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.5, whiteSpace: "nowrap"
+                      }}>{label}</button>
+                  );
+                })}
+                {Object.values(sportFilters).some(Boolean) && (
+                  <button
+                    onClick={() => setSportFilters({ rookieOnly: false, autoOnly: false, patchOnly: false, numberedOnly: false, gradedOnly: false, insertOnly: false })}
+                    style={{ flexShrink: 0, padding: "6px 11px", borderRadius: 18, border: "1px solid var(--b)", background: "transparent", color: "var(--tm)", cursor: "pointer", fontSize: 11, whiteSpace: "nowrap" }}
+                  >✕ Clear</button>
+                )}
+              </HScroll>
             </div>
             <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
               background: "var(--deep)", border: "1px solid var(--b)", color: "var(--ts)",
@@ -3335,45 +3367,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           </div>
         )}
 
-        {/* Sport Quick Filters */}
-        {cards.length > 0 && (
-          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-            {[
-              { key: "rookieOnly", label: "RC", title: "Rookie Cards Only" },
-              { key: "autoOnly", label: "AUTO", title: "Autographs Only" },
-              { key: "patchOnly", label: "PATCH", title: "Patch / Memorabilia Only" },
-              { key: "numberedOnly", label: "#", title: "Numbered Cards Only" },
-              { key: "gradedOnly", label: "GRADED", title: "Graded Only" },
-              { key: "insertOnly", label: "INSERT", title: "Insert / Subset Only" },
-            ].map(({ key, label, title }) => {
-              const active = sportFilters[key];
-              return (
-                <button
-                  key={key}
-                  title={title}
-                  onClick={() => setSportFilters(prev => ({ ...prev, [key]: !prev[key] }))}
-                  style={{
-                    padding: "3px 10px", borderRadius: 20, border: "1px solid",
-                    borderColor: active ? "#ff6b35" : "var(--b)",
-                    background: active ? "#ff6b3520" : "transparent",
-                    color: active ? "#ff6b35" : "var(--td)",
-                    cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.5
-                  }}
-                >{label}</button>
-              );
-            })}
-            {Object.values(sportFilters).some(Boolean) && (
-              <button
-                onClick={() => setSportFilters({ rookieOnly: false, autoOnly: false, patchOnly: false, numberedOnly: false, gradedOnly: false, insertOnly: false })}
-                style={{
-                  padding: "3px 10px", borderRadius: 20, border: "1px solid var(--b)",
-                  background: "transparent", color: "var(--tm)",
-                  cursor: "pointer", fontSize: 11
-                }}
-              >✕ Clear</button>
-            )}
-          </div>
-        )}
+        {/* Sport Quick Filters merged into the filter row above (Option B) */}
 
         {/* Insert Collection Browser */}
         {(() => {
