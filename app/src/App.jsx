@@ -11,6 +11,9 @@ import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import ShareModal from "./ShareModal";
 import CardDetailModal from "./CardDetailModal";
+import BottomTabBar from "./BottomTabBar";
+import HScroll from "./HScroll";
+import { isNativeMobile } from "./lib/platform";
 import AdGateModal from "./AdGateModal";
 import BreakTracker from "./BreakTracker";
 import BreaksView from "./BreaksView";
@@ -494,12 +497,11 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
           {/* Info — click = expand */}
           <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={handleExpand}>
 
-            {/* Set name — top line */}
-            <div style={{ fontSize: 11, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3 }}>
-              {fullCardName}
+            {/* Set name — concise + clamped to 2 lines (full detail lives in expanded view) */}
+            <div style={{ fontSize: 11, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 3, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {[card.year, card.brand, card.series].filter(Boolean).join(" ") || fullCardName}
               {card.insertName && <span style={{ color: "#64b5f6" }}> · {card.insertName}</span>}
               {parallelLabel && <span style={{ color: "#ff6b3580" }}> · {parallelLabel}</span>}
-              {card.pack && <span style={{ color: "var(--tg)" }}> · {card.pack}</span>}
             </div>
 
             {/* Player name + rarity badge */}
@@ -541,7 +543,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               {card.hasPatch && <Badge label="PATCH" color="#26c6da" />}
               {card.isInsert && !card.insertName && <Badge label="INSERT" color="#64b5f6" />}
               {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
-              {card.cardNumber && <Badge label={`#${card.cardNumber}`} color="#555" />}
+              {card.cardNumber && <Badge label={`#${String(card.cardNumber).replace(/^#+/, "")}`} color="#555" />}
               {card.isPC && <Badge label="PC" color="#2196f3" />}
               {card.confidenceLevel === "Low" && <Badge label="⚠ Low Confidence" color="#ff6666" />}
               {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
@@ -1663,7 +1665,7 @@ function ValueBreakdownModal({ cards, totalValue, onClose }) {
           flexShrink: 0,
         }}>
           <div>
-            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 3 }}>Collection Value</div>
+            <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 3 }}>💼 Portfolio</div>
             <div style={{ fontSize: 28, fontWeight: 400, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 2 }}>
               {totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(2)}k` : `$${totalValue.toFixed(2)}`}
             </div>
@@ -1757,6 +1759,15 @@ export default function App() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
   const [detailCard, setDetailCard] = useState(null); // WP-3: card open in CardDetailModal (strip taps)
+  const [scanMenuOpen, setScanMenuOpen] = useState(false); // WP-1: + tab → camera/upload chooser
+  // WP-2: Breaks is a desktop-web-only feature. Track "mobile" (native app OR narrow
+  // viewport) reactively so resizing a desktop browser narrow also hides Breaks.
+  const [isMobileUI, setIsMobileUI] = useState(() => isNativeMobile());
+  useEffect(() => {
+    const update = () => setIsMobileUI(isNativeMobile());
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
   const [publicView, setPublicView] = useState(null); // null | { mode, card?, cards?, filterLabel? }
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
@@ -2485,7 +2496,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
   const doneCount = queue.filter(q => q.status === "done").length;
 
   return (
-    <div data-theme={theme} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--t)", fontFamily: "'Inter', sans-serif", overflowX: "hidden", width: "100%" }}>
+    <div data-theme={theme} style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--t)", fontFamily: "'Inter', sans-serif", overflowX: "hidden", width: "100%", paddingBottom: isMobileUI ? "calc(var(--tab-bar-h) + env(safe-area-inset-bottom, 0px) + 16px)" : 0 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
@@ -2568,7 +2579,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · Live pricing</p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, minWidth: 0 }}>
-            {user && (
+            {user && !isMobileUI && (
               <button
                 onClick={() => setShowCollections(v => !v)}
                 title="My Collections"
@@ -2584,35 +2595,40 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 <span style={{ fontSize: 13 }}>📚</span> Collections
               </button>
             )}
-            <button
-              onClick={() => setShowBreakTracker(true)}
-              title="New Break"
-              style={{
-                background: showBreakTracker ? "#ff6b3518" : "var(--gbg)",
-                border: `1px solid ${showBreakTracker ? "#ff6b3550" : "var(--gb)"}`,
-                borderRadius: 20, padding: "5px 12px",
-                color: showBreakTracker ? "#ff6b35" : "var(--gc)",
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
-              }}
-            >
-              <span style={{ fontSize: 13 }}>🎯</span> New Break
-            </button>
-            <button
-              onClick={() => setShowBreaksView(true)}
-              title="My Breaks"
-              style={{
-                background: showBreaksView ? "#ff6b3518" : "var(--gbg)",
-                border: `1px solid ${showBreaksView ? "#ff6b3550" : "var(--gb)"}`,
-                borderRadius: 20, padding: "5px 12px",
-                color: showBreaksView ? "#ff6b35" : "var(--gc)",
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
-              }}
-            >
-              <span style={{ fontSize: 13 }}>📦</span> My Breaks
-            </button>
-            {cards.length > 0 && (
+            {/* WP-2: Breaks is desktop-web only — hidden on the native app + mobile web */}
+            {!isMobileUI && (
+              <>
+                <button
+                  onClick={() => setShowBreakTracker(true)}
+                  title="New Break"
+                  style={{
+                    background: showBreakTracker ? "#ff6b3518" : "var(--gbg)",
+                    border: `1px solid ${showBreakTracker ? "#ff6b3550" : "var(--gb)"}`,
+                    borderRadius: 20, padding: "5px 12px",
+                    color: showBreakTracker ? "#ff6b35" : "var(--gc)",
+                    fontSize: 11, fontWeight: 700, cursor: "pointer",
+                    letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+                  }}
+                >
+                  <span style={{ fontSize: 13 }}>🎯</span> New Break
+                </button>
+                <button
+                  onClick={() => setShowBreaksView(true)}
+                  title="My Breaks"
+                  style={{
+                    background: showBreaksView ? "#ff6b3518" : "var(--gbg)",
+                    border: `1px solid ${showBreaksView ? "#ff6b3550" : "var(--gb)"}`,
+                    borderRadius: 20, padding: "5px 12px",
+                    color: showBreaksView ? "#ff6b35" : "var(--gc)",
+                    fontSize: 11, fontWeight: 700, cursor: "pointer",
+                    letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+                  }}
+                >
+                  <span style={{ fontSize: 13 }}>📦</span> My Breaks
+                </button>
+              </>
+            )}
+            {cards.length > 0 && !isMobileUI && (
               <button
                 onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
                 title="Share your vault"
@@ -2631,20 +2647,22 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 Share
               </button>
             )}
-            <button
-              onClick={() => setShowChat(v => !v)}
-              title="Ask The Vault AI"
-              style={{
-                background: showChat ? "#ff6b3518" : "var(--gbg)",
-                border: `1px solid ${showChat ? "#ff6b3550" : "var(--gb)"}`,
-                borderRadius: 20, padding: "5px 12px",
-                color: showChat ? "#ff6b35" : "var(--gc)",
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
-              }}
-            >
-              <span style={{ fontSize: 13 }}>✦</span> Ask AI
-            </button>
+            {!isMobileUI && (
+              <button
+                onClick={() => setShowChat(v => !v)}
+                title="Ask The Vault AI"
+                style={{
+                  background: showChat ? "#ff6b3518" : "var(--gbg)",
+                  border: `1px solid ${showChat ? "#ff6b3550" : "var(--gb)"}`,
+                  borderRadius: 20, padding: "5px 12px",
+                  color: showChat ? "#ff6b35" : "var(--gc)",
+                  fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+                }}
+              >
+                <span style={{ fontSize: 13 }}>✦</span> Ask AI
+              </button>
+            )}
             {user === undefined ? null : user ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <button
@@ -2720,30 +2738,30 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           <div style={{
             maxWidth: 680, margin: "0 auto",
             padding: "10px 16px",
-            display: "flex", gap: 24, alignItems: "center",
+            display: "flex", gap: 14, alignItems: "center", flexWrap: "nowrap", minWidth: 0,
           }}>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span style={{ fontSize: 20, fontWeight: 800, color: "#ff6b35", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{cards.length}</span>
-              <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Cards</span>
+              <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, whiteSpace: "nowrap" }}>Cards</span>
             </div>
             {totalValue > 0 && (
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>
                   {totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`}
                 </span>
-                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</span>
+                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, whiteSpace: "nowrap" }}>Est. Value</span>
               </div>
             )}
             {cards.filter(c => c.isFavourite).length > 0 && (
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: "#f0c040", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{cards.filter(c => c.isFavourite).length}</span>
-                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>★ Faves</span>
+                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, whiteSpace: "nowrap" }}>★ Faves</span>
               </div>
             )}
             {cards.filter(c => c.isPC).length > 0 && (
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: "#2196f3", fontFamily: "'Bebas Neue', sans-serif", lineHeight: 1 }}>{cards.filter(c => c.isPC).length}</span>
-                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1 }}>PC</span>
+                <span style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, whiteSpace: "nowrap" }}>PC</span>
               </div>
             )}
             {/* Daily / streak bonus claim button — non-blocking, user-initiated */}
@@ -2775,15 +2793,33 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 }}
                 style={{
                   marginLeft: "auto",
-                  background: isValueUnlocked || isPro ? "rgba(240,192,64,0.1)" : "rgba(255,255,255,0.04)",
-                  border: isValueUnlocked || isPro ? "1px solid rgba(240,192,64,0.25)" : "1px solid var(--b)",
-                  borderRadius: 20, padding: "5px 14px",
-                  color: isValueUnlocked || isPro ? "#f0c040" : "var(--td)",
-                  fontSize: 11, fontWeight: 600, cursor: "pointer",
-                  display: "flex", alignItems: "center", gap: 6,
+                  display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
+                  borderRadius: 22, padding: "6px 12px", cursor: "pointer",
+                  fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, fontWeight: 400, letterSpacing: 1.2,
+                  background: isValueUnlocked || isPro
+                    ? "linear-gradient(180deg, #1c1c25 0%, #0e0e16 100%)"
+                    : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${isValueUnlocked || isPro ? "rgba(255,107,53,0.75)" : "var(--b)"}`,
+                  color: isValueUnlocked || isPro ? "#ff6b35" : "var(--td)",
+                  boxShadow: isValueUnlocked || isPro ? "0 0 14px rgba(255,107,53,0.38)" : "none",
+                  transition: "box-shadow 0.15s, border-color 0.15s",
                 }}
               >
-                {isValueUnlocked || isPro ? "📊 Full Breakdown" : "🔒 Full Breakdown"}
+                {/* Brilliant-cut gem with an upward value arrow (Portfolio) */}
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">
+                  <path d="M7 5 H17 L21 10 L12 21 L3 10 Z" />
+                  <path d="M3 10 H21" />
+                  <path d="M7 5 L9.5 10 L12 21" />
+                  <path d="M17 5 L14.5 10 L12 21" />
+                  <path d="M16 5.5 L21 1.5 M21 1.5 L18 1.7 M21 1.5 L20.8 4.4" />
+                </svg>
+                PORTFOLIO
+                {!(isValueUnlocked || isPro) && (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="5" y="11" width="14" height="9" rx="2" />
+                    <path d="M8 11 V7 a4 4 0 0 1 8 0 v4" />
+                  </svg>
+                )}
               </button>
             )}
           </div>
@@ -3141,7 +3177,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         {/* Category Tiles */}
         {cards.length > 0 && categories.filter(c => c !== "All" && c !== "Favourites" && c !== "PC").length > 1 && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))", gap: 10 }}>
+            <HScroll>
               {categories.filter(c => c !== "All" && c !== "Favourites" && c !== "PC").map(cat => {
                 const img = CATEGORY_IMAGES[cat];
                 const emoji = CATEGORY_EMOJI[cat] || "🃏";
@@ -3158,7 +3194,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                     key={cat}
                     onClick={() => setFilter(isActive ? "All" : cat)}
                     style={{
-                      position: "relative", aspectRatio: "3/4", width: "100%", borderRadius: 12, overflow: "hidden",
+                      position: "relative", aspectRatio: "3/4", width: 132, flexShrink: 0, scrollSnapAlign: "start", borderRadius: 12, overflow: "hidden",
                       border: `2px solid ${isActive ? "#ff6b35" : "rgba(255,255,255,0.06)"}`,
                       cursor: "pointer", padding: 0, background: "var(--deep)",
                       boxShadow: isActive ? "0 0 16px #ff6b3540" : "none",
@@ -3185,7 +3221,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                   </button>
                 );
               })}
-            </div>
+            </HScroll>
           </div>
         )}
 
@@ -3703,14 +3739,50 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       )}
       {adGate?.type === 'value' && (
         <AdGateModal
-          title="Your Collection Value Breakdown"
-          description={`Your collection is estimated at ${totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`}. Watch a short ad to see the full per-card breakdown, unlocked for 24 hours.`}
-          rewardLine="24-Hour Breakdown Unlock"
+          title="Unlock Your Portfolio"
+          description={`Your collection is estimated at ${totalValue >= 1000 ? `$${(totalValue / 1000).toFixed(1)}k` : `$${Math.round(totalValue)}`}. Watch a short ad to open your full Portfolio — per-card values and category breakdowns, unlocked for 24 hours.`}
+          rewardLine="24-Hour Portfolio Unlock"
           isDismissable={true}
           onWatched={handleAdWatched}
           onUpgrade={handleAdUpgrade}
           onDismiss={handleAdDismiss}
         />
+      )}
+      {isMobileUI && (
+        <BottomTabBar
+          active={showChat ? "ai" : showCollections ? "collections" : profileMenuOpen ? "profile" : "home"}
+          onHome={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); }}
+          onCollections={() => { setShowChat(false); setProfileMenuOpen(false); setScanMenuOpen(false); setShowCollections(true); }}
+          onScan={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(true); }}
+          onAskAI={() => { setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); setShowChat(true); }}
+          onProfile={() => { setShowChat(false); setShowCollections(false); setScanMenuOpen(false); if (user) { setProfileMenuOpen(true); } else { setShowAuth(true); } }}
+        />
+      )}
+      {scanMenuOpen && (
+        <div
+          onClick={() => setScanMenuOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 760, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 480, background: "var(--card)", borderRadius: "20px 20px 0 0", borderTop: "1px solid var(--b)", padding: "10px 16px calc(env(safe-area-inset-bottom, 0px) + 20px)" }}
+          >
+            <div style={{ width: 38, height: 4, borderRadius: 3, background: "var(--so)", margin: "4px auto 14px" }} />
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--t)", textAlign: "center", marginBottom: 14 }}>Add a card</div>
+            <button
+              onClick={() => { cameraRef.current?.click(); setTimeout(() => setScanMenuOpen(false), 0); }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "var(--gbg)", border: "1px solid var(--gb)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", color: "var(--t)", fontSize: 14, fontWeight: 700, marginBottom: 10 }}
+            >
+              <span style={{ fontSize: 20 }}>📷</span> Take a photo
+            </button>
+            <button
+              onClick={() => { fileRef.current?.click(); setTimeout(() => setScanMenuOpen(false), 0); }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, background: "var(--gbg)", border: "1px solid var(--gb)", borderRadius: 14, padding: "14px 16px", cursor: "pointer", color: "var(--t)", fontSize: 14, fontWeight: 700 }}
+            >
+              <span style={{ fontSize: 20 }}>🗂️</span> Upload file(s)
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

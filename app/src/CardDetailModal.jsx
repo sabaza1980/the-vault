@@ -42,8 +42,8 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
   if (!card) return null;
 
   const rColor = RARITY_COLORS[card.rarity] || "#555";
-  const fullCardName = card.fullCardName
-    || [card.year, card.brand, card.series].filter(Boolean).join(" ")
+  const fullCardName = [card.year, card.brand, card.series].filter(Boolean).join(" ")
+    || card.fullCardName
     || "Unknown Set";
   const parallelLabel = card.parallel && card.parallel !== "Base" ? card.parallel : null;
   const ev = Number(card.estimatedValue) || 0;
@@ -116,8 +116,8 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
           </div>
         </div>
 
-        {/* Set line */}
-        <div style={{ fontSize: 11, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4, lineHeight: 1.3 }}>
+        {/* Set line — concise + clamped */}
+        <div style={{ fontSize: 11, color: "var(--tl)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4, lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {fullCardName}
           {card.insertName && <span style={{ color: "#64b5f6" }}> · {card.insertName}</span>}
           {parallelLabel && <span style={{ color: "#ff6b3580" }}> · {parallelLabel}</span>}
@@ -162,7 +162,7 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
           {card.hasPatch && <Badge label="PATCH" color="#26c6da" />}
           {card.isInsert && !card.insertName && <Badge label="INSERT" color="#64b5f6" />}
           {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
-          {card.cardNumber && <Badge label={`#${card.cardNumber}`} color="#888" />}
+          {card.cardNumber && <Badge label={`#${String(card.cardNumber).replace(/^#+/, "")}`} color="#888" />}
           {card.isPC && <Badge label="PC" color="#2196f3" />}
           {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
         </div>

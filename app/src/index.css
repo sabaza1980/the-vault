@@ -3,7 +3,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  zoom: 1.53;
+  /* Master UI scale. Was 1.53, which made the app feel oversized on phones AND
+     broke fixed/vh layouts (e.g. the card detail sheet rendered taller than the
+     screen and couldn't scroll). 1.0 = true design size. Nudge to ~1.05–1.15 if
+     you want everything slightly larger. */
+  zoom: 1;
 }
 
 * {

@@ -337,16 +337,81 @@ something to land in a focused, build-tested step rather than bundled blindly.
   Share/Sell route through existing `setShareModal`/`handleSellCard` (closing the detail
   first). First visible change of the project.
 
+**2026-06-25 — WP-2 (Breaks → desktop-web only):**
+- `src/App.jsx` — imported `isNativeMobile`; added reactive `isMobileUI` state (updates on
+  resize); wrapped the New Break + My Breaks header buttons in `{!isMobileUI && (…)}`. On the
+  native app and mobile web they're hidden; desktop web unchanged. Breaks code/overlays kept
+  in the bundle (only the entry points are gated, and they're the only triggers).
+- Remaining for #8: the "Ask AI" visibility fix comes with the WP-1 tab bar (Ask AI becomes a
+  permanent tab); today it can still be clipped by the overflowing header on narrow screens.
+
+**2026-06-25 — WP-1 (bottom tab bar) — structure done:**
+- `src/BottomTabBar.jsx` (new) — fixed mobile tab bar: Home · Collections · (+) Scan ·
+  Ask AI · Profile, with the raised center scan button. Theme-aware, safe-area aware, ESLint
+  clean.
+- `src/App.jsx` — imported + rendered `<BottomTabBar>` when `isMobileUI`; handlers wired to
+  existing state (Home resets overlays, Collections→showCollections, Scan→`cameraRef.click()`,
+  Ask AI→showChat, Profile→profile menu / auth). Hid Collections + Ask AI buttons from the top
+  bar on mobile (now tabs); added bottom padding so content clears the bar. This fixes the
+  top-row overflow (#4) and makes Ask AI a permanent tab (#8 complete).
+- **DEFERRED (needs Sherif's eyes):** the `index.css` `zoom: 1.53` global scale that makes
+  everything feel oversized. The tab bar is intentionally built consistent with the *current*
+  zoom; reducing zoom is a whole-app visual change I can't verify blind. Next step: Sherif
+  builds, screenshots, and we tune that one value together (it's the master scale knob).
+
+**2026-06-25 — WP-1 zoom fix + modal crop (from Sherif's screenshot):**
+- Root cause confirmed: `index.css` `zoom: 1.53` inflates `position:fixed` + `vh`, so the
+  CardDetailModal's `max-height:92vh` rendered ~141% of the real viewport → cropped at top,
+  un-scrollable. Same zoom is the "everything's too big" cause.
+- `src/index.css` — `zoom: 1.53 → 1` (documented as the master UI scale; tune 1.05–1.15 if
+  desired). Fixes both the modal crop and the oversizing in one change.
+- `src/CardDetailModal.jsx` — fixed double-hash card number (`##274` → `#274`).
+- Sizing is now Sherif's to fine-tune by eye via that single `zoom` value.
+
+**2026-06-25 — WP-1 polish (from Sherif testing):**
+- Tab handlers now mutually exclusive (each closes the others) so views no longer overlap
+  (e.g. Ask AI + Profile); `active` highlight also reflects the profile menu.
+- `+` (Scan) now opens a chooser sheet: "Take a photo" (camera) or "Upload file(s)"
+  (multi-file picker) instead of going straight to camera.
+- Removed the vault Share button from the top nav on mobile (kept on desktop).
+- `VaultChat` bug fixed: the panel was missing `className="vault-chat-panel"`, so the mobile
+  full-width rule never applied (it stayed a 390px desktop widget). Added the className,
+  widened the breakpoint to <768px, and lifted the panel above the bottom tab bar.
+
+**2026-06-25 — WP-7 (share price toggle, #1):**
+- `src/ShareModal.jsx` — enabled the `shareOptions` setter; added an "Include price in image"
+  toggle (switch) below the preview; the preview re-generates when toggled (effect now depends
+  on `shareOptions`). Builds on the S5 plumbing (price drawing already gated on `includePrice`).
+- Also removed the panel's stale `zoom: 0.6` — it was compensating for the old global
+  `zoom: 1.53`; with global zoom now 1 it was shrinking the share sheet. (Eyeball share sheet
+  sizing after build.)
+
+**2026-06-25 — WP-4 (category rail, #2):**
+- `src/HScroll.jsx` (new) — reusable horizontal scroller. Tracks scroll position and shows a
+  fade + a tappable chevron on each edge that still has content (so scrollability is obvious in
+  both directions); scroll-snap, hidden scrollbar. ESLint clean.
+- `src/App.jsx` — the category showcase ("Category Tiles") changed from a wrapping 2-col grid
+  to `<HScroll>`; each tile is now fixed-width (132px) and scroll-snaps. Reusable for other
+  rails later.
+
+**2026-06-25 — Card row declutter (Sherif feedback):**
+- `src/App.jsx` (CardItem) — collapsed-row set line now shows a concise name
+  (`year + brand + series`, parallel as accent) clamped to 2 lines, instead of the verbose
+  AI `fullCardName` that ballooned to ~9 lines; dropped `pack` from this line; fixed `##`
+  double-hash on card number.
+- `src/CardDetailModal.jsx` — same concise-name preference + 3-line clamp for long-name safety.
+- Note: filters-section declutter (Option B) chosen but NOT yet built — next.
+
 ## 7. Status tracker
 
 | WP | Req | Title | Phase | Est | Status |
 |----|-----|-------|-------|-----|--------|
 | WP-0 | — | Foundations (S1–S5) | 0 | M | ✅ Done — build green 2026-06-25 |
-| WP-1 | #4 | Header redesign + sizing | 1 | M–L | Not started |
-| WP-2 | #8 | Breaks web-only + Ask AI | 1 | S–M | Not started |
+| WP-1 | #4 | Header redesign + tab bar (sizing/zoom tune pending) | 1 | M–L | Tab bar done — awaiting build; zoom tuning with Sherif next |
+| WP-2 | #8 | Breaks web-only (Ask AI part → WP-1) | 1 | S–M | Breaks gating done — awaiting build; Ask AI tab in WP-1 |
 | WP-3 | #3 | Tappable Top 10 / Favourites | 2 | S | Code done — awaiting `npm run build` + tap test |
-| WP-4 | #2 | Type sections horizontal scroll | 2 | S | Not started |
-| WP-7 | #1 | Share price toggle | 3 | S | Not started |
+| WP-4 | #2 | Type sections horizontal scroll | 2 | S | Code done — awaiting build/test |
+| WP-7 | #1 | Share price toggle | 3 | S | Code done — awaiting build/test |
 | WP-5 | #5 | Fix & redesign pricing (SportsCardsPro + PriceCharting) | 4 | M–L | Not started |
 | WP-6 | #7 | Live AI player sourcing | 4 | M | Not started |
 | WP-8 | #6 | Bulk listing + CSV export | 5 | L | Not started |

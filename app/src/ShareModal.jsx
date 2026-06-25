@@ -220,7 +220,7 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
   // Share preferences (WP-0 / S5). Stable reference via useState so the generate
   // callback identity is steady. WP-7 adds the setter + a "include price" toggle
   // and re-generates when it flips.
-  const [shareOptions] = useState({ includePrice: true });
+  const [shareOptions, setShareOptions] = useState({ includePrice: true });
   const { generate, share, previewUrl, capturing, generateError } = useShareCard({
     card, cards, mode, filterLabel, user, collectionId, shareOptions,
   });
@@ -255,10 +255,10 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           : `${BASE}?shareVault=${uid}`
       : BASE;
 
-  // Generate image on mount
+  // Generate on mount and whenever share options change (e.g. include-price toggle)
   useEffect(() => {
     generate();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [shareOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShare = useCallback(async (destination) => {
     const result = await share(destination);
@@ -315,7 +315,6 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
             padding: '20px 20px 36px',
             width: '100%', maxWidth: 480,
             maxHeight: '92vh', overflowY: 'auto',
-            zoom: 0.6,
             transformOrigin: 'bottom center',
             animation: 'slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1)',
           }}
@@ -397,6 +396,30 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
               </div>
             )}
           </div>
+
+          {/* Include-price toggle (WP-7 / #1) */}
+          <button
+            onClick={() => setShareOptions(o => ({ ...o, includePrice: !o.includePrice }))}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: 10, background: '#07070f', border: '1px solid #1a1a2e',
+              borderRadius: 10, padding: '11px 12px', marginBottom: 16, cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 12, color: '#bbb', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5 }}>
+              Include price in image
+            </span>
+            <span style={{
+              width: 40, height: 22, borderRadius: 11, flexShrink: 0,
+              background: shareOptions.includePrice ? '#4caf50' : '#333',
+              position: 'relative', transition: 'background 0.15s',
+            }}>
+              <span style={{
+                position: 'absolute', top: 2, left: shareOptions.includePrice ? 20 : 2,
+                width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s',
+              }} />
+            </span>
+          </button>
 
           {/* URL bar */}
           <div style={{

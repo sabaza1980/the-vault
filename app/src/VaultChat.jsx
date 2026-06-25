@@ -386,6 +386,7 @@ export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessi
 
       {/* Panel */}
       <div
+        className="vault-chat-panel"
         style={{
           position: "fixed",
           bottom: 24,
@@ -412,14 +413,14 @@ export default function VaultChat({ cards, isOpen, onClose, user, isPro, aiSessi
             0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
             40%            { transform: scale(1);   opacity: 1;   }
           }
-          @media (max-width: 460px) {
+          @media (max-width: 767px) {
             .vault-chat-panel {
-              bottom: 0 !important;
+              bottom: calc(var(--tab-bar-h, 56px) + env(safe-area-inset-bottom, 0px)) !important;
               right: 0 !important;
               left: 0 !important;
               width: 100% !important;
               border-radius: 20px 20px 0 0 !important;
-              max-height: 88vh !important;
+              max-height: 76vh !important;
             }
             .vault-chat-backdrop { display: block !important; }
           }
