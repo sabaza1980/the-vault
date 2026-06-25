@@ -117,6 +117,21 @@ async function fetchPricingProxy(cardInfo) {
   }
 }
 
+// WP-5b: pick a usable comp value from Ximilar's price_stats array.
+// Raw cards → ungraded stats; graded cards → graded; else overall. Median preferred
+// (robust to outliers), then mean, then latest. Returns { value, volume, asOf } or null.
+function pickXimilarPrice(priceStats, isGraded) {
+  if (!Array.isArray(priceStats) || priceStats.length === 0) return null;
+  const byType = (t) => priceStats.find(s => s.stats_type === t)?.value;
+  const tier = isGraded
+    ? (byType('graded') || byType('overall') || byType('ungraded'))
+    : (byType('ungraded') || byType('overall') || byType('graded'));
+  if (!tier) return null;
+  const num = Number(tier.median ?? tier.mean ?? tier.latest);
+  if (!num || num <= 0) return null;
+  return { value: Math.round(num * 100) / 100, volume: tier.volume ?? null, asOf: tier.latest_date ?? null };
+}
+
 function Lightbox({ imageUrl, playerName, onClose }) {
   return (
     <div
@@ -2213,21 +2228,29 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       }
 
       const aiValue = parseFloat(cardInfo.estimatedValue) || 0;
-      const newCard = { id: cardId, imageUrl: persistedImageUrl, ...cardInfo, estimatedValue: aiValue, addedAt: new Date().toISOString() };
+      // WP-5b: prefer Ximilar's market comp (matched to the exact card) as the value —
+      // ungraded comp for raw cards, graded comp for graded. AI estimate is only a fallback.
+      const xPrice = pickXimilarPrice(ximilarId?.priceStats, cardInfo.isGraded);
+      const newCard = {
+        id: cardId, imageUrl: persistedImageUrl, ...cardInfo,
+        estimatedValue: xPrice?.value ?? aiValue,
+        priceSource: xPrice ? "Ximilar" : (aiValue > 0 ? "AI estimate" : null),
+        priceCondition: xPrice ? (cardInfo.isGraded ? "graded" : "ungraded") : null,
+        priceVolume: xPrice?.volume ?? null,
+        priceAsOf: xPrice?.asOf ?? null,
+        addedAt: new Date().toISOString(),
+      };
       setCards(prev => [newCard, ...prev]);
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "done" } : q));
 
-      // Background pricing fetch — populates estimatedValue so new cards appear in Top 10
-      if (aiValue === 0) {
-        Promise.all([fetchPricingProxy(newCard), fetchEbaySales(newCard)]).then(([proxyResult, ebayResult]) => {
-          let value = null;
-          if (proxyResult) {
-            value = proxyResult.raw != null ? parseFloat(proxyResult.raw)
-              : proxyResult.avg != null ? proxyResult.avg : null;
-          }
-          if (!value && ebayResult?.avg) value = ebayResult.avg;
+      // No Ximilar comp → fall back to SportsCardsPro (secondary). The eBay-average path is retired.
+      if (!xPrice) {
+        fetchPricingProxy(newCard).then((proxyResult) => {
+          const value = proxyResult?.raw != null ? parseFloat(proxyResult.raw) : null;
           if (value && value > 0) {
-            setCards(prev => prev.map(c => String(c.id) === String(cardId) ? { ...c, estimatedValue: Math.round(value * 100) / 100 } : c));
+            setCards(prev => prev.map(c => String(c.id) === String(cardId)
+              ? { ...c, estimatedValue: Math.round(value * 100) / 100, priceSource: proxyResult.priceSource || "SportsCardsPro", priceCondition: "raw" }
+              : c));
           }
         }).catch(() => {});
       }
