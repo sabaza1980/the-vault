@@ -270,9 +270,13 @@ function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onTogg
   }, [expanded, pricingFetched, card, runPricingFetch]);
 
   const handleSaveCorrections = useCallback(async () => {
-    onUpdate(card.id, editDraft);
+    // Manual edit: save the corrected fields AND clear the now-stale AI-written narrative
+    // (notes / "About this card" / composed name) so it can't contradict the edit. Use
+    // "Rescan" to regenerate a fresh AI description consistent with the corrections.
+    const cleared = { ...editDraft, notes: null, playerContext: null, playerContextSearched: false, fullCardName: null };
+    onUpdate(card.id, cleared);
     setEditMode(false);
-    const merged = { ...card, ...editDraft };
+    const merged = { ...card, ...cleared };
     await runPricingFetch(merged);
   }, [card, editDraft, onUpdate, runPricingFetch]);
 
@@ -2621,7 +2625,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           --bg:#07070f; --surface:#09090e; --card:#0e0e1c; --card2:#12121f;
           --input:#0d0d1a; --deep:#0a0a14;
           --b:#1a1a2e; --bs:#1c1c2e; --bf:rgba(255,255,255,0.024);
-          --t:#f0f0f0; --ts:#888; --tm:#555; --td:#444; --tg:#3a3a5a; --tf:#2a2a3a; --tl:#4a4a6a;
+          --t:#f0f0f0; --ts:#9c9caf; --tm:#8e8e9e; --td:#80808f; --tg:#8a8a9e; --tf:#70707f; --tl:#9696ae;
           --hbg:linear-gradient(180deg,#09090f 0%,transparent 100%); --hb:rgba(255,255,255,0.024);
           --sk:#1a1a2e; --so:#252535; --sh:#444;
           --gbg:rgba(255,255,255,0.04); --gb:rgba(255,255,255,0.08); --gc:#888;
