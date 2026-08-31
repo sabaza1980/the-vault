@@ -187,6 +187,49 @@ function MoreIcon() {
   );
 }
 
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY'];
+const CURRENCY_KEY = 'vault.shareCurrency';
+
+// Digits + at most one decimal point, max 2 decimals. Keeps the field usable
+// on mobile numeric keypads without fighting the user mid-typing.
+function sanitizePrice(v) {
+  const cleaned = String(v).replace(/[^0-9.]/g, '');
+  const parts = cleaned.split('.');
+  const out = parts.length > 1
+    ? `${parts[0]}.${parts.slice(1).join('').slice(0, 2)}`
+    : cleaned;
+  return out.slice(0, 12);
+}
+
+function ToggleRow({ label, checked, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      role="switch"
+      aria-checked={checked}
+      style={{
+        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 10, background: '#07070f', border: '1px solid #1a1a2e',
+        borderRadius: 10, padding: '11px 12px', marginBottom: 10, cursor: 'pointer',
+      }}
+    >
+      <span style={{ fontSize: 12, color: '#bbb', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5 }}>
+        {label}
+      </span>
+      <span style={{
+        width: 40, height: 22, borderRadius: 11, flexShrink: 0,
+        background: checked ? '#4caf50' : '#333',
+        position: 'relative', transition: 'background 0.15s',
+      }}>
+        <span style={{
+          position: 'absolute', top: 2, left: checked ? 20 : 2,
+          width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s',
+        }} />
+      </span>
+    </button>
+  );
+}
+
 function ShareButton({ label, onClick, bg, border, isGradientBorder, icon }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -220,7 +263,20 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
   // Share preferences (WP-0 / S5). Stable reference via useState so the generate
   // callback identity is steady. WP-7 adds the setter + a "include price" toggle
   // and re-generates when it flips.
-  const [shareOptions, setShareOptions] = useState({ includePrice: true });
+  const [shareOptions, setShareOptions] = useState({
+    includePrice: true,
+    forSale: false,        // off by default — opt in per share
+    salePrice: null,
+    saleCurrency: 'USD',
+  });
+
+  // For-sale inputs are held locally and debounced into shareOptions, so
+  // typing a price doesn't re-render the 1080x1080 canvas on every keystroke.
+  const [forSale, setForSale] = useState(false);
+  const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState(() => {
+    try { return localStorage.getItem(CURRENCY_KEY) || 'USD'; } catch { return 'USD'; }
+  });
   const { generate, share, previewUrl, capturing, generateError } = useShareCard({
     card, cards, mode, filterLabel, user, collectionId, shareOptions,
   });
@@ -254,6 +310,26 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
           ? `${BASE}?shareSet=${encodeURIComponent(filterLabel)}&uid=${uid}`
           : `${BASE}?shareVault=${uid}`
       : BASE;
+
+  useEffect(() => {
+    try { localStorage.setItem(CURRENCY_KEY, currency); } catch { /* private mode */ }
+  }, [currency]);
+
+  // Fold the for-sale inputs into shareOptions after a short pause. Returning
+  // the same object when nothing actually changed keeps the canvas from
+  // regenerating on no-op edits.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const parsed = Number(price);
+      const salePrice = forSale && price !== '' && isFinite(parsed) && parsed > 0 ? parsed : null;
+      setShareOptions(o => (
+        o.forSale === forSale && o.salePrice === salePrice && o.saleCurrency === currency
+          ? o
+          : { ...o, forSale, salePrice, saleCurrency: currency }
+      ));
+    }, 350);
+    return () => clearTimeout(t);
+  }, [forSale, price, currency]);
 
   // Generate on mount and whenever share options change (e.g. include-price toggle)
   useEffect(() => {
@@ -397,29 +473,70 @@ export default function ShareModal({ mode, card, cards, filterLabel, user, onClo
             )}
           </div>
 
-          {/* Include-price toggle (WP-7 / #1) */}
-          <button
-            onClick={() => setShareOptions(o => ({ ...o, includePrice: !o.includePrice }))}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              gap: 10, background: '#07070f', border: '1px solid #1a1a2e',
-              borderRadius: 10, padding: '11px 12px', marginBottom: 16, cursor: 'pointer',
-            }}
-          >
-            <span style={{ fontSize: 12, color: '#bbb', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 0.5 }}>
-              Include price in image
-            </span>
-            <span style={{
-              width: 40, height: 22, borderRadius: 11, flexShrink: 0,
-              background: shareOptions.includePrice ? '#4caf50' : '#333',
-              position: 'relative', transition: 'background 0.15s',
-            }}>
-              <span style={{
-                position: 'absolute', top: 2, left: shareOptions.includePrice ? 20 : 2,
-                width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s',
-              }} />
-            </span>
-          </button>
+          {/* Image options — include price (WP-7 / #1) + for-sale tag */}
+          <div style={{ marginBottom: 6 }}>
+            <ToggleRow
+              label="Include price in image"
+              checked={shareOptions.includePrice}
+              onToggle={() => setShareOptions(o => ({ ...o, includePrice: !o.includePrice }))}
+            />
+
+            {mode === 'card' && (
+              <>
+                <ToggleRow
+                  label="Mark as for sale"
+                  checked={forSale}
+                  onToggle={() => setForSale(v => !v)}
+                />
+
+                {forSale && (
+                  <div style={{
+                    display: 'flex', gap: 8, marginBottom: 10,
+                    animation: 'fadeInUp 0.18s ease',
+                  }}>
+                    <div style={{
+                      flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8,
+                      background: '#07070f', border: '1px solid #1a1a2e',
+                      borderRadius: 10, padding: '9px 12px',
+                    }}>
+                      <span style={{
+                        fontSize: 11, color: '#555', flexShrink: 0,
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        letterSpacing: 1, textTransform: 'uppercase',
+                      }}>Asking</span>
+                      <input
+                        value={price}
+                        onChange={e => setPrice(sanitizePrice(e.target.value))}
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        aria-label="Asking price"
+                        style={{
+                          flex: 1, minWidth: 0, background: 'transparent',
+                          border: 'none', outline: 'none', padding: 0,
+                          color: '#f0f0f0', fontSize: 15, fontFamily: "'Barlow', sans-serif",
+                        }}
+                      />
+                    </div>
+                    <select
+                      value={currency}
+                      onChange={e => setCurrency(e.target.value)}
+                      aria-label="Currency"
+                      style={{
+                        background: '#07070f', border: '1px solid #1a1a2e', borderRadius: 10,
+                        color: '#bbb', fontSize: 13, padding: '9px 10px', cursor: 'pointer',
+                        outline: 'none', flexShrink: 0,
+                        fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1,
+                      }}
+                    >
+                      {CURRENCIES.map(c => (
+                        <option key={c} value={c} style={{ background: '#0d0d1a' }}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
 
           {/* URL bar */}
           <div style={{

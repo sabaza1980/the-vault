@@ -87,6 +87,49 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return drawn * lineH;
 }
 
+// Currency-aware money formatting. Intl handles symbol choice and placement
+// per currency, so nothing here has to hardcode a symbol table.
+function formatMoney(amount, currency) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency || ''} ${amount}`.trim();
+  }
+}
+
+// "FOR SALE" tag, drawn into the negative space beneath the card image.
+// Anchored to the left column so it can never collide with the stats stack
+// on the right, and sized to clear the footer bar.
+function drawForSaleTag(ctx, x, y, price, currency) {
+  const label = 'FOR SALE';
+  const padX = 24, tagH = 60;
+
+  ctx.textAlign = 'left';
+  ctx.font = '400 40px "Bebas Neue", sans-serif';
+  const tagW = ctx.measureText(label).width + padX * 2;
+
+  ctx.fillStyle = '#ff6b35';
+  rrect(ctx, x, y, tagW, tagH, 12);
+  ctx.fill();
+  ctx.fillStyle = '#07070f';
+  ctx.fillText(label, x + padX, y + 44);
+
+  const hasPrice = typeof price === 'number' && isFinite(price) && price > 0;
+  if (hasPrice) {
+    ctx.font = '400 66px "Bebas Neue", sans-serif';
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillText(formatMoney(price, currency), x, y + tagH + 74);
+    ctx.font = '700 20px "Barlow Condensed", sans-serif';
+    ctx.fillStyle = 'rgba(240,240,240,0.45)';
+    ctx.fillText('ASKING PRICE', x, y + tagH + 104);
+  }
+}
+
 // Footer bar shared by both share images: brand mark on the left, a
 // call-to-action in the empty space on the right. The CTA is intentionally
 // legible (the old 'myvaults.io' was #3a3a3a on near-black, i.e. invisible)
@@ -232,6 +275,11 @@ async function drawSingleCard(card, shareOptions = { includePrice: true }) {
     ctx.font = '600 22px "Barlow Condensed", sans-serif';
     ctx.fillStyle = '#2d5c2d';
     ctx.fillText('EST. VALUE', RX, ry);
+  }
+
+  // For-sale tag fills the empty band under the card image (off by default)
+  if (shareOptions.forSale) {
+    drawForSaleTag(ctx, IX, IY + IH + 32, shareOptions.salePrice, shareOptions.saleCurrency);
   }
 
   drawFooter(ctx, W, H);
