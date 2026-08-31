@@ -9,8 +9,6 @@
  *   (VITE_EBAY_CLIENT_ID is your App ID � already set)
  */
 
-import { buildConditionDescriptors, buildConditionDescriptorsXml } from './_ebay/conditions.js';
-
 const API             = 'https://api.ebay.com';
 const TRADING_API_URL = 'https://api.ebay.com/ws/api.dll';
 const TRADING_COMPAT  = '1119';
@@ -36,30 +34,68 @@ const MARKETPLACE_CURRENCY = {
 };
 function getCurrency(marketplace) { return MARKETPLACE_CURRENCY[marketplace] || 'USD'; }
 
-// Condition for card categories is expressed with eBay ConditionIDs plus
-// ConditionDescriptors, NOT with the old 4000/5000/6000 scale. Verified live
-// against getItemConditionPolicies for category 183050 on 2026-08-29, which
-// accepts exactly three ConditionIDs:
-//   2750 Graded    -> descriptors 27501 Professional Grader, 27502 Grade,
-//                     27503 Certification Number (free text)
-//   3000 Used      -> no descriptors
-//   4000 Ungraded  -> descriptor 40001 Card Condition
-// 5000 and 6000 are NOT valid here and cause AddItem to fail.
-const CONDITION_ID_GRADED   = '2750';
-const CONDITION_ID_UNGRADED = '4000';
-
-// The Vault's internal condition vocabulary -> eBay's four ungraded buckets.
-// The authoritative value IDs are resolved live in _ebay/conditions.js; this
-// map only normalises our wording before that lookup.
-const UNGRADED_CONDITION_ALIAS = {
-  'Mint':      'Near mint or better',
-  'Near Mint': 'Near mint or better',
-  'Excellent': 'Excellent',
-  'Good':      'Very good',
-  'Fair':      'Very good',
-  'Poor':      'Poor',
-  'Unknown':   'Very good',
+// Map condition strings to Trading API ConditionIDs valid for category 183050
+// Only 4000/5000/6000 are confirmed valid for category 183050 on eBay US
+const TRADING_CONDITION_MAP = {
+  'Mint':      '4000', // Near Mint or Better (1000 is invalid for 183050)
+  'Near Mint': '4000', // Near Mint or Better
+  'Excellent': '4000', // Near Mint or Better
+  'Good':      '5000', // Good
+  'Fair':      '6000', // Acceptable
+  'Poor':      '6000', // Acceptable
+  'Unknown':   '5000', // Good
 };
+
+// Map condition strings to eBay "Card Condition" item specific (aspect ID 40001)
+// Must align with ConditionID: 4000="Very Good", 5000="Very Good", 6000="Poor"
+// "Near Mint or Better" appears in Taxonomy API but only applies to ConditionID 3000
+// which is INVALID for category 183050 — so we never use it.
+const CARD_CONDITION_SPECIFIC_MAP = {
+  'Mint':      'Very Good',
+  'Near Mint': 'Very Good',
+  'Excellent': 'Very Good',
+  'Good':      'Very Good',
+  'Fair':      'Poor',
+  'Poor':      'Poor',
+  'Unknown':   'Very Good',
+};
+
+// Fetch the seller''s registered country + marketplace from eBay identity API
+async function getSellerInfo(accessToken) {
+  try {
+    const res  = await fetch(`${API}/commerce/identity/v1/user/`, {
+      headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Identity API ${res.status}: ${text.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    console.log('eBay identity response:', JSON.stringify(data));
+    const marketplace = data.registrationMarketplaceId || 'EBAY_US';
+    const account     = data.individualAccount || data.businessAccount || {};
+    const addr        = account.primaryAddress || {};
+    const country     = addr.country
+                      || marketplace.replace(/^EBAY_/, '')
+                      || 'US';
+    // Location is a buyer-facing text string (city or region)
+    const location    = [addr.city, addr.stateOrProvince, country].filter(Boolean).join(', ') || country;
+    console.log('Seller marketplace:', marketplace, 'country:', country, 'location:', location);
+    return { marketplace, country, location };
+  } catch (e) {
+    console.warn('Could not fetch seller identity:', e.message);
+    return { marketplace: 'EBAY_US', country: 'US', location: 'US' };
+  }
+}
+
+function escapeXml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 
 function buildDescription(cards, extraNotes) {
   const note   = extraNotes ? `<p>${extraNotes}</p>` : '';
@@ -112,13 +148,13 @@ function truncateTitle(title) {
   return title.slice(0, 79).replace(/\s+\S*$/, '').slice(0, 80);
 }
 
-function buildItemSpecificsXml(cards) {
+function buildItemSpecificsXml(cards, condition) {
   const c = cards[0];
+  const cardCondition = CARD_CONDITION_SPECIFIC_MAP[condition] || 'Good';
   const pairs = [
     ['Sport', 'Basketball'],
     ['Franchise', c.team || 'NBA'], // required by eBay for category 183050
-    // 'Card Condition' is deliberately absent: eBay moved it to condition
-    // descriptor 40001, sent in <ConditionDescriptors> below.
+    ['Card Condition', cardCondition],  // required aspect ID 40001
     c.playerName                        ? ['Player/Athlete',    c.playerName]         : null,
     c.year                              ? ['Season',            String(c.year)]       : null,
     c.brand                             ? ['Card Manufacturer', c.brand]              : null,
@@ -166,29 +202,12 @@ export default async function handler(req, res) {
     const { marketplace, country, location } = await getSellerInfo(accessToken);
     const currency     = getCurrency(marketplace);
     const siteId       = getSiteId(marketplace);
-    // Resolve ConditionID + ConditionDescriptors from live eBay metadata.
-    const firstCard = cards[0] || {};
-    const isGraded  = Boolean(firstCard.graded ?? (firstCard.grader && firstCard.grade));
-    const descriptorInput = isGraded
-      ? { graded: true, grader: firstCard.grader, grade: firstCard.grade, certNumber: firstCard.certNumber }
-      : { graded: false, condition: UNGRADED_CONDITION_ALIAS[condition] || condition || 'Very good' };
-
-    let conditionId = isGraded ? CONDITION_ID_GRADED : CONDITION_ID_UNGRADED;
-    let descriptorsXml = '';
-    try {
-      const resolved = await buildConditionDescriptors(descriptorInput, CATEGORY_ID, marketplace);
-      conditionId    = resolved.conditionId;
-      descriptorsXml = buildConditionDescriptorsXml(resolved.descriptors);
-      if (resolved.warnings.length) console.warn('[ebay-list] condition warnings:', resolved.warnings);
-    } catch (e) {
-      // Metadata lookup is best-effort: fall back to the bare ConditionID.
-      console.error('[ebay-list] condition descriptor lookup failed:', e.message);
-    }
+    const conditionId  = TRADING_CONDITION_MAP[condition] || '5000';
     const cleanTitle   = truncateTitle(title.trim());
     const description  = buildDescription(cards, conditionDescription);
     const imageUrls    = getImageUrls(cards);
 
-    const specificsXml = buildItemSpecificsXml(cards);
+    const specificsXml = buildItemSpecificsXml(cards, condition);
 
     const picturesXml = imageUrls.length > 0
       ? `  <PictureDetails>\n    <GalleryType>Gallery</GalleryType>\n${imageUrls.map(u => `    <PictureURL>${escapeXml(u)}</PictureURL>`).join('\n')}\n  </PictureDetails>`
@@ -211,7 +230,6 @@ export default async function handler(req, res) {
     <Location>${escapeXml(location)}</Location>
     <Currency>${escapeXml(currency)}</Currency>
     <ConditionID>${conditionId}</ConditionID>
-${descriptorsXml}
     <ItemSpecifics>
 ${specificsXml}
     </ItemSpecifics>

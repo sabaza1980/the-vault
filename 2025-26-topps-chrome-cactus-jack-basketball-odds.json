@@ -1,0 +1,105 @@
+{
+  "_comment": "Odds transcribed from the Beckett article for 2025-26 Topps Chrome x Cactus Jack Basketball (Andrew Harner, June 19 2026). Hobby-only product: 4 cards per pack, 20 packs per box, 12 boxes per case. Odds published as 1:N packs per Topps. Base rainbow spans 18 parallels; autos and inserts share smaller parallel sets.",
+  "setId": "2025-26-topps-chrome-cactus-jack-basketball",
+  "source": "Topps published odds (transcribed from Beckett article, June 2026)",
+  "lastUpdated": "2026-06-19",
+  "configurations": {
+    "Hobby": { "cardsPerPack": 4, "packsPerBox": 20, "boxesPerCase": 12 }
+  },
+  "perParallel": {
+    "_comment": "Base parallel rainbow — odds apply to ANY card in the 100-card base set at this parallel.",
+    "cj-white":                { "Hobby": { "oddsPer": "pack", "ratio": "1:7",     "estimated": false } },
+    "cj-refractor":            { "Hobby": { "oddsPer": "pack", "ratio": "1:10",    "estimated": false } },
+    "cj-logofractor":          { "Hobby": { "oddsPer": "pack", "ratio": "1:20",    "estimated": false } },
+    "cj-teal-speckle":         { "Hobby": { "oddsPer": "pack", "ratio": "1:26",    "estimated": false } },
+    "cj-pink":                 { "Hobby": { "oddsPer": "pack", "ratio": "1:31",    "estimated": false } },
+    "cj-aqua-shimmer":         { "Hobby": { "oddsPer": "pack", "ratio": "1:38",    "estimated": false } },
+    "cj-lasers":               { "Hobby": { "oddsPer": "pack", "ratio": "1:44",    "estimated": false } },
+    "cj-blue":                 { "Hobby": { "oddsPer": "pack", "ratio": "1:51",    "estimated": false } },
+    "cj-sonar":                { "Hobby": { "oddsPer": "pack", "ratio": "1:61",    "estimated": false } },
+    "cj-green":                { "Hobby": { "oddsPer": "pack", "ratio": "1:77",    "estimated": false } },
+    "cj-purple-mini-diamond":  { "Hobby": { "oddsPer": "pack", "ratio": "1:101",   "estimated": false } },
+    "cj-gold":                 { "Hobby": { "oddsPer": "pack", "ratio": "1:151",   "estimated": false } },
+    "cj-cactus-jack":          { "Hobby": { "oddsPer": "pack", "ratio": "1:184",   "estimated": false } },
+    "cj-orange":               { "Hobby": { "oddsPer": "pack", "ratio": "1:302",   "estimated": false } },
+    "cj-black":                { "Hobby": { "oddsPer": "pack", "ratio": "1:754",   "estimated": false } },
+    "cj-red":                  { "Hobby": { "oddsPer": "pack", "ratio": "1:1509",  "estimated": false } },
+    "cj-red-mini-diamond":     { "Hobby": { "oddsPer": "pack", "ratio": "1:1509",  "estimated": false } },
+    "cj-superfractor":         { "Hobby": { "oddsPer": "pack", "ratio": "1:7575",  "estimated": false } }
+  },
+  "perAutoSubset": {
+    "_comment": "Both autograph subsets pull at 1:208 packs base rate with the same 4-parallel rainbow.",
+    "base-autographs": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:208",   "estimated": false } },
+      "parallels": {
+        "cj-orange":      { "Hobby": { "ratio": "1:1064",  "estimated": false } },
+        "cj-black":       { "Hobby": { "ratio": "1:2664",  "estimated": false } },
+        "cj-red":         { "Hobby": { "ratio": "1:5348",  "estimated": false } },
+        "cj-superfractor":{ "Hobby": { "ratio": "1:26934", "estimated": false } }
+      }
+    },
+    "cactus-ink": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:208",   "estimated": false } },
+      "parallels": {
+        "cj-orange":      { "Hobby": { "ratio": "1:1064",  "estimated": false } },
+        "cj-black":       { "Hobby": { "ratio": "1:2664",  "estimated": false } },
+        "cj-red":         { "Hobby": { "ratio": "1:5348",  "estimated": false } },
+        "cj-superfractor":{ "Hobby": { "ratio": "1:26934", "estimated": false } }
+      }
+    }
+  },
+  "perInsert": {
+    "_comment": "Three common inserts share the 8-parallel rainbow. Two rare inserts (Astrovision, Cactus Mode) are Superfractor-only.",
+    "utopia-highlights": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:8",     "estimated": false } },
+      "parallels": {
+        "cj-blue":                { "Hobby": { "ratio": "1:126",   "estimated": false } },
+        "cj-green":               { "Hobby": { "ratio": "1:191",   "estimated": false } },
+        "cj-purple-mini-diamond": { "Hobby": { "ratio": "1:252",   "estimated": false } },
+        "cj-gold":                { "Hobby": { "ratio": "1:377",   "estimated": false } },
+        "cj-orange":              { "Hobby": { "ratio": "1:754",   "estimated": false } },
+        "cj-black":               { "Hobby": { "ratio": "1:1884",  "estimated": false } },
+        "cj-red":                 { "Hobby": { "ratio": "1:3768",  "estimated": false } },
+        "cj-superfractor":        { "Hobby": { "ratio": "1:19137", "estimated": false } }
+      }
+    },
+    "jacked-up": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:8",     "estimated": false } },
+      "parallels": {
+        "cj-blue":                { "Hobby": { "ratio": "1:126",   "estimated": false } },
+        "cj-green":               { "Hobby": { "ratio": "1:191",   "estimated": false } },
+        "cj-purple-mini-diamond": { "Hobby": { "ratio": "1:252",   "estimated": false } },
+        "cj-gold":                { "Hobby": { "ratio": "1:377",   "estimated": false } },
+        "cj-orange":              { "Hobby": { "ratio": "1:754",   "estimated": false } },
+        "cj-black":               { "Hobby": { "ratio": "1:1884",  "estimated": false } },
+        "cj-red":                 { "Hobby": { "ratio": "1:3768",  "estimated": false } },
+        "cj-superfractor":        { "Hobby": { "ratio": "1:19137", "estimated": false } }
+      }
+    },
+    "la-flame-legends": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:15",    "estimated": false } },
+      "parallels": {
+        "cj-blue":                { "Hobby": { "ratio": "1:252",   "estimated": false } },
+        "cj-green":               { "Hobby": { "ratio": "1:381",   "estimated": false } },
+        "cj-purple-mini-diamond": { "Hobby": { "ratio": "1:503",   "estimated": false } },
+        "cj-gold":                { "Hobby": { "ratio": "1:754",   "estimated": false } },
+        "cj-orange":              { "Hobby": { "ratio": "1:1509",  "estimated": false } },
+        "cj-black":               { "Hobby": { "ratio": "1:3768",  "estimated": false } },
+        "cj-red":                 { "Hobby": { "ratio": "1:7575",  "estimated": false } },
+        "cj-superfractor":        { "Hobby": { "ratio": "1:38274", "estimated": false } }
+      }
+    },
+    "astrovision": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:305",   "estimated": false } },
+      "parallels": {
+        "cj-superfractor":        { "Hobby": { "ratio": "1:42777", "estimated": false } }
+      }
+    },
+    "cactus-mode": {
+      "base":   { "Hobby": { "oddsPer": "pack", "ratio": "1:1200",  "estimated": false } },
+      "parallels": {
+        "cj-superfractor":        { "Hobby": { "ratio": "1:42777", "estimated": false } }
+      }
+    }
+  }
+}

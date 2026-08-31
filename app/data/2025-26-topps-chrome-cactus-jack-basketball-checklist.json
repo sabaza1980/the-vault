@@ -1,0 +1,2330 @@
+{
+  "set": {
+    "id": "2025-26-topps-chrome-cactus-jack-basketball",
+    "name": "2025-26 Topps Chrome x Cactus Jack Basketball",
+    "manufacturer": "Topps",
+    "sport": "Basketball",
+    "season": "2025-26",
+    "releaseDate": "2026-06-19",
+    "baseCardCount": 100,
+    "configurations": [
+      "Hobby"
+    ],
+    "format": {
+      "Hobby": {
+        "cardsPerPack": 4,
+        "packsPerBox": 20,
+        "boxesPerCase": 12
+      }
+    },
+    "note": "Second NBA collaboration between Fanatics/Topps and Travis Scott (Cactus Jack). Streetball aesthetic — chain net and brick wall design DNA. 18 base parallels form one of the deepest rainbows in the hobby.",
+    "collaboration": {
+      "brand": "Cactus Jack",
+      "artist": "Travis Scott",
+      "relatedSets": [
+        "2025-26 Topps Chrome x Cactus Jack Basketball NBA All-Star Game"
+      ]
+    }
+  },
+  "parallelLibrary": {
+    "cj-white": {
+      "name": "White",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-refractor": {
+      "name": "Refractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-logofractor": {
+      "name": "LogoFractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-teal-speckle": {
+      "name": "Teal Speckle Refractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-pink": {
+      "name": "Pink Refractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-aqua-shimmer": {
+      "name": "Aqua Shimmer",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-lasers": {
+      "name": "Lasers",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-blue": {
+      "name": "Blue Refractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-sonar": {
+      "name": "Sonar",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-green": {
+      "name": "Green Refractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-purple-mini-diamond": {
+      "name": "Purple Mini-Diamond",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-gold": {
+      "name": "Gold Refractor",
+      "printRun": 50,
+      "exclusive": null
+    },
+    "cj-cactus-jack": {
+      "name": "Cactus Jack Refractor",
+      "printRun": null,
+      "exclusive": null
+    },
+    "cj-orange": {
+      "name": "Orange Refractor",
+      "printRun": 25,
+      "exclusive": null
+    },
+    "cj-black": {
+      "name": "Black Refractor",
+      "printRun": 10,
+      "exclusive": null
+    },
+    "cj-red": {
+      "name": "Red Refractor",
+      "printRun": 5,
+      "exclusive": null
+    },
+    "cj-red-mini-diamond": {
+      "name": "Red Mini-Diamond Refractor",
+      "printRun": 5,
+      "exclusive": null
+    },
+    "cj-superfractor": {
+      "name": "Superfractor",
+      "printRun": 1,
+      "exclusive": null
+    }
+  },
+  "subsets": [
+    {
+      "id": "base",
+      "name": "Base",
+      "cardPrefix": "",
+      "cardCount": 100,
+      "type": "base",
+      "isAuto": false,
+      "isInsert": false,
+      "league": "NBA",
+      "parallels": [
+        "cj-white",
+        "cj-refractor",
+        "cj-logofractor",
+        "cj-teal-speckle",
+        "cj-pink",
+        "cj-aqua-shimmer",
+        "cj-lasers",
+        "cj-blue",
+        "cj-sonar",
+        "cj-green",
+        "cj-purple-mini-diamond",
+        "cj-gold",
+        "cj-cactus-jack",
+        "cj-orange",
+        "cj-black",
+        "cj-red",
+        "cj-red-mini-diamond",
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "1",
+          "player": "Jayson Tatum",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "2",
+          "player": "Jaylen Brown",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "3",
+          "player": "Cam Thomas",
+          "team": "Brooklyn Nets",
+          "isRC": false
+        },
+        {
+          "number": "4",
+          "player": "Jalen Brunson",
+          "team": "New York Knicks",
+          "isRC": false
+        },
+        {
+          "number": "5",
+          "player": "Karl-Anthony Towns",
+          "team": "New York Knicks",
+          "isRC": false
+        },
+        {
+          "number": "6",
+          "player": "Tyrese Maxey",
+          "team": "Philadelphia 76ers",
+          "isRC": false
+        },
+        {
+          "number": "7",
+          "player": "Joel Embiid",
+          "team": "Philadelphia 76ers",
+          "isRC": false
+        },
+        {
+          "number": "8",
+          "player": "Jared McCain",
+          "team": "Philadelphia 76ers",
+          "isRC": false
+        },
+        {
+          "number": "9",
+          "player": "Gradey Dick",
+          "team": "Toronto Raptors",
+          "isRC": false
+        },
+        {
+          "number": "10",
+          "player": "Scottie Barnes",
+          "team": "Toronto Raptors",
+          "isRC": false
+        },
+        {
+          "number": "11",
+          "player": "Matas Buzelis",
+          "team": "Chicago Bulls",
+          "isRC": false
+        },
+        {
+          "number": "12",
+          "player": "Josh Giddey",
+          "team": "Chicago Bulls",
+          "isRC": false
+        },
+        {
+          "number": "13",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons",
+          "isRC": false
+        },
+        {
+          "number": "14",
+          "player": "Ausar Thompson",
+          "team": "Detroit Pistons",
+          "isRC": false
+        },
+        {
+          "number": "15",
+          "player": "Tyrese Haliburton",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "16",
+          "player": "Bennedict Mathurin",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "17",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks",
+          "isRC": false
+        },
+        {
+          "number": "18",
+          "player": "Damian Lillard",
+          "team": "Milwaukee Bucks",
+          "isRC": false
+        },
+        {
+          "number": "19",
+          "player": "Trae Young",
+          "team": "Atlanta Hawks",
+          "isRC": false
+        },
+        {
+          "number": "20",
+          "player": "Zaccharie Risacher",
+          "team": "Atlanta Hawks",
+          "isRC": false
+        },
+        {
+          "number": "21",
+          "player": "LaMelo Ball",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "22",
+          "player": "Brandon Miller",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "23",
+          "player": "Tyler Herro",
+          "team": "Miami Heat",
+          "isRC": false
+        },
+        {
+          "number": "24",
+          "player": "Bam Adebayo",
+          "team": "Miami Heat",
+          "isRC": false
+        },
+        {
+          "number": "25",
+          "player": "Donovan Mitchell",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "26",
+          "player": "Darius Garland",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "27",
+          "player": "Paolo Banchero",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "28",
+          "player": "Franz Wagner",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "29",
+          "player": "Alex Sarr",
+          "team": "Washington Wizards",
+          "isRC": false
+        },
+        {
+          "number": "30",
+          "player": "Bub Carrington",
+          "team": "Washington Wizards",
+          "isRC": false
+        },
+        {
+          "number": "31",
+          "player": "Nikola Jokić",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "32",
+          "player": "Jamal Murray",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "33",
+          "player": "Anthony Edwards",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "34",
+          "player": "Terrence Shannon Jr.",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "35",
+          "player": "Shai Gilgeous-Alexander",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "36",
+          "player": "Jalen Williams",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "37",
+          "player": "Chet Holmgren",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "38",
+          "player": "Scoot Henderson",
+          "team": "Portland Trail Blazers",
+          "isRC": false
+        },
+        {
+          "number": "39",
+          "player": "Shaedon Sharpe",
+          "team": "Portland Trail Blazers",
+          "isRC": false
+        },
+        {
+          "number": "40",
+          "player": "Lauri Markkanen",
+          "team": "Utah Jazz",
+          "isRC": false
+        },
+        {
+          "number": "41",
+          "player": "Keyonte George",
+          "team": "Utah Jazz",
+          "isRC": false
+        },
+        {
+          "number": "42",
+          "player": "Stephen Curry",
+          "team": "Golden State Warriors",
+          "isRC": false
+        },
+        {
+          "number": "43",
+          "player": "Jimmy Butler III",
+          "team": "Golden State Warriors",
+          "isRC": false
+        },
+        {
+          "number": "44",
+          "player": "Kawhi Leonard",
+          "team": "Los Angeles Clippers",
+          "isRC": false
+        },
+        {
+          "number": "45",
+          "player": "James Harden",
+          "team": "Los Angeles Clippers",
+          "isRC": false
+        },
+        {
+          "number": "46",
+          "player": "LeBron James",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "47",
+          "player": "Luka Dončić",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "48",
+          "player": "Devin Booker",
+          "team": "Phoenix Suns",
+          "isRC": false
+        },
+        {
+          "number": "49",
+          "player": "Kevin Durant",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "50",
+          "player": "DeMar DeRozan",
+          "team": "Sacramento Kings",
+          "isRC": false
+        },
+        {
+          "number": "51",
+          "player": "Zach LaVine",
+          "team": "Sacramento Kings",
+          "isRC": false
+        },
+        {
+          "number": "52",
+          "player": "Kyrie Irving",
+          "team": "Dallas Mavericks",
+          "isRC": false
+        },
+        {
+          "number": "53",
+          "player": "Anthony Davis",
+          "team": "Dallas Mavericks",
+          "isRC": false
+        },
+        {
+          "number": "54",
+          "player": "Jalen Green",
+          "team": "Phoenix Suns",
+          "isRC": false
+        },
+        {
+          "number": "55",
+          "player": "Amen Thompson",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "56",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies",
+          "isRC": false
+        },
+        {
+          "number": "57",
+          "player": "Jaren Jackson Jr.",
+          "team": "Memphis Grizzlies",
+          "isRC": false
+        },
+        {
+          "number": "58",
+          "player": "Trey Murphy III",
+          "team": "New Orleans Pelicans",
+          "isRC": false
+        },
+        {
+          "number": "59",
+          "player": "Victor Wembanyama",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "60",
+          "player": "De'Aaron Fox",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "61",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "62",
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "63",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers",
+          "isRC": true
+        },
+        {
+          "number": "64",
+          "player": "Kon Knueppel",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "65",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "66",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards",
+          "isRC": true
+        },
+        {
+          "number": "67",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "68",
+          "player": "Egor Dëmin",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "69",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "70",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "71",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies",
+          "isRC": true
+        },
+        {
+          "number": "72",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls",
+          "isRC": true
+        },
+        {
+          "number": "73",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "74",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "75",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder",
+          "isRC": true
+        },
+        {
+          "number": "76",
+          "player": "Yang Hansen",
+          "team": "Portland Trail Blazers",
+          "isRC": true
+        },
+        {
+          "number": "77",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves",
+          "isRC": true
+        },
+        {
+          "number": "78",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "79",
+          "player": "Nolan Traore",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "80",
+          "player": "Kasparas Jakučionis",
+          "team": "Miami Heat",
+          "isRC": true
+        },
+        {
+          "number": "81",
+          "player": "Will Riley",
+          "team": "Washington Wizards",
+          "isRC": true
+        },
+        {
+          "number": "82",
+          "player": "Drake Powell",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "83",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks",
+          "isRC": true
+        },
+        {
+          "number": "84",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings",
+          "isRC": true
+        },
+        {
+          "number": "85",
+          "player": "Jase Richardson",
+          "team": "Orlando Magic",
+          "isRC": true
+        },
+        {
+          "number": "86",
+          "player": "Ben Saraf",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "87",
+          "player": "Danny Wolf",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "88",
+          "player": "Hugo González",
+          "team": "Boston Celtics",
+          "isRC": true
+        },
+        {
+          "number": "89",
+          "player": "Liam McNeeley",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "90",
+          "player": "Yanic Konan-Niederhäuser",
+          "team": "Los Angeles Clippers",
+          "isRC": true
+        },
+        {
+          "number": "91",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "92",
+          "player": "Noah Penda",
+          "team": "Orlando Magic",
+          "isRC": true
+        },
+        {
+          "number": "93",
+          "player": "Sion James",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "94",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "95",
+          "player": "Johni Broome",
+          "team": "Philadelphia 76ers",
+          "isRC": true
+        },
+        {
+          "number": "96",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers",
+          "isRC": true
+        },
+        {
+          "number": "97",
+          "player": "Will Richard",
+          "team": "Golden State Warriors",
+          "isRC": true
+        },
+        {
+          "number": "98",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons",
+          "isRC": true
+        },
+        {
+          "number": "99",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers",
+          "isRC": true
+        },
+        {
+          "number": "100",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors",
+          "isRC": true
+        }
+      ]
+    },
+    {
+      "id": "base-autographs",
+      "name": "Base Autographs",
+      "cardPrefix": "BV-",
+      "cardCount": 49,
+      "type": "auto",
+      "isAuto": true,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-orange",
+        "cj-black",
+        "cj-red",
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "BV-AB",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "BV-AE",
+          "player": "Anthony Edwards",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "BV-AN",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks",
+          "isRC": true
+        },
+        {
+          "number": "BV-AS",
+          "player": "Alex Sarr",
+          "team": "Washington Wizards",
+          "isRC": false
+        },
+        {
+          "number": "BV-BM",
+          "player": "Brandon Miller",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "BV-BS",
+          "player": "Ben Saraf",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "BV-CC",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies",
+          "isRC": true
+        },
+        {
+          "number": "BV-CF",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "BV-CH",
+          "player": "Chet Holmgren",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "BV-CMB",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "BV-CU",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons",
+          "isRC": false
+        },
+        {
+          "number": "BV-DH",
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "BV-DP",
+          "player": "Drake Powell",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "BV-DQ",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "BV-DW",
+          "player": "Danny Wolf",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "BV-ED",
+          "player": "Egor Dëmin",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "BV-GA",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks",
+          "isRC": false
+        },
+        {
+          "number": "BV-GD",
+          "player": "Gradey Dick",
+          "team": "Toronto Raptors",
+          "isRC": false
+        },
+        {
+          "number": "BV-JB",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves",
+          "isRC": true
+        },
+        {
+          "number": "BV-JH",
+          "player": "James Harden",
+          "team": "Los Angeles Clippers",
+          "isRC": false
+        },
+        {
+          "number": "BV-JM",
+          "player": "Jamal Murray",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "BV-JR",
+          "player": "Jase Richardson",
+          "team": "Orlando Magic",
+          "isRC": true
+        },
+        {
+          "number": "BV-JT",
+          "player": "Jayson Tatum",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "BV-JU",
+          "player": "Jalen Brunson",
+          "team": "New York Knicks",
+          "isRC": false
+        },
+        {
+          "number": "BV-JW",
+          "player": "Jalen Williams",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "BV-KD",
+          "player": "Kevin Durant",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "BV-KJ",
+          "player": "Kasparas Jakučionis",
+          "team": "Miami Heat",
+          "isRC": true
+        },
+        {
+          "number": "BV-KK",
+          "player": "Kon Knueppel",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "BV-KM",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "BV-LBJ",
+          "player": "LeBron James",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "BV-Lm",
+          "player": "Liam McNeeley",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "BV-MT",
+          "player": "Myles Turner",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "BV-NC",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings",
+          "isRC": true
+        },
+        {
+          "number": "BV-NE",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls",
+          "isRC": true
+        },
+        {
+          "number": "BV-NJ",
+          "player": "Nikola Jokić",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "BV-NT",
+          "player": "Nolan Traore",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "BV-PB",
+          "player": "Paolo Banchero",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "BV-SC",
+          "player": "Stephen Curry",
+          "team": "Golden State Warriors",
+          "isRC": false
+        },
+        {
+          "number": "BV-SGA",
+          "player": "Shai Gilgeous-Alexander",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "BV-SH",
+          "player": "Scoot Henderson",
+          "team": "Portland Trail Blazers",
+          "isRC": false
+        },
+        {
+          "number": "BV-TA",
+          "player": "Tyrese Haliburton",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "BV-TS",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder",
+          "isRC": true
+        },
+        {
+          "number": "BV-VW",
+          "player": "Victor Wembanyama",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "BV-WC",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "BV-WR",
+          "player": "Will Riley",
+          "team": "Washington Wizards",
+          "isRC": true
+        },
+        {
+          "number": "BV-YH",
+          "player": "Yang Hansen",
+          "team": "Portland Trail Blazers",
+          "isRC": true
+        },
+        {
+          "number": "BV-YK",
+          "player": "Yanic Konan-Niederhäuser",
+          "team": "Los Angeles Clippers",
+          "isRC": true
+        },
+        {
+          "number": "BV-ZL",
+          "player": "Zach LaVine",
+          "team": "Sacramento Kings",
+          "isRC": false
+        },
+        {
+          "number": "BV-ZR",
+          "player": "Zaccharie Risacher",
+          "team": "Atlanta Hawks",
+          "isRC": false
+        }
+      ]
+    },
+    {
+      "id": "cactus-ink",
+      "name": "Cactus Ink",
+      "cardPrefix": "CI-",
+      "cardCount": 49,
+      "type": "auto",
+      "isAuto": true,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-orange",
+        "cj-black",
+        "cj-red",
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "CI-AB",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "CI-AL",
+          "player": "Anthony Black",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "CI-AM",
+          "player": "Alijah Martin",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "CI-AN",
+          "player": "Asa Newell",
+          "team": "Atlanta Hawks",
+          "isRC": true
+        },
+        {
+          "number": "CI-AT",
+          "player": "Adou Thiero",
+          "team": "Los Angeles Lakers",
+          "isRC": true
+        },
+        {
+          "number": "CI-BB",
+          "player": "Brooks Barnhizer",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "CI-BJ",
+          "player": "Bronny James Jr.",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "CI-BS",
+          "player": "Ben Saraf",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "CI-CC",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies",
+          "isRC": true
+        },
+        {
+          "number": "CI-CF",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "CI-CL",
+          "player": "Chaz Lanier",
+          "team": "Detroit Pistons",
+          "isRC": true
+        },
+        {
+          "number": "CI-CMB",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "CI-CW",
+          "player": "Cam Whitmore",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "CI-DH",
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "CI-DP",
+          "player": "Drake Powell",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "CI-DQ",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "CI-DW",
+          "player": "Danny Wolf",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "CI-ED",
+          "player": "Egor Dëmin",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "CI-IC",
+          "player": "Isaiah Collier",
+          "team": "Utah Jazz",
+          "isRC": false
+        },
+        {
+          "number": "CI-JA",
+          "player": "Jarace Walker",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "CI-JB",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves",
+          "isRC": true
+        },
+        {
+          "number": "CI-JE",
+          "player": "Jaylen Wells",
+          "team": "Memphis Grizzlies",
+          "isRC": false
+        },
+        {
+          "number": "CI-JH",
+          "player": "Jett Howard",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "CI-JR",
+          "player": "Jase Richardson",
+          "team": "Orlando Magic",
+          "isRC": true
+        },
+        {
+          "number": "CI-JT",
+          "player": "Jaylon Tyson",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "CI-JW",
+          "player": "Jamir Watkins",
+          "team": "Washington Wizards",
+          "isRC": false
+        },
+        {
+          "number": "CI-KB",
+          "player": "Koby Brea",
+          "team": "Phoenix Suns",
+          "isRC": false
+        },
+        {
+          "number": "CI-KJ",
+          "player": "Kasparas Jakučionis",
+          "team": "Miami Heat",
+          "isRC": true
+        },
+        {
+          "number": "CI-KK",
+          "player": "Kon Knueppel",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "CI-KM",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "CI-KO",
+          "player": "Kam Jones",
+          "team": "Indiana Pacers",
+          "isRC": true
+        },
+        {
+          "number": "CI-LM",
+          "player": "Liam McNeeley",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "CI-MP",
+          "player": "Micah Peavy",
+          "team": "New Orleans Pelicans",
+          "isRC": false
+        },
+        {
+          "number": "CI-MR",
+          "player": "Maxime Raynaud",
+          "team": "Sacramento Kings",
+          "isRC": false
+        },
+        {
+          "number": "CI-NC",
+          "player": "Nique Clifford",
+          "team": "Sacramento Kings",
+          "isRC": true
+        },
+        {
+          "number": "CI-NE",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls",
+          "isRC": true
+        },
+        {
+          "number": "CI-NP",
+          "player": "Noah Penda",
+          "team": "Orlando Magic",
+          "isRC": true
+        },
+        {
+          "number": "CI-NT",
+          "player": "Nolan Traore",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "CI-RF",
+          "player": "Rasheer Fleming",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "CI-RK",
+          "player": "Ryan Kalkbrenner",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "CI-SJ",
+          "player": "Sion James",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "CI-TA",
+          "player": "Tidjane Salaün",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "CI-TH",
+          "player": "Taylor Hendricks",
+          "team": "Utah Jazz",
+          "isRC": false
+        },
+        {
+          "number": "CI-TP",
+          "player": "Tyrese Proctor",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "CI-TS",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder",
+          "isRC": true
+        },
+        {
+          "number": "CI-WC",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "CI-WR",
+          "player": "Will Riley",
+          "team": "Washington Wizards",
+          "isRC": true
+        },
+        {
+          "number": "CI-YH",
+          "player": "Yang Hansen",
+          "team": "Portland Trail Blazers",
+          "isRC": true
+        },
+        {
+          "number": "CI-YK",
+          "player": "Yanic Konan-Niederhäuser",
+          "team": "Los Angeles Clippers",
+          "isRC": true
+        }
+      ]
+    },
+    {
+      "id": "utopia-highlights",
+      "name": "Utopia Highlights",
+      "cardPrefix": "UH-",
+      "cardCount": 40,
+      "type": "insert",
+      "isAuto": false,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-blue",
+        "cj-green",
+        "cj-purple-mini-diamond",
+        "cj-gold",
+        "cj-orange",
+        "cj-black",
+        "cj-red",
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "UH-1",
+          "player": "Jayson Tatum",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "UH-2",
+          "player": "Jalen Brunson",
+          "team": "New York Knicks",
+          "isRC": false
+        },
+        {
+          "number": "UH-3",
+          "player": "Tyrese Maxey",
+          "team": "Philadelphia 76ers",
+          "isRC": false
+        },
+        {
+          "number": "UH-4",
+          "player": "Tyrese Haliburton",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "UH-5",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks",
+          "isRC": false
+        },
+        {
+          "number": "UH-6",
+          "player": "Donovan Mitchell",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "UH-7",
+          "player": "Nikola Jokić",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "UH-8",
+          "player": "Paolo Banchero",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "UH-9",
+          "player": "Anthony Edwards",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "UH-10",
+          "player": "Shai Gilgeous-Alexander",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "UH-11",
+          "player": "Stephen Curry",
+          "team": "Golden State Warriors",
+          "isRC": false
+        },
+        {
+          "number": "UH-12",
+          "player": "LeBron James",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "UH-13",
+          "player": "Devin Booker",
+          "team": "Phoenix Suns",
+          "isRC": false
+        },
+        {
+          "number": "UH-14",
+          "player": "Kyrie Irving",
+          "team": "Dallas Mavericks",
+          "isRC": false
+        },
+        {
+          "number": "UH-15",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies",
+          "isRC": false
+        },
+        {
+          "number": "UH-16",
+          "player": "Victor Wembanyama",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "UH-17",
+          "player": "Amen Thompson",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "UH-18",
+          "player": "Kevin Durant",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "UH-19",
+          "player": "LaMelo Ball",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "UH-20",
+          "player": "Luka Dončić",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "UH-21",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "UH-22",
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "UH-23",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers",
+          "isRC": true
+        },
+        {
+          "number": "UH-24",
+          "player": "Kon Knueppel",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "UH-25",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "UH-26",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards",
+          "isRC": true
+        },
+        {
+          "number": "UH-27",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "UH-28",
+          "player": "Egor Dëmin",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "UH-29",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "UH-30",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "UH-31",
+          "player": "Cedric Coward",
+          "team": "Memphis Grizzlies",
+          "isRC": true
+        },
+        {
+          "number": "UH-32",
+          "player": "Noa Essengue",
+          "team": "Chicago Bulls",
+          "isRC": true
+        },
+        {
+          "number": "UH-33",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "UH-34",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "UH-35",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder",
+          "isRC": true
+        },
+        {
+          "number": "UH-36",
+          "player": "Yang Hansen",
+          "team": "Portland Trail Blazers",
+          "isRC": true
+        },
+        {
+          "number": "UH-37",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves",
+          "isRC": true
+        },
+        {
+          "number": "UH-38",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "UH-39",
+          "player": "Nolan Traore",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "UH-40",
+          "player": "Kasparas Jakučionis",
+          "team": "Miami Heat",
+          "isRC": true
+        }
+      ]
+    },
+    {
+      "id": "jacked-up",
+      "name": "Jacked Up",
+      "cardPrefix": "JU-",
+      "cardCount": 40,
+      "type": "insert",
+      "isAuto": false,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-blue",
+        "cj-green",
+        "cj-purple-mini-diamond",
+        "cj-gold",
+        "cj-orange",
+        "cj-black",
+        "cj-red",
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "JU-1",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "JU-2",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers",
+          "isRC": true
+        },
+        {
+          "number": "JU-3",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "JU-4",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "JU-5",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "JU-6",
+          "player": "Derik Queen",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "JU-7",
+          "player": "Carter Bryant",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "JU-8",
+          "player": "Thomas Sorber",
+          "team": "Oklahoma City Thunder",
+          "isRC": true
+        },
+        {
+          "number": "JU-9",
+          "player": "Yang Hansen",
+          "team": "Portland Trail Blazers",
+          "isRC": true
+        },
+        {
+          "number": "JU-10",
+          "player": "Joan Beringer",
+          "team": "Minnesota Timberwolves",
+          "isRC": true
+        },
+        {
+          "number": "JU-11",
+          "player": "Jayson Tatum",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "JU-12",
+          "player": "Jaylen Brown",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "JU-13",
+          "player": "Karl-Anthony Towns",
+          "team": "New York Knicks",
+          "isRC": false
+        },
+        {
+          "number": "JU-14",
+          "player": "Joel Embiid",
+          "team": "Philadelphia 76ers",
+          "isRC": false
+        },
+        {
+          "number": "JU-15",
+          "player": "Scottie Barnes",
+          "team": "Toronto Raptors",
+          "isRC": false
+        },
+        {
+          "number": "JU-16",
+          "player": "Cade Cunningham",
+          "team": "Detroit Pistons",
+          "isRC": false
+        },
+        {
+          "number": "JU-17",
+          "player": "Brandon Miller",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "JU-18",
+          "player": "Donovan Mitchell",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "JU-19",
+          "player": "Paolo Banchero",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "JU-20",
+          "player": "Anthony Edwards",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "JU-21",
+          "player": "Scoot Henderson",
+          "team": "Portland Trail Blazers",
+          "isRC": false
+        },
+        {
+          "number": "JU-22",
+          "player": "Jalen Williams",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "JU-23",
+          "player": "Kawhi Leonard",
+          "team": "Los Angeles Clippers",
+          "isRC": false
+        },
+        {
+          "number": "JU-24",
+          "player": "Kevin Durant",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "JU-25",
+          "player": "Zach LaVine",
+          "team": "Sacramento Kings",
+          "isRC": false
+        },
+        {
+          "number": "JU-26",
+          "player": "Anthony Davis",
+          "team": "Dallas Mavericks",
+          "isRC": false
+        },
+        {
+          "number": "JU-27",
+          "player": "Alex Sarr",
+          "team": "Washington Wizards",
+          "isRC": false
+        },
+        {
+          "number": "JU-28",
+          "player": "Jalen Johnson",
+          "team": "Atlanta Hawks",
+          "isRC": false
+        },
+        {
+          "number": "JU-29",
+          "player": "Pascal Siakam",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "JU-30",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks",
+          "isRC": false
+        },
+        {
+          "number": "JU-31",
+          "player": "Amen Thompson",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "JU-32",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies",
+          "isRC": false
+        },
+        {
+          "number": "JU-33",
+          "player": "Victor Wembanyama",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "JU-34",
+          "player": "Vince Carter",
+          "team": "Toronto Raptors",
+          "isRC": false
+        },
+        {
+          "number": "JU-35",
+          "player": "Tracy McGrady",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "JU-36",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat",
+          "isRC": false
+        },
+        {
+          "number": "JU-37",
+          "player": "Kevin Garnett",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "JU-38",
+          "player": "Clyde Drexler",
+          "team": "Portland Trail Blazers",
+          "isRC": false
+        },
+        {
+          "number": "JU-39",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "JU-40",
+          "player": "Dominique Wilkins",
+          "team": "Atlanta Hawks",
+          "isRC": false
+        }
+      ]
+    },
+    {
+      "id": "la-flame-legends",
+      "name": "La Flame Legends",
+      "cardPrefix": "LFL-",
+      "cardCount": 20,
+      "type": "insert",
+      "isAuto": false,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-blue",
+        "cj-green",
+        "cj-purple-mini-diamond",
+        "cj-gold",
+        "cj-orange",
+        "cj-black",
+        "cj-red",
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "LFL-1",
+          "player": "Ray Allen",
+          "team": "Miami Heat",
+          "isRC": false
+        },
+        {
+          "number": "LFL-2",
+          "player": "Robert Horry",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "LFL-3",
+          "player": "Larry Bird",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "LFL-4",
+          "player": "Magic Johnson",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "LFL-5",
+          "player": "Dirk Nowitzki",
+          "team": "Dallas Mavericks",
+          "isRC": false
+        },
+        {
+          "number": "LFL-6",
+          "player": "Vince Carter",
+          "team": "Toronto Raptors",
+          "isRC": false
+        },
+        {
+          "number": "LFL-7",
+          "player": "Tracy McGrady",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "LFL-8",
+          "player": "Dwyane Wade",
+          "team": "Miami Heat",
+          "isRC": false
+        },
+        {
+          "number": "LFL-9",
+          "player": "Kevin Garnett",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "LFL-10",
+          "player": "Allen Iverson",
+          "team": "Philadelphia 76ers",
+          "isRC": false
+        },
+        {
+          "number": "LFL-11",
+          "player": "Shaquille O'Neal",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "LFL-12",
+          "player": "Carmelo Anthony",
+          "team": "New York Knicks",
+          "isRC": false
+        },
+        {
+          "number": "LFL-13",
+          "player": "Paul Pierce",
+          "team": "Boston Celtics",
+          "isRC": false
+        },
+        {
+          "number": "LFL-14",
+          "player": "John Stockton",
+          "team": "Utah Jazz",
+          "isRC": false
+        },
+        {
+          "number": "LFL-15",
+          "player": "Isiah Thomas",
+          "team": "Detroit Pistons",
+          "isRC": false
+        },
+        {
+          "number": "LFL-16",
+          "player": "David Robinson",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "LFL-17",
+          "player": "Hakeem Olajuwon",
+          "team": "Houston Rockets",
+          "isRC": false
+        },
+        {
+          "number": "LFL-18",
+          "player": "James Worthy",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "LFL-19",
+          "player": "Clyde Drexler",
+          "team": "Portland Trail Blazers",
+          "isRC": false
+        },
+        {
+          "number": "LFL-20",
+          "player": "Gary Payton",
+          "team": "Seattle Supersonics",
+          "isRC": false
+        }
+      ]
+    },
+    {
+      "id": "astrovision",
+      "name": "Astrovision",
+      "cardPrefix": "AST-",
+      "cardCount": 20,
+      "type": "insert",
+      "isAuto": false,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "AST-1",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "AST-2",
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "AST-3",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers",
+          "isRC": true
+        },
+        {
+          "number": "AST-4",
+          "player": "Kon Knueppel",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "AST-5",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "AST-6",
+          "player": "Tre Johnson III",
+          "team": "Washington Wizards",
+          "isRC": true
+        },
+        {
+          "number": "AST-7",
+          "player": "Jeremiah Fears",
+          "team": "New Orleans Pelicans",
+          "isRC": true
+        },
+        {
+          "number": "AST-8",
+          "player": "Egor Dëmin",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "AST-9",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "AST-10",
+          "player": "Khaman Maluach",
+          "team": "Phoenix Suns",
+          "isRC": true
+        },
+        {
+          "number": "AST-11",
+          "player": "Tyrese Haliburton",
+          "team": "Indiana Pacers",
+          "isRC": false
+        },
+        {
+          "number": "AST-12",
+          "player": "Giannis Antetokounmpo",
+          "team": "Milwaukee Bucks",
+          "isRC": false
+        },
+        {
+          "number": "AST-13",
+          "player": "Victor Wembanyama",
+          "team": "San Antonio Spurs",
+          "isRC": false
+        },
+        {
+          "number": "AST-14",
+          "player": "LaMelo Ball",
+          "team": "Charlotte Hornets",
+          "isRC": false
+        },
+        {
+          "number": "AST-15",
+          "player": "Nikola Jokić",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "AST-16",
+          "player": "Paolo Banchero",
+          "team": "Orlando Magic",
+          "isRC": false
+        },
+        {
+          "number": "AST-17",
+          "player": "Anthony Edwards",
+          "team": "Minnesota Timberwolves",
+          "isRC": false
+        },
+        {
+          "number": "AST-18",
+          "player": "Shai Gilgeous-Alexander",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "AST-19",
+          "player": "Stephen Curry",
+          "team": "Golden State Warriors",
+          "isRC": false
+        },
+        {
+          "number": "AST-20",
+          "player": "Luka Dončić",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        }
+      ]
+    },
+    {
+      "id": "cactus-mode",
+      "name": "Cactus Mode",
+      "cardPrefix": "CM-",
+      "cardCount": 20,
+      "type": "insert",
+      "isAuto": false,
+      "isInsert": true,
+      "league": "NBA",
+      "exclusive": "Hobby",
+      "parallels": [
+        "cj-superfractor"
+      ],
+      "cards": [
+        {
+          "number": "CM-1",
+          "player": "Cooper Flagg",
+          "team": "Dallas Mavericks",
+          "isRC": true
+        },
+        {
+          "number": "CM-2",
+          "player": "Dylan Harper",
+          "team": "San Antonio Spurs",
+          "isRC": true
+        },
+        {
+          "number": "CM-3",
+          "player": "VJ Edgecombe",
+          "team": "Philadelphia 76ers",
+          "isRC": true
+        },
+        {
+          "number": "CM-4",
+          "player": "Kon Knueppel",
+          "team": "Charlotte Hornets",
+          "isRC": true
+        },
+        {
+          "number": "CM-5",
+          "player": "Ace Bailey",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "CM-6",
+          "player": "Walter Clayton Jr.",
+          "team": "Utah Jazz",
+          "isRC": true
+        },
+        {
+          "number": "CM-7",
+          "player": "Kasparas Jakučionis",
+          "team": "Miami Heat",
+          "isRC": true
+        },
+        {
+          "number": "CM-8",
+          "player": "Yang Hansen",
+          "team": "Portland Trail Blazers",
+          "isRC": true
+        },
+        {
+          "number": "CM-9",
+          "player": "Egor Dëmin",
+          "team": "Brooklyn Nets",
+          "isRC": true
+        },
+        {
+          "number": "CM-10",
+          "player": "Collin Murray-Boyles",
+          "team": "Toronto Raptors",
+          "isRC": true
+        },
+        {
+          "number": "CM-11",
+          "player": "Shai Gilgeous-Alexander",
+          "team": "Oklahoma City Thunder",
+          "isRC": false
+        },
+        {
+          "number": "CM-12",
+          "player": "Stephen Curry",
+          "team": "Golden State Warriors",
+          "isRC": false
+        },
+        {
+          "number": "CM-13",
+          "player": "Luka Dončić",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "CM-14",
+          "player": "Devin Booker",
+          "team": "Phoenix Suns",
+          "isRC": false
+        },
+        {
+          "number": "CM-15",
+          "player": "Kyrie Irving",
+          "team": "Dallas Mavericks",
+          "isRC": false
+        },
+        {
+          "number": "CM-16",
+          "player": "Ja Morant",
+          "team": "Memphis Grizzlies",
+          "isRC": false
+        },
+        {
+          "number": "CM-17",
+          "player": "Donovan Mitchell",
+          "team": "Cleveland Cavaliers",
+          "isRC": false
+        },
+        {
+          "number": "CM-18",
+          "player": "Nikola Jokić",
+          "team": "Denver Nuggets",
+          "isRC": false
+        },
+        {
+          "number": "CM-19",
+          "player": "LeBron James",
+          "team": "Los Angeles Lakers",
+          "isRC": false
+        },
+        {
+          "number": "CM-20",
+          "player": "Jalen Brunson",
+          "team": "New York Knicks",
+          "isRC": false
+        }
+      ]
+    }
+  ],
+  "_dataNotes": [
+    "Hobby-only configuration: 4 cards per pack, 20 packs per box, 12 boxes per case.",
+    "Base set = 100 cards: 60 veterans (#1-60) + 40 rookies (#61-100).",
+    "18 base parallels form the rainbow. Numbered parallels: Gold /50, Orange /25, Black /10, Red /5, Red Mini-Diamond /5, Superfractor 1/1.",
+    "Two autograph subsets (Base Autographs BV-, Cactus Ink CI-) share the 4-parallel autograph rainbow: Orange/Black/Red/Superfractor.",
+    "Three common inserts (Utopia Highlights UH-, Jacked Up JU-, La Flame Legends LFL-) share an 8-parallel rainbow. Two rare inserts (Astrovision AST-, Cactus Mode CM-) are Superfractor-only.",
+    "Jacked Up mixes veterans, rookies, and retired legends. La Flame Legends is legends-only."
+  ]
+}

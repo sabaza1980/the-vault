@@ -17,6 +17,9 @@ import { isNativeMobile } from "./lib/platform";
 import AdGateModal from "./AdGateModal";
 import BreakTracker from "./BreakTracker";
 import BreaksView from "./BreaksView";
+import BreakersHub from "./BreakersHub";
+import BulkListingModal from "./breaker/BulkListingModal";
+import { cardsToItems } from "./lib/listingExport.js";
 import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, getDocs, increment } from "firebase/firestore";
@@ -1791,11 +1794,13 @@ export default function App() {
   const [bundleMode, setBundleMode] = useState(false);
   const [bundleCardIds, setBundleCardIds] = useState(new Set());
   const [sellModalCards, setSellModalCards] = useState(null);
+  const [bundleExportCards, setBundleExportCards] = useState(null); // cards being exported to a listing CSV
   const [showValueBreakdown, setShowValueBreakdown] = useState(false);
   const [showProComingSoon, setShowProComingSoon] = useState(false);
   const [showReferral, setShowReferral] = useState(false);
   const [showBreakTracker, setShowBreakTracker] = useState(false);
   const [showBreaksView, setShowBreaksView] = useState(false);
+  const [showBreakers, setShowBreakers] = useState(false);
   const [collections, setCollections] = useState([]);
   const [showCollections, setShowCollections] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null); // collection being viewed
@@ -2712,6 +2717,21 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 </button>
               </>
             )}
+            {/* Breakers hub — seller tools, its own place (separate from the buyer Break Tracker / My Breaks) */}
+            <button
+              onClick={() => setShowBreakers(true)}
+              title="Breakers"
+              style={{
+                background: showBreakers ? "#ff6b3518" : "var(--gbg)",
+                border: `1px solid ${showBreakers ? "#ff6b3550" : "var(--gb)"}`,
+                borderRadius: 20, padding: "5px 12px",
+                color: showBreakers ? "#ff6b35" : "var(--gc)",
+                fontSize: 11, fontWeight: 700, cursor: "pointer",
+                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
+              }}
+            >
+              <span style={{ fontSize: 13 }}>🎬</span> Breakers
+            </button>
             {cards.length > 0 && !isMobileUI && (
               <button
                 onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
@@ -2935,6 +2955,14 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           user={user}
           onClose={() => setShowBreaksView(false)}
           onAddCard={handleAddCardFromBreak}
+        />
+      )}
+
+      {/* Breakers hub overlay (seller tools) */}
+      {showBreakers && (
+        <BreakersHub
+          user={user}
+          onClose={() => setShowBreakers(false)}
         />
       )}
 
@@ -3644,6 +3672,12 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
               borderRadius: 20, padding: "6px 16px", fontSize: 12, fontWeight: 700, cursor: "pointer"
             }}>List Bundle →</button>
           )}
+          {bundleCardIds.size >= 1 && (
+            <button onClick={() => setBundleExportCards(cards.filter(c => bundleCardIds.has(String(c.id))))} style={{
+              background: "#ff6b3518", border: "1px solid #ff6b3550", color: "#ff6b35",
+              borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer"
+            }}>📤 Export CSV</button>
+          )}
           <button onClick={cancelBundleMode} style={{
             background: "var(--gbg)", border: "1px solid var(--gb)", color: "var(--gc)",
             borderRadius: 20, padding: "6px 12px", fontSize: 11, cursor: "pointer"
@@ -3657,6 +3691,15 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           user={user}
           onClose={() => setSellModalCards(null)}
           onSuccess={handleSellSuccess}
+        />
+      )}
+
+      {/* Bulk-listing CSV export for a selected bundle (Breakers BK-4 singles path) */}
+      {bundleExportCards && (
+        <BulkListingModal
+          items={cardsToItems(bundleExportCards)}
+          sourceLabel="singles"
+          onClose={() => setBundleExportCards(null)}
         />
       )}
       {publicView && (

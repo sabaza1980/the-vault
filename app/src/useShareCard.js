@@ -87,6 +87,35 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
   return drawn * lineH;
 }
 
+// Footer bar shared by both share images: brand mark on the left, a
+// call-to-action in the empty space on the right. The CTA is intentionally
+// legible (the old 'myvaults.io' was #3a3a3a on near-black, i.e. invisible)
+// so anyone who sees a shared card knows where to get their own Vault.
+function drawFooter(ctx, W, H) {
+  const barH = 108;
+  const barY = H - barH;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.82)';
+  ctx.fillRect(0, barY, W, barH);
+  ctx.strokeStyle = 'rgba(255,107,53,0.18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, barY); ctx.lineTo(W, barY); ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.font = '400 52px "Bebas Neue", sans-serif';
+  ctx.fillStyle = '#ff6b35';
+  ctx.fillText('THE VAULT', 60, barY + 68);
+
+  ctx.textAlign = 'right';
+  ctx.font = '600 22px "Barlow Condensed", sans-serif';
+  ctx.fillStyle = 'rgba(240,240,240,0.62)';
+  ctx.fillText('START YOUR OWN VAULT \u2014 SHARE & ENJOY YOUR CARDS', W - 60, barY + 42);
+  ctx.font = '400 36px "Bebas Neue", sans-serif';
+  ctx.fillStyle = '#ff6b35';
+  ctx.fillText('www.myvaults.io', W - 60, barY + 88);
+  ctx.textAlign = 'left';
+}
+
 async function drawSingleCard(card, shareOptions = { includePrice: true }) {
   // Wait for fonts but cap at 3s so slow CDN never blocks canvas generation
   await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 3000))]);
@@ -205,21 +234,7 @@ async function drawSingleCard(card, shareOptions = { includePrice: true }) {
     ctx.fillText('EST. VALUE', RX, ry);
   }
 
-  // Bottom bar
-  const barH = 108;
-  ctx.fillStyle = 'rgba(0,0,0,0.82)';
-  ctx.fillRect(0, H - barH, W, barH);
-  ctx.strokeStyle = 'rgba(255,107,53,0.18)';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0, H - barH); ctx.lineTo(W, H - barH); ctx.stroke();
-  ctx.font = '400 52px "Bebas Neue", sans-serif';
-  ctx.fillStyle = '#ff6b35';
-  ctx.fillText('THE VAULT', 60, H - barH + 68);
-  ctx.font = '600 24px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = '#3a3a3a';
-  ctx.textAlign = 'right';
-  ctx.fillText('myvaults.io', W - 60, H - barH + 68);
-  ctx.textAlign = 'left';
+  drawFooter(ctx, W, H);
 
   return canvas;
 }
@@ -328,21 +343,7 @@ async function drawCollection(cards, filterLabel, user, shareOptions = { include
     ctx.textAlign = 'left';
   }
 
-  // Bottom bar
-  const barH = 108;
-  ctx.fillStyle = 'rgba(0,0,0,0.82)';
-  ctx.fillRect(0, H - barH, W, barH);
-  ctx.strokeStyle = 'rgba(255,107,53,0.18)';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0, H - barH); ctx.lineTo(W, H - barH); ctx.stroke();
-  ctx.font = '400 52px "Bebas Neue", sans-serif';
-  ctx.fillStyle = '#ff6b35';
-  ctx.fillText('THE VAULT', 60, H - barH + 68);
-  ctx.font = '600 24px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = '#3a3a3a';
-  ctx.textAlign = 'right';
-  ctx.fillText('myvaults.io', W - 60, H - barH + 68);
-  ctx.textAlign = 'left';
+  drawFooter(ctx, W, H);
 
   return canvas;
 }
