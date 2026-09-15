@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>The Vault — Card Collection Manager for Every Collector | Pokémon, MTG, Sports Cards & More</title>
-  <meta name="description" content="The Vault is the AI-powered card collection manager for every collector. Scan, identify, value and track Pokémon cards, MTG cards, sports cards (basketball, football, soccer, baseball, hockey) and more — free to start." />
+  <title>The Vault: Card Collection Manager for Pokémon, MTG, Sports Cards and More</title>
+  <meta name="description" content="The Vault is a card collection manager for people who love their cards. Scan any card and it files itself in seconds. Sports, Pokémon, MTG, stamps and coins. Build your sets, star your favourites and share them." />
 
   <!-- Canonical & Language -->
   <link rel="canonical" href="https://www.myvaults.io/" />
@@ -17,16 +17,16 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.myvaults.io/" />
-  <meta property="og:title" content="The Vault — Card Collection Manager for Every Collector" />
-  <meta property="og:description" content="AI-powered card collection management. Scan any card — Pokémon, MTG, sports, and more — get instant identification, live eBay pricing, and grading advice." />
+  <meta property="og:title" content="The Vault: Catalogue, Enjoy and Share Your Card Collection" />
+  <meta property="og:description" content="Scan a card and it is in your vault in seconds. Sports, Pokémon, MTG, stamps and coins. Build your sets, star your favourites, and share them with people who get it." />
   <meta property="og:image" content="https://www.myvaults.io/og-image.jpg" />
   <meta property="og:site_name" content="The Vault" />
   <meta property="og:locale" content="en_US" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="The Vault — Card Collection Manager for Every Collector" />
-  <meta name="twitter:description" content="AI-powered card collection management. Scan any card — Pokémon, MTG, sports, and more — free to start." />
+  <meta name="twitter:title" content="The Vault: Catalogue, Enjoy and Share Your Card Collection" />
+  <meta name="twitter:description" content="Scan a card and it is in your vault in seconds. Build your sets, star your favourites, and share them. Free to start." />
   <meta name="twitter:image" content="https://www.myvaults.io/og-image.jpg" />
 
   <!-- JSON-LD Structured Data -->
@@ -46,10 +46,11 @@
     },
     "featureList": [
       "AI card identification",
-      "Live eBay pricing",
-      "PSA grading advisor",
-      "Collection portfolio tracker",
-      "Price spike alerts",
+      "Automatic collection categories",
+      "Share cards and collections as images",
+      "Favourites and set tracking",
+      "Ask the AI about a card",
+      "eBay sold comps",
       "Bulk card upload"
     ],
     "screenshot": "https://www.myvaults.io/og-image.jpg",
@@ -247,10 +248,59 @@
       letter-spacing: 2px; font-weight: 600; margin-top: 2px;
     }
 
-    /* ─── APP EMBED SECTION ─── */
-    #app-section {
-      position: relative; padding: 100px 24px;
-      background: linear-gradient(180deg, var(--dark2) 0%, var(--dark) 100%);
+    /* ─── HERO STORE BUTTONS ─── */
+    .btn-store { gap: 10px; }
+    .btn-store svg { flex: 0 0 auto; }
+
+    /* ─── SCREENS MARQUEE ─── */
+    #screens { padding: 80px 0 90px; background: var(--dark2); overflow: hidden; }
+    .screens-head { max-width: 1100px; margin: 0 auto 40px; padding: 0 24px; text-align: center; }
+    .screens-viewport {
+      /* fade the strip out at both edges so it reads as continuous motion */
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+      mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+      overflow: hidden;
+    }
+    .screens-track {
+      display: flex; gap: 28px; width: max-content;
+      animation: screensScroll 46s linear infinite;
+    }
+    .screens-viewport:hover .screens-track { animation-play-state: paused; }
+    /* Track holds the shots twice; -50% lands exactly on the duplicate, so the
+       loop is seamless. Any change to the shot count must keep both copies. */
+    @keyframes screensScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .screens-track { animation: none; }
+      .screens-viewport { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+    .screen-item { width: 240px; flex: 0 0 auto; }
+    .screen-shot {
+      width: 240px; aspect-ratio: 14 / 27;
+      border-radius: 22px; overflow: hidden;
+      background: #0d0d1a;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+      display: block;
+    }
+    .screen-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .screen-shot--empty {
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      color: #3a3a4a; font-family: 'Barlow Condensed', sans-serif;
+      font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; padding: 20px;
+      border-style: dashed; border-color: rgba(255,107,53,0.25);
+    }
+    .screen-caption {
+      margin-top: 16px; font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--orange);
+    }
+    .screen-sub { margin-top: 4px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+    @media (max-width: 640px) {
+      .screen-item, .screen-shot { width: 190px; }
+      .screens-track { gap: 20px; }
     }
 
     .section-label {
@@ -269,50 +319,6 @@
 
     .section-sub {
       font-size: 16px; color: #666; max-width: 500px; line-height: 1.7;
-    }
-
-    .app-embed-wrapper {
-      max-width: 1100px; margin: 60px auto 0;
-      display: grid; grid-template-columns: 1fr 1.6fr; gap: 48px;
-      align-items: start;
-    }
-
-    .app-embed-text { padding-top: 16px; }
-
-    .app-embed-frame {
-      position: relative; border-radius: 20px; overflow: hidden;
-      border: 1px solid rgba(255,107,53,0.2);
-      box-shadow: 0 0 80px rgba(255,107,53,0.1), 0 0 0 1px rgba(255,255,255,0.04);
-      background: var(--dark3);
-    }
-
-    .app-embed-bar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 12px 16px; background: #0a0a14;
-      border-bottom: 1px solid #ffffff08;
-    }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-r { background: #ff5f57; }
-    .dot-y { background: #ffbd2e; }
-    .dot-g { background: #28c941; }
-    .url-bar {
-      flex: 1; background: #111; border-radius: 6px;
-      padding: 4px 12px; font-size: 11px; color: #444;
-      font-family: monospace;
-    }
-
-    .app-embed-frame iframe {
-      width: 100%; height: 620px; border: none; display: block;
-    }
-
-    .embed-feature-list {
-      list-style: none; margin-top: 32px; display: flex;
-      flex-direction: column; gap: 16px;
-    }
-
-    .embed-feature-list li {
-      display: flex; align-items: flex-start; gap: 12px;
-      font-size: 14px; color: #888; line-height: 1.5;
     }
 
     .feature-icon {
@@ -516,7 +522,6 @@
     @media (max-width: 900px) {
       nav { padding: 16px 24px; }
       .nav-links { display: none; }
-      .app-embed-wrapper { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr 1fr; }
       .download-inner { grid-template-columns: 1fr; gap: 48px; }
       footer { padding: 32px 24px; }
@@ -535,7 +540,7 @@
   <nav>
     <a href="#" class="nav-logo">� The Vault</a>
     <ul class="nav-links">
-      <li><a href="#app-section">Try It</a></li>
+      <li><a href="#screens">Inside The App</a></li>
       <li><a href="#collections">Collections</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="/blog">Blog</a></li>
@@ -548,18 +553,32 @@
     <div class="hero-bg"></div>
     <div class="hero-stripe"></div>
     <div class="hero-content">
-      <div class="hero-eyebrow">� AI-Powered Card Intelligence</div>
+      <div class="hero-eyebrow">For people who actually love their cards</div>
       <h1 class="hero-title">
         <span>YOUR</span>
         <span>COLLECTION.</span>
-        <span class="accent">UNLEASHED.</span>
+        <span class="accent">OUT LOUD.</span>
       </h1>
       <p class="hero-sub">
-        Scan any card — Pokémon, MTG, sports cards, and more. AI identifies the exact set, parallel, condition and player in seconds. Live eBay pricing. PSA grading advice. All in one vault.
+        Scan a card and it is in your vault in seconds. Sports, Pokémon, MTG, stamps and coins. Build your sets, star the ones you actually care about, and show them to people who get it.
       </p>
       <div class="hero-actions">
-        <a href="#app-section" class="btn-primary">▶ &nbsp;Try The App</a>
-        <a href="#waitlist" class="btn-secondary">Join the Waitlist</a>
+        <a href="https://app.myvaults.io" class="btn-primary">Use the web app</a>
+        <a href="https://play.google.com/store/apps/details?id=com.thevault.app" target="_blank" rel="noopener" class="btn-secondary btn-store">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path fill="#00BCD4" d="M3 20.5V3.5C3 2.91 3.34 2.39 3.84 2.15L13.69 12L3.84 21.85C3.34 21.6 3 21.09 3 20.5Z"/>
+            <path fill="#F44336" d="M16.81 15.12L6.05 21.34L14.54 12.85L16.81 15.12Z"/>
+            <path fill="#FFD740" d="M20.16 10.81C20.5 11.08 20.75 11.5 20.75 12C20.75 12.5 20.53 12.9 20.18 13.18L17.89 14.5L15.39 12L17.89 9.5L20.16 10.81Z"/>
+            <path fill="#4CAF50" d="M6.05 2.66L16.81 8.88L14.54 11.15L6.05 2.66Z"/>
+          </svg>
+          Get it on Android
+        </a>
+        <a href="#waitlist" class="btn-secondary btn-store">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+          iOS waitlist
+        </a>
       </div>
       <div class="hero-stats">
         <div class="hero-stat">
@@ -571,8 +590,8 @@
           <div class="hero-stat-label">Powered ID</div>
         </div>
         <div class="hero-stat">
-          <div class="hero-stat-num">eBay</div>
-          <div class="hero-stat-label">Live Pricing</div>
+          <div class="hero-stat-num">1 tap</div>
+          <div class="hero-stat-label">To Share A Card</div>
         </div>
         <div class="hero-stat">
           <div class="hero-stat-num">FREE</div>
@@ -582,66 +601,114 @@
     </div>
   </section>
 
-  <!-- APP EMBED -->
-  <section id="app-section">
-    <div class="app-embed-wrapper">
-      <div class="app-embed-text">
-        <div class="section-label">Live Demo</div>
-        <h2 class="section-title">Try it<br/><span style="color:var(--orange)">right now.</span></h2>
-        <p class="section-sub">No sign-up needed. Drop a card photo and watch the AI go to work.</p>
-        <ul class="embed-feature-list">
-          <li>
-            <div class="feature-icon">🔍</div>
-            <div>
-              <div class="feature-icon-label">AI Card Identification</div>
-              <div>Reads set, year, brand, parallel and card number directly from the image</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-icon">💰</div>
-            <div>
-              <div class="feature-icon-label">Live eBay Pricing</div>
-              <div>See what your card is actually selling for right now — not guesses</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-icon">🏆</div>
-            <div>
-              <div class="feature-icon-label">PSA Grading Advice</div>
-              <div>AI tells you whether grading is worth it based on condition and value</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-icon">�️</div>
-            <div>
-              <div class="feature-icon-label">Auto Categories</div>
-              <div>Pokémon, MTG, basketball, football, soccer — each card sorted automatically the moment it’s scanned</div>
-            </div>
-          </li>
-          <li>
-            <div class="feature-icon">�📦</div>
-            <div>
-              <div class="feature-icon-label">Bulk Upload</div>
-              <div>Drop your whole collection at once — each card identified automatically</div>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <div class="app-embed-frame">
-        <div class="app-embed-bar">
-          <div class="dot dot-r"></div>
-          <div class="dot dot-y"></div>
-          <div class="dot dot-g"></div>
-          <div class="url-bar">app.thevault.com</div>
+  <!-- SCREENS -->
+  <section id="screens">
+    <div class="screens-head">
+      <div class="section-label">Inside the app</div>
+      <h2 class="section-title">See it<br/><span style="color:var(--orange)">in your hand.</span></h2>
+      <p class="section-sub" style="margin-top:16px">Scan a card and it is identified, filed and ready to show before you put it back in the sleeve.</p>
+    </div>
+    <div class="screens-viewport">
+      <!-- The strip holds every shot TWICE. The keyframe ends at -50%, which is
+           exactly the duplicate, so the loop is seamless. Add a shot to both
+           copies or the seam will jump. -->
+      <div class="screens-track">
+        <div class="screen-item">
+          <div class="screen-shot">
+            <img src="screens/01-home.jpg" alt="Your collection, one screen" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Your collection, one screen';">
+          </div>
+          <div class="screen-caption">Your collection, one screen</div>
+          <div class="screen-sub">Your favourites, the sets you are chasing, and the cards you keep coming back to.</div>
         </div>
-        <!-- Replace src with your actual Vercel deployment URL -->
-        <iframe
-          src="https://app-five-xi-40.vercel.app"
-          title="The Vault App"
-          allow="camera"
-          loading="lazy"
-        ></iframe>
+        <div class="screen-item">
+          <div class="screen-shot">
+            <img src="screens/02-scan.jpg" alt="Scan any card" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Scan any card';">
+          </div>
+          <div class="screen-caption">Scan any card</div>
+          <div class="screen-sub">Point the camera or drop a photo in. No typing, no hunting through set lists.</div>
+        </div>
+        <div class="screen-item">
+          <div class="screen-shot">
+            <img src="screens/03-ai-id.jpg" alt="The AI names the exact card" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='The AI names the exact card';">
+          </div>
+          <div class="screen-caption">The AI names the exact card</div>
+          <div class="screen-sub">Set, year, parallel, rookie flag and condition, read straight off the image.</div>
+        </div>
+        <div class="screen-item">
+          <div class="screen-shot">
+            <img src="screens/04-collection.jpg" alt="Everything files itself" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Everything files itself';">
+          </div>
+          <div class="screen-caption">Everything files itself</div>
+          <div class="screen-sub">Basketball, football, Pokémon, MTG, stamps and coins, sorted the moment they are scanned.</div>
+        </div>
+        <div class="screen-item">
+          <div class="screen-shot">
+            <img src="screens/05-ask-ai.jpg" alt="Ask PJ or Toppsy" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Ask PJ or Toppsy';">
+          </div>
+          <div class="screen-caption">Ask PJ or Toppsy</div>
+          <div class="screen-sub">Two co-pilots who know the sets and the parallels. Ask in plain English, get a straight answer.</div>
+        </div>
+        <div class="screen-item">
+          <div class="screen-shot">
+            <img src="screens/06-value.jpg" alt="The numbers, when you want them" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='The numbers, when you want them';">
+          </div>
+          <div class="screen-caption">The numbers, when you want them</div>
+          <div class="screen-sub">Sold comps and a collection total, there when you are trading and out of the way when you are not.</div>
+        </div>
+        <div class="screen-item" aria-hidden="true">
+          <div class="screen-shot">
+            <img src="screens/01-home.jpg" alt="Your collection, one screen" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Your collection, one screen';">
+          </div>
+          <div class="screen-caption">Your collection, one screen</div>
+          <div class="screen-sub">Your favourites, the sets you are chasing, and the cards you keep coming back to.</div>
+        </div>
+        <div class="screen-item" aria-hidden="true">
+          <div class="screen-shot">
+            <img src="screens/02-scan.jpg" alt="Scan any card" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Scan any card';">
+          </div>
+          <div class="screen-caption">Scan any card</div>
+          <div class="screen-sub">Point the camera or drop a photo in. No typing, no hunting through set lists.</div>
+        </div>
+        <div class="screen-item" aria-hidden="true">
+          <div class="screen-shot">
+            <img src="screens/03-ai-id.jpg" alt="The AI names the exact card" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='The AI names the exact card';">
+          </div>
+          <div class="screen-caption">The AI names the exact card</div>
+          <div class="screen-sub">Set, year, parallel, rookie flag and condition, read straight off the image.</div>
+        </div>
+        <div class="screen-item" aria-hidden="true">
+          <div class="screen-shot">
+            <img src="screens/04-collection.jpg" alt="Everything files itself" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Everything files itself';">
+          </div>
+          <div class="screen-caption">Everything files itself</div>
+          <div class="screen-sub">Basketball, football, Pokémon, MTG, stamps and coins, sorted the moment they are scanned.</div>
+        </div>
+        <div class="screen-item" aria-hidden="true">
+          <div class="screen-shot">
+            <img src="screens/05-ask-ai.jpg" alt="Ask PJ or Toppsy" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Ask PJ or Toppsy';">
+          </div>
+          <div class="screen-caption">Ask PJ or Toppsy</div>
+          <div class="screen-sub">Two co-pilots who know the sets and the parallels. Ask in plain English, get a straight answer.</div>
+        </div>
+        <div class="screen-item" aria-hidden="true">
+          <div class="screen-shot">
+            <img src="screens/06-value.jpg" alt="The numbers, when you want them" loading="lazy" width="560" height="1080"
+                 onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='The numbers, when you want them';">
+          </div>
+          <div class="screen-caption">The numbers, when you want them</div>
+          <div class="screen-sub">Sold comps and a collection total, there when you are trading and out of the way when you are not.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -653,7 +720,7 @@
       <div class="section-label">Every Collection. One Vault.</div>
       <h2 class="section-title" style="margin-bottom:12px;">What do you collect?</h2>
       <p style="font-size:16px;color:#555;max-width:540px;margin:0 auto 56px;line-height:1.7;">
-        The Vault automatically recognises and categorises every card type the moment you scan it.
+        Whatever you collect, it goes in the same vault and files itself the moment you scan it.
       </p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:900px;margin:0 auto;">
         <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
@@ -723,7 +790,7 @@
         <div class="section-label">Why The Vault</div>
         <h2 class="section-title">Built for<br/>every collector.</h2>
       </div>
-      <p class="section-sub" style="max-width:340px">Pokémon, MTG, sports cards — basketball, football, soccer, baseball. One vault for every collection. Free to start, powerful when you go Pro.</p>
+      <p class="section-sub" style="max-width:340px">Pokémon, MTG, basketball, football, soccer, baseball, stamps and coins. One vault for all of it, free to start.</p>
     </div>
 
     <div class="features-grid">
@@ -731,37 +798,37 @@
         <div class="feature-number">01</div>
         <span class="feature-emoji">🤖</span>
         <div class="feature-title">AI Card Scanner</div>
-        <p class="feature-desc">Point your camera at any card — Pokémon, MTG, basketball, football, soccer, baseball, or any trading card. AI reads the exact set, parallel, serial number and condition instantly. No manual entry.</p>
+        <p class="feature-desc">Point your camera at any card. The AI reads the exact set, parallel, serial number and condition straight off the image, so cataloguing a stack takes minutes instead of an evening.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">02</div>
         <span class="feature-emoji">🗂️</span>
         <div class="feature-title">Auto Categories</div>
-        <p class="feature-desc">Cards are automatically sorted into their collection categories — Pokémon, MTG, basketball, football, soccer and more — the moment you scan them.</p>
+        <p class="feature-desc">Cards sort themselves into Pokémon, MTG, basketball, football, soccer and the rest the moment you scan them. Your binder, organised, without the admin.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">03</div>
-        <span class="feature-emoji">💰</span>
-        <div class="feature-title">Live eBay Pricing</div>
-        <p class="feature-desc">Real sold comps pulled directly from eBay. See what your specific card — right parallel, right year — actually sold for this week.</p>
+        <span class="feature-emoji">📤</span>
+        <div class="feature-title">Share Your Vault</div>
+        <p class="feature-desc">Turn any card, or your whole collection, into a clean image made for group chats and stories. The cards you are proud of, shown the way you want them seen.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">04</div>
-        <span class="feature-emoji">🏆</span>
-        <div class="feature-title">PSA Grading Advisor</div>
-        <p class="feature-desc">AI evaluates condition, rarity and market value to tell you whether PSA grading is financially worth it for each card.</p>
+        <span class="feature-emoji">⭐</span>
+        <div class="feature-title">Favourites &amp; Sets</div>
+        <p class="feature-desc">Star the cards that mean something. Track the set you have been chasing since you were twelve, and see how close you are to finishing it.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">05</div>
-        <span class="feature-emoji">🔔</span>
-        <div class="feature-title">Price Spike Alerts</div>
-        <p class="feature-desc">Get notified the moment a card in your vault spikes in value. Never miss the window to sell at peak price. <span class="coming-soon-pill">Pro</span></p>
+        <span class="feature-emoji">💬</span>
+        <div class="feature-title">Ask The AI</div>
+        <p class="feature-desc">What parallel is this? Is it worth grading? What else did this player have printed that year? Ask in plain English and get a straight answer.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">06</div>
-        <span class="feature-emoji">📊</span>
-        <div class="feature-title">Portfolio Tracker</div>
-        <p class="feature-desc">See your entire collection's value at a glance — across every game and sport. Track performance over time, know exactly what you own. <span class="coming-soon-pill">Pro</span></p>
+        <span class="feature-emoji">💰</span>
+        <div class="feature-title">Pricing When You Want It</div>
+        <p class="feature-desc">Real sold comps from eBay for the exact parallel and year. There when you are trading or insuring, out of the way when you just want to look at your cards. <span class="coming-soon-pill">Pro</span></p>
       </div>
     </div>
   </section>
@@ -772,7 +839,7 @@
       <div>
         <div class="section-label">Get The App</div>
         <h2 class="section-title">Take your<br/><span style="color:var(--orange)">vault</span><br/>everywhere.</h2>
-        <p class="section-sub" style="margin-top:16px">Scan cards at shows, shops, and trades — Pokémon, MTG, sports cards and more. Your full collection always in your pocket. Now available on Android, coming soon on iOS.</p>
+        <p class="section-sub" style="margin-top:16px">Scan at shows, shops and trades. Your whole collection stays in your pocket, ready to pull up the second someone asks what you collect. On Android now, iOS coming soon.</p>
       </div>
       <div>
         <p style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; font-weight:600;">Available on</p>
@@ -871,7 +938,7 @@
     <div class="waitlist-inner">
       <div class="section-label" style="text-align:center">Early Access</div>
       <h2 class="section-title" style="text-align:center">Be first<br/><span style="color:var(--orange)">in the vault.</span></h2>
-      <p class="section-sub" style="margin: 16px auto 24px; text-align:center">Join the waitlist for early access, launch pricing, and collector-exclusive features — for Pokémon, MTG, sports cards, and every collection you love.</p>
+      <p class="section-sub" style="margin: 16px auto 24px; text-align:center">The iOS app is in the works. Leave your email and you will hear from us the day it lands.</p>
 
       <style>@import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');</style><div class="newsletter-form-container"><form class="newsletter-form" action="https://app.loops.so/api/newsletter-form/cmmo488pk0kfu0i34lpt1alon" method="POST" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;"><input class="newsletter-form-input" placeholder="you@example.com" required="" type="email" name="newsletter-form-input" style="font-family: Inter, sans-serif; color: rgb(0, 0, 0); font-size: 14px; margin: 0px 0px 10px; width: 100%; max-width: 300px; min-width: 100px; background: rgb(255, 255, 255); border: 1px solid rgb(209, 213, 219); box-sizing: border-box; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; padding: 8px 12px;"><button type="submit" class="newsletter-form-button" style="background: rgb(13, 148, 136); font-size: 14px; color: rgb(255, 255, 255); font-family: Inter, sans-serif; display: flex; width: 100%; max-width: 300px; white-space: normal; height: 38px; align-items: center; justify-content: center; flex-direction: row; padding: 9px 17px; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; text-align: center; font-style: normal; font-weight: 500; line-height: 20px; border: none; cursor: pointer;">Join Waitlist</button><button type="button" class="newsletter-loading-button" style="background: rgb(13, 148, 136); font-size: 14px; color: rgb(255, 255, 255); font-family: Inter, sans-serif; display: none; width: 100%; max-width: 300px; white-space: normal; height: 38px; align-items: center; justify-content: center; flex-direction: row; padding: 9px 17px; box-shadow: rgba(0, 0, 0, 0.05) 0px 1px 2px; border-radius: 6px; text-align: center; font-style: normal; font-weight: 500; line-height: 20px; border: none; cursor: pointer;">Please wait...</button></form><div class="newsletter-success" style="display: none; align-items: center; justify-content: center; width: 100%;"><p class="newsletter-success-message" style="font-family: Inter, sans-serif; color: rgb(0, 0, 0); font-size: 14px;">Thanks! We'll be in touch!</p></div><div class="newsletter-error" style="display: none; align-items: center; justify-content: center; width: 100%;"><p class="newsletter-error-message" style="font-family: Inter, sans-serif; color: rgb(185, 28, 28); font-size: 14px;">Oops! Something went wrong, please try again</p></div>
 <button class='newsletter-back-button' type='button' style='color:#6b7280;font: 14px, Inter, sans-serif;margin:10px auto;text-align:center;display:none;background:transparent;border:none;cursor:pointer' onmouseout='this.style.textDecoration="none"' onmouseover='this.style.textDecoration="underline"'>&larr; Back</button>

@@ -1,2 +1,5 @@
 .vercel/
 WhatNot Purchases 2026 - cleaned.xlsx
+*.bak
+*.bak.*
+Claude outputs/

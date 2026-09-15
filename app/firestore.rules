@@ -88,9 +88,37 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // ── Public collection reads (for shared collection links) ──
-    match /{path=**}/collections/{collectionId} {
+    // Shared-collection links are served by the service-account API
+    // (api/public-card.js), which can check what the owner actually shared.
+    // The recursive `allow read: if true` that used to sit here exposed every
+    // user's collections to anyone holding the Firebase web config, and that
+    // config ships inside the browser bundle.
+
+    // ── Handles: the uniqueness lock behind public profiles ──
+    // World-readable so a profile URL resolves; only the API ever writes them.
+    match /handles/{handle} {
       allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Reactions ──
+    // Counts are public. Every write goes through api/react.js with a verified
+    // ID token, because rules cannot express "increment by exactly one, and
+    // only alongside a matching per-user document".
+    match /reactions/{targetKey} {
+      allow read: if true;
+      allow write: if false;
+      match /by/{uid} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+    }
+
+    // ── Abuse reports ──
+    // A signed-in user can file one; only admins read or act on them.
+    match /reports/{reportId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if isAdmin();
     }
 
   }

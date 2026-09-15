@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { SELL_ENABLED } from "./featureFlags";
 
 // Reusable card detail overlay (WP-0 / S1).
 //
@@ -50,7 +51,7 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
     || "Unknown Set";
   const parallelLabel = card.parallel && card.parallel !== "Base" ? card.parallel : null;
   const ev = Number(card.estimatedValue) || 0;
-  const canSell = typeof onSell === "function";
+  const canSell = SELL_ENABLED && typeof onSell === "function";
 
   return (
     <div
@@ -167,7 +168,7 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
           {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
           {card.cardNumber && <Badge label={`#${String(card.cardNumber).replace(/^#+/, "")}`} color="#888" />}
           {card.isPC && <Badge label="PC" color="#2196f3" />}
-          {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
+          {SELL_ENABLED && card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
         </div>
 
         {/* Price box (WP-5b): value + source / condition / recency + refresh */}

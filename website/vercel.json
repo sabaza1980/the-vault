@@ -4,6 +4,7 @@
     { "src": "/robots\\.txt",  "dest": "/robots.txt",  "headers": { "Content-Type": "text/plain; charset=utf-8" } },
     { "src": "/app-ads\\.txt", "dest": "/app-ads.txt", "headers": { "Content-Type": "text/plain; charset=utf-8" } },
     { "handle": "filesystem" },
+    { "src": "/u/([a-z0-9_]{3,20})/?", "dest": "https://app.myvaults.io/api/profile-page?handle=$1" },
     { "src": "/privacy-policy", "dest": "/privacy-policy.html" },
     { "src": "/terms", "dest": "/terms.html" },
     { "src": "/delete-account", "dest": "/delete-account.html" },

@@ -69,21 +69,21 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function wrapText(ctx, text, x, y, maxW, lineH) {
+function wrapText(ctx, text, x, y, maxW, lineH, draw = true) {
   const words = text.split(' ');
   let line = '';
   let drawn = 0;
   for (const w of words) {
     const test = line + (line ? ' ' : '') + w;
     if (ctx.measureText(test).width > maxW && line) {
-      ctx.fillText(line, x, y + drawn * lineH);
+      if (draw) ctx.fillText(line, x, y + drawn * lineH);
       drawn++;
       line = w;
     } else {
       line = test;
     }
   }
-  if (line) { ctx.fillText(line, x, y + drawn * lineH); drawn++; }
+  if (line) { if (draw) ctx.fillText(line, x, y + drawn * lineH); drawn++; }
   return drawn * lineH;
 }
 
@@ -102,10 +102,11 @@ function formatMoney(amount, currency) {
   }
 }
 
-// "FOR SALE" tag, drawn into the negative space beneath the card image.
-// Anchored to the left column so it can never collide with the stats stack
-// on the right, and sized to clear the footer bar.
-function drawForSaleTag(ctx, x, y, price, currency) {
+// "FOR SALE" tag. Sits at the foot of the right-hand info column (it used to
+// live in the empty band under the card image, which no longer exists now the
+// card fills the left side). Returns the height it consumed so the column
+// layout can measure itself, and skips painting when draw is false.
+function drawForSaleTag(ctx, x, y, price, currency, draw = true) {
   const label = 'FOR SALE';
   const padX = 24, tagH = 60;
 
@@ -113,21 +114,26 @@ function drawForSaleTag(ctx, x, y, price, currency) {
   ctx.font = '400 40px "Bebas Neue", sans-serif';
   const tagW = ctx.measureText(label).width + padX * 2;
 
-  ctx.fillStyle = '#ff6b35';
-  rrect(ctx, x, y, tagW, tagH, 12);
-  ctx.fill();
-  ctx.fillStyle = '#07070f';
-  ctx.fillText(label, x + padX, y + 44);
+  if (draw) {
+    ctx.fillStyle = '#ff6b35';
+    rrect(ctx, x, y, tagW, tagH, 12);
+    ctx.fill();
+    ctx.fillStyle = '#07070f';
+    ctx.fillText(label, x + padX, y + 44);
+  }
 
   const hasPrice = typeof price === 'number' && isFinite(price) && price > 0;
-  if (hasPrice) {
-    ctx.font = '400 66px "Bebas Neue", sans-serif';
+  if (!hasPrice) return tagH;
+
+  ctx.font = '400 66px "Bebas Neue", sans-serif';
+  if (draw) {
     ctx.fillStyle = '#f0f0f0';
     ctx.fillText(formatMoney(price, currency), x, y + tagH + 74);
     ctx.font = '700 20px "Barlow Condensed", sans-serif';
     ctx.fillStyle = 'rgba(240,240,240,0.45)';
     ctx.fillText('ASKING PRICE', x, y + tagH + 104);
   }
+  return tagH + 114;
 }
 
 // Footer bar shared by both share images: brand mark on the left, a
@@ -192,8 +198,11 @@ async function drawSingleCard(card, shareOptions = { includePrice: true }) {
   ctx.fillRect(-200, 0, 360, 1700);
   ctx.restore();
 
-  // Card image — left side
-  const IX = 72, IY = 140, IW = 430, IH = 600;
+  // Card image - left column. The card is the reason anyone looks at a share
+  // image, so it is the hero: was 430x600 (~22% of the canvas), now 620x868
+  // (~46%). A 2.5:3.5 portrait cannot reach half a square canvas without
+  // crossing the centre line, so it overhangs by ~120px by design.
+  const IX = 44, IY = 64, IW = 620, IH = 868;
   const cardImg = await loadImg(card.imageUrl);
   if (cardImg) {
     ctx.save();
@@ -211,35 +220,6 @@ async function drawSingleCard(card, shareOptions = { includePrice: true }) {
     ctx.fill();
   }
 
-  // Right side
-  const RX = 576, MAX_W = 452;
-  let ry = 168;
-
-  ctx.font = '700 26px "Barlow Condensed", sans-serif';
-  ctx.fillStyle = '#ff6b35';
-  const setH = wrapText(ctx, fullCardName.toUpperCase(), RX, ry, MAX_W, 34);
-  ry += setH + 18;
-
-  const playerText = String(card.playerName || 'UNKNOWN').toUpperCase();
-  let pSize = 108;
-  ctx.font = `400 ${pSize}px "Bebas Neue", sans-serif`;
-  while (ctx.measureText(playerText).width > MAX_W + 10 && pSize > 56) {
-    pSize -= 4;
-    ctx.font = `400 ${pSize}px "Bebas Neue", sans-serif`;
-  }
-  ctx.fillStyle = '#f0f0f0';
-  ctx.fillText(playerText, RX, ry + pSize * 0.85, MAX_W + 10);
-  ry += pSize + 14;
-
-  if (card.team && card.team !== 'Unknown') {
-    ctx.font = '400 30px "Barlow Condensed", sans-serif';
-    ctx.fillStyle = '#555555';
-    ctx.fillText(card.team, RX, ry);
-    ry += 48;
-  }
-
-  ry += 18;
-
   const badges = [];
   if (card.condition) badges.push({ label: String(card.condition), color: '#888', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.1)' });
   // isRookie/hasAutograph can be stored as string 'true'/'false' from the AI JSON
@@ -248,39 +228,86 @@ async function drawSingleCard(card, shareOptions = { includePrice: true }) {
   if (card.serialNumber) badges.push({ label: String(card.serialNumber), color: '#ce93d8', bg: 'rgba(206,147,216,0.15)', border: 'rgba(206,147,216,0.35)' });
   if (card.rarity && card.rarity !== 'Common') badges.push({ label: String(card.rarity).toUpperCase(), color: rColor, bg: rColor + '18', border: rColor + '40' });
 
-  ctx.font = '700 22px "Barlow Condensed", sans-serif';
-  let bx = RX;
-  for (const badge of badges) {
-    const tw = ctx.measureText(badge.label).width;
-    const bw = tw + 28, bh = 38, br = 8;
-    ctx.fillStyle = badge.bg;
-    rrect(ctx, bx, ry, bw, bh, br); ctx.fill();
-    ctx.strokeStyle = badge.border;
-    ctx.lineWidth = 1.5;
-    rrect(ctx, bx, ry, bw, bh, br); ctx.stroke();
-    ctx.fillStyle = badge.color;
-    ctx.fillText(badge.label, bx + 14, ry + 27);
-    bx += bw + 10;
-    if (bx > RX + MAX_W - 60) { bx = RX; ry += 52; }
-  }
-  if (badges.length > 0) ry += 56;
+  // Right column. Canvas has no layout pass, so the stack is run twice: once
+  // with draw = false purely to measure its height, then again at an offset
+  // that centres it against the card. Without this it floats at the top of a
+  // now much taller card.
+  const RX = 700, MAX_W = 336;
 
-  if (shareOptions.includePrice && card.estimatedValue > 0) {
-    const ev = Number(card.estimatedValue);
-    ry += 10;
-    ctx.font = '400 84px "Bebas Neue", sans-serif';
-    ctx.fillStyle = '#4caf50';
-    ctx.fillText(`$${ev.toFixed(2)}`, RX, ry + 72);
-    ry += 84;
-    ctx.font = '600 22px "Barlow Condensed", sans-serif';
-    ctx.fillStyle = '#2d5c2d';
-    ctx.fillText('EST. VALUE', RX, ry);
-  }
+  const layoutInfo = (startY, draw) => {
+    let ry = startY;
 
-  // For-sale tag fills the empty band under the card image (off by default)
-  if (shareOptions.forSale) {
-    drawForSaleTag(ctx, IX, IY + IH + 32, shareOptions.salePrice, shareOptions.saleCurrency);
-  }
+    ctx.font = '700 26px "Barlow Condensed", sans-serif';
+    ctx.fillStyle = '#ff6b35';
+    ry += wrapText(ctx, fullCardName.toUpperCase(), RX, ry, MAX_W, 34, draw) + 18;
+
+    // Player name: shrink to fit as before, but stop at 76px and wrap to a
+    // second line rather than shrinking to nothing in the narrower column.
+    const playerText = String(card.playerName || 'UNKNOWN').toUpperCase();
+    let pSize = 88;
+    ctx.font = `400 ${pSize}px "Bebas Neue", sans-serif`;
+    while (ctx.measureText(playerText).width > MAX_W + 10 && pSize > 76) {
+      pSize -= 4;
+      ctx.font = `400 ${pSize}px "Bebas Neue", sans-serif`;
+    }
+    const lineH = Math.round(pSize * 0.92);
+    ctx.fillStyle = '#f0f0f0';
+    const nameH = wrapText(ctx, playerText, RX, ry + pSize * 0.82, MAX_W + 10, lineH, draw);
+    const nameLines = Math.max(1, Math.round(nameH / lineH));
+    ry += pSize * 0.82 + (nameLines - 1) * lineH + 18;
+
+    if (card.team && card.team !== 'Unknown') {
+      ctx.font = '400 30px "Barlow Condensed", sans-serif';
+      ctx.fillStyle = '#555555';
+      if (draw) ctx.fillText(card.team, RX, ry);
+      ry += 48;
+    }
+
+    ry += 18;
+
+    ctx.font = '700 22px "Barlow Condensed", sans-serif';
+    let bx = RX;
+    for (const badge of badges) {
+      const bw = ctx.measureText(badge.label).width + 28, bh = 38, br = 8;
+      // Wrap before drawing, so a badge can never spill past the column edge
+      if (bx > RX && bx + bw > RX + MAX_W) { bx = RX; ry += 52; }
+      if (draw) {
+        ctx.fillStyle = badge.bg;
+        rrect(ctx, bx, ry, bw, bh, br); ctx.fill();
+        ctx.strokeStyle = badge.border;
+        ctx.lineWidth = 1.5;
+        rrect(ctx, bx, ry, bw, bh, br); ctx.stroke();
+        ctx.fillStyle = badge.color;
+        ctx.fillText(badge.label, bx + 14, ry + 27);
+      }
+      bx += bw + 10;
+    }
+    if (badges.length > 0) ry += 56;
+
+    if (shareOptions.includePrice && card.estimatedValue > 0) {
+      const ev = Number(card.estimatedValue);
+      ry += 10;
+      ctx.font = '400 84px "Bebas Neue", sans-serif';
+      ctx.fillStyle = '#4caf50';
+      if (draw) ctx.fillText(`$${ev.toFixed(2)}`, RX, ry + 72);
+      // 98 not 84: at 84 the EST. VALUE cap height clipped the price digits
+      ry += 98;
+      ctx.font = '600 22px "Barlow Condensed", sans-serif';
+      ctx.fillStyle = '#2d5c2d';
+      if (draw) ctx.fillText('EST. VALUE', RX, ry);
+      ry += 16;
+    }
+
+    if (shareOptions.forSale) {
+      ry += 28;
+      ry += drawForSaleTag(ctx, RX, ry, shareOptions.salePrice, shareOptions.saleCurrency, draw);
+    }
+
+    return ry - startY;
+  };
+
+  const blockH = layoutInfo(0, false);
+  layoutInfo(IY + Math.max(0, (IH - blockH) / 2), true);
 
   drawFooter(ctx, W, H);
 

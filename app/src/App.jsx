@@ -9,6 +9,7 @@ import CollectionsView, { CollectionCreatorModal, CollectionDetailView } from ".
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
+import { SELL_ENABLED } from "./featureFlags";
 import ShareModal from "./ShareModal";
 import CardDetailModal from "./CardDetailModal";
 import BottomTabBar from "./BottomTabBar";
@@ -18,6 +19,7 @@ import AdGateModal from "./AdGateModal";
 import BreakTracker from "./BreakTracker";
 import BreaksView from "./BreaksView";
 import BreakersHub from "./BreakersHub";
+import PublicProfileSettings from "./PublicProfileSettings";
 import BulkListingModal from "./breaker/BulkListingModal";
 import { cardsToItems } from "./lib/listingExport.js";
 import { storage, db } from "./firebase";
@@ -568,7 +570,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               {card.cardNumber && <Badge label={`#${String(card.cardNumber).replace(/^#+/, "")}`} color="#555" />}
               {card.isPC && <Badge label="PC" color="#2196f3" />}
               {card.confidenceLevel === "Low" && <Badge label="⚠ Low Confidence" color="#ff6666" />}
-              {card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
+              {SELL_ENABLED && card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
             </div>
           </div>
 
@@ -1000,8 +1002,8 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
                 />
               </div>
 
-              {/* Sell */}
-              {!bundleMode && (
+              {/* Sell. Parked: no entry point unless ?sell=1 */}
+              {SELL_ENABLED && !bundleMode && (
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Sell</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -1541,7 +1543,6 @@ function ProComingSoonModal({ onClose }) {
     { icon: "♾️", title: "Unlimited Card Storage", desc: "Add as many cards as you want with no limits and no ads." },
     { icon: "📊", title: "Full Collection Analytics", desc: "Live value tracking, category breakdowns, and trend charts — always on." },
     { icon: "🤖", title: "Unlimited AI Sessions", desc: "Chat with your vault AI as much as you like, any time." },
-    { icon: "📤", title: "Priority eBay Listing", desc: "One-tap bulk listing with pre-filled card data and smart pricing." },
     { icon: "🏷️", title: "Advanced Card Identification", desc: "Deeper parallel, grading, and serial number detection." },
     { icon: "☁️", title: "Cloud Backup & Sync", desc: "Your collection automatically backed up and synced across all your devices." },
   ];
@@ -1800,7 +1801,15 @@ export default function App() {
   const [showReferral, setShowReferral] = useState(false);
   const [showBreakTracker, setShowBreakTracker] = useState(false);
   const [showBreaksView, setShowBreaksView] = useState(false);
-  const [showBreakers, setShowBreakers] = useState(false);
+  // Breakers hub is intentionally hidden from the UI: no button, no nav entry.
+  // It stays reachable by direct link for internal use — app.myvaults.io/?breakers=1
+  // (or #breakers). Remove this initialiser to retire the section entirely.
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [showBreakers, setShowBreakers] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const qs = new URLSearchParams(window.location.search);
+    return qs.get("breakers") === "1" || window.location.hash === "#breakers";
+  });
   const [collections, setCollections] = useState([]);
   const [showCollections, setShowCollections] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState(null); // collection being viewed
@@ -2717,21 +2726,6 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 </button>
               </>
             )}
-            {/* Breakers hub — seller tools, its own place (separate from the buyer Break Tracker / My Breaks) */}
-            <button
-              onClick={() => setShowBreakers(true)}
-              title="Breakers"
-              style={{
-                background: showBreakers ? "#ff6b3518" : "var(--gbg)",
-                border: `1px solid ${showBreakers ? "#ff6b3550" : "var(--gb)"}`,
-                borderRadius: 20, padding: "5px 12px",
-                color: showBreakers ? "#ff6b35" : "var(--gc)",
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-                letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
-              }}
-            >
-              <span style={{ fontSize: 13 }}>🎬</span> Breakers
-            </button>
             {cards.length > 0 && !isMobileUI && (
               <button
                 onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
@@ -2804,6 +2798,9 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                       </button>
                       <button onClick={() => { window.open("https://myvaults.io/terms", "_blank"); setProfileMenuOpen(false); }}>
                         <span style={{ fontSize: 13 }}>📄</span> Terms &amp; Conditions
+                      </button>
+                      <button onClick={() => { setShowProfileSettings(true); setProfileMenuOpen(false); }}>
+                        <span style={{ fontSize: 13 }}>🌍</span> Public profile
                       </button>
                       <button onClick={() => { setShowReferral(true); setProfileMenuOpen(false); }}>
                         <span style={{ fontSize: 13 }}>🎁</span> Invite Friends (+20 cards)
@@ -2958,12 +2955,27 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         />
       )}
 
-      {/* Breakers hub overlay (seller tools) */}
+      {/* Breakers hub overlay (seller tools). Direct link only — see the
+          showBreakers initialiser. Closing strips the param so a refresh
+          does not reopen it. */}
       {showBreakers && (
         <BreakersHub
           user={user}
-          onClose={() => setShowBreakers(false)}
+          onClose={() => {
+            setShowBreakers(false);
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("breakers");
+              if (url.hash === "#breakers") url.hash = "";
+              window.history.replaceState({}, "", url);
+            } catch { /* non-blocking */ }
+          }}
         />
+      )}
+
+      {/* Public profile settings */}
+      {showProfileSettings && user && (
+        <PublicProfileSettings user={user} onClose={() => setShowProfileSettings(false)} />
       )}
 
       {/* Referral modal */}
@@ -3428,7 +3440,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 }}>{v === "cards" ? "⊞" : "☰"}</button>
               ))}
             </div>
-            {view === "cards" && (
+            {SELL_ENABLED && view === "cards" && (
               <button
                 onClick={() => { setBundleMode(v => !v); setBundleCardIds(new Set()); }}
                 style={{
@@ -3566,7 +3578,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={handleSellCard} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={SELL_ENABLED ? handleSellCard : undefined} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
@@ -3656,7 +3668,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         </>)}
       </div>
       {/* Floating bundle action bar */}
-      {bundleMode && (
+      {SELL_ENABLED && bundleMode && (
         <div style={{
           position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
           zIndex: 50, background: "var(--card)", border: "1px solid var(--b)",
@@ -3685,7 +3697,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         </div>
       )}
 
-      {sellModalCards && (
+      {SELL_ENABLED && sellModalCards && (
         <EbayListingModal
           cards={sellModalCards}
           user={user}
@@ -3776,7 +3788,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           card={cards.find(c => String(c.id) === String(detailCard.id)) || detailCard}
           onUpdate={handleUpdate}
           onShare={(card) => { setDetailCard(null); setShareModal({ mode: 'card', card, cards: null, filterLabel: null }); }}
-          onSell={(card) => { setDetailCard(null); handleSellCard(card); }}
+          onSell={SELL_ENABLED ? (card) => { setDetailCard(null); handleSellCard(card); } : undefined}
           onRefreshPrice={handleRefreshPrice}
           onClose={() => setDetailCard(null)}
         />

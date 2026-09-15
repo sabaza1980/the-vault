@@ -124,6 +124,25 @@ export default async function handler(req, res) {
 
   const { uid, cardId, shareVault, shareSet, shareCollection, og, collectionId } = req.query;
 
+  // ── Whole-vault reads are opt-in ───────────────────────────────────────────
+  // A single card or a named collection is something the owner deliberately
+  // shared, so those paths keep working exactly as before. Handing back an
+  // entire vault to anyone who knows a uid is the part that was never
+  // intended: uids travel in every share link, so one shared card leaked
+  // the lot.
+  async function vaultIsPublic(ownerUid) {
+    try {
+      const { projectId: PID } = getServiceAccount();
+      const tok = await googleToken();
+      const b = `https://firestore.googleapis.com/v1/projects/${PID}/databases/(default)/documents`;
+      const r = await fetch(`${b}/users/${ownerUid}`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (!r.ok) return false;
+      const u = docToCard(await r.json());
+      const pp = u.profile_public || {};
+      return pp.enabled === true || u.share_vault === true;
+    } catch { return false; }
+  }
+
   // ── OG share-link preview (no uid required for vault/set defaults) ────────
   if (og) {
     const BASE_APP = 'https://app.myvaults.io';
@@ -226,7 +245,10 @@ export default async function handler(req, res) {
     });
     return res.json({ collection: col, cards, ownerName });
   } else {
-    // All cards for the vault (max 200)
+    // All cards for the vault (max 200). Opt-in only — see vaultIsPublic above.
+    if (!(await vaultIsPublic(uid))) {
+      return res.status(404).json({ error: 'vault not found', cards: [] });
+    }
     const [r, ownerName] = await Promise.all([
       fetch(`${BASE}/users/${uid}/cards?pageSize=200`, { headers: { Authorization: `Bearer ${token}` } }),
       getOwnerName(uid, token, BASE),
