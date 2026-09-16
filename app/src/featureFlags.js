@@ -18,4 +18,6 @@ function flag(name) {
   return qs.get(name) === "1" || window.location.hash === `#${name}`;
 }
 
-export const SELL_ENABLED = flag("sell");
+export const SELL_ENABLED   = flag("sell");
+/** New Break / My Breaks, and the Breakers hub they belong to. */
+export const BREAKS_ENABLED = flag("breakers");

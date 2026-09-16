@@ -1,18 +1,92 @@
 {
   "rewrites": [
-    { "source": "/sitemap.xml",     "destination": "/website/sitemap.xml" },
-    { "source": "/robots.txt",      "destination": "/website/robots.txt" },
-    { "source": "/ads.txt",         "destination": "/website/ads.txt" },
-    { "source": "/app-ads.txt",     "destination": "/website/app-ads.txt" },
-    { "source": "/blog/:slug",      "destination": "/api/article-page?slug=:slug" },
-    { "source": "/",                "destination": "/website/index.html" },
-    { "source": "/privacy-policy",  "destination": "/website/privacy-policy.html" },
-    { "source": "/terms",           "destination": "/website/terms.html" },
-    { "source": "/blog",            "destination": "/website/blog.html" },
-    { "source": "/blog.html",       "destination": "/website/blog.html" },
-    { "source": "/delete-account",  "destination": "/website/delete-account.html" },
-    { "source": "/admin",           "destination": "/website/admin.html" },
-    { "source": "/admin.html",      "destination": "/website/admin.html" },
-    { "source": "/(.*)",            "destination": "/website/index.html" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "/website/sitemap.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/website/robots.txt"
+    },
+    {
+      "source": "/ads.txt",
+      "destination": "/website/ads.txt"
+    },
+    {
+      "source": "/app-ads.txt",
+      "destination": "/website/app-ads.txt"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/api/article-page?slug=:slug"
+    },
+    {
+      "source": "/",
+      "destination": "/website/index.html"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/website/privacy-policy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/website/terms.html"
+    },
+    {
+      "source": "/blog",
+      "destination": "/website/blog.html"
+    },
+    {
+      "source": "/blog.html",
+      "destination": "/website/blog.html"
+    },
+    {
+      "source": "/delete-account",
+      "destination": "/website/delete-account.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/website/admin.html"
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/website/admin.html"
+    },
+    {
+      "source": "/screens/:path*",
+      "destination": "/website/screens/:path*"
+    },
+    {
+      "source": "/categories/:path*",
+      "destination": "/website/categories/:path*"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/website/index.html"
+    },
+    {
+      "source": "/privacy-policy.html",
+      "destination": "/website/privacy-policy.html"
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/website/terms.html"
+    },
+    {
+      "source": "/delete-account.html",
+      "destination": "/website/delete-account.html"
+    },
+    {
+      "source": "/app-embed.html",
+      "destination": "/website/app-embed.html"
+    },
+    {
+      "source": "/admin-config.js",
+      "destination": "/website/admin-config.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/website/index.html"
+    }
   ]
 }

@@ -9,7 +9,7 @@ import CollectionsView, { CollectionCreatorModal, CollectionDetailView } from ".
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
-import { SELL_ENABLED } from "./featureFlags";
+import { SELL_ENABLED, BREAKS_ENABLED } from "./featureFlags";
 import ShareModal from "./ShareModal";
 import CardDetailModal from "./CardDetailModal";
 import BottomTabBar from "./BottomTabBar";
@@ -24,7 +24,7 @@ import BulkListingModal from "./breaker/BulkListingModal";
 import { cardsToItems } from "./lib/listingExport.js";
 import { storage, db } from "./firebase";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
-import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, getDocs, increment } from "firebase/firestore";
+import { collection, doc, query, orderBy, limit, onSnapshot, updateDoc, setDoc, getDoc, getDocs, increment } from "firebase/firestore";
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
@@ -1805,6 +1805,10 @@ export default function App() {
   // It stays reachable by direct link for internal use — app.myvaults.io/?breakers=1
   // (or #breakers). Remove this initialiser to retire the section entirely.
   const [showProfileSettings, setShowProfileSettings] = useState(false);
+  // The public profile doc, read straight from the user record. The header
+  // Share button needs the handle, and it must reflect changes made in the
+  // settings sheet, so this is refreshed whenever that sheet closes.
+  const [publicProfile, setPublicProfile] = useState(null);
   const [showBreakers, setShowBreakers] = useState(() => {
     if (typeof window === "undefined") return false;
     const qs = new URLSearchParams(window.location.search);
@@ -1816,6 +1820,7 @@ export default function App() {
   const [showCollectionCreator, setShowCollectionCreator] = useState(false);
   const [editingCollection, setEditingCollection] = useState(null); // collection being edited
   const [referralNotification, setReferralNotification] = useState(null);
+  const [toast, setToast] = useState(null);
   const [adminGiftNotification, setAdminGiftNotification] = useState(null);
   const globalGiftClaimedRef = useRef(false);
   // adGate: null | { type: 'upload' | 'daily' | 'streak10' | 'value' }
@@ -2305,6 +2310,39 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
     setCards(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updates } : c));
   }, []);
 
+  const refreshPublicProfile = useCallback(async () => {
+    if (!user) { setPublicProfile(null); return; }
+    try {
+      const snap = await getDoc(doc(db, "users", user.uid));
+      setPublicProfile((snap.exists() && snap.data().profile_public) || null);
+    } catch { /* sharing falls back to opening the settings sheet */ }
+  }, [user]);
+
+  useEffect(() => { refreshPublicProfile(); }, [refreshPublicProfile]);
+
+  // The header Share button shares the collector's public profile page. If there
+  // is no handle yet, or the profile is switched off, there is nothing to share,
+  // so it opens the place where they can set that up instead.
+  const shareProfile = useCallback(async () => {
+    const handle = publicProfile?.handle;
+    if (!handle || publicProfile?.enabled !== true) { setShowProfileSettings(true); return; }
+    const url = `https://www.myvaults.io/u/${handle}`;
+    const text = "My vault on The Vault";
+    if (navigator.share) {
+      // A dismissed share sheet rejects. That is the user changing their mind,
+      // so do not silently fall through and copy the link instead.
+      try { await navigator.share({ title: text, text, url }); } catch { /* dismissed */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setToast("Profile link copied");
+      setTimeout(() => setToast(null), 2600);
+    } catch {
+      window.prompt("Your profile link", url);
+    }
+  }, [publicProfile]);
+
   const handleSellCard = useCallback((card) => setSellModalCards([card]), []);
 
   // WP-5b: re-price a single card from its stored image via Ximilar (used by the
@@ -2693,8 +2731,10 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 <span style={{ fontSize: 13 }}>📚</span> Collections
               </button>
             )}
-            {/* WP-2: Breaks is desktop-web only — hidden on the native app + mobile web */}
-            {!isMobileUI && (
+            {/* WP-2: Breaks was desktop-web only. Now parked entirely while the
+                product focuses on collecting and sharing — reachable at
+                ?breakers=1 together with the Breakers hub. */}
+            {BREAKS_ENABLED && !isMobileUI && (
               <>
                 <button
                   onClick={() => setShowBreakTracker(true)}
@@ -2728,8 +2768,10 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             )}
             {cards.length > 0 && !isMobileUI && (
               <button
-                onClick={() => setShareModal({ mode: 'collection', cards, filterLabel: null })}
-                title="Share your vault"
+                onClick={shareProfile}
+                title={publicProfile?.enabled && publicProfile?.handle
+                  ? `Share myvaults.io/u/${publicProfile.handle}`
+                  : "Set up your public profile"}
                 style={{
                   background: "var(--gbg)", border: "1px solid var(--gb)",
                   borderRadius: 20, padding: "5px 12px",
@@ -2975,7 +3017,10 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
 
       {/* Public profile settings */}
       {showProfileSettings && user && (
-        <PublicProfileSettings user={user} onClose={() => setShowProfileSettings(false)} />
+        <PublicProfileSettings
+          user={user}
+          onClose={() => { setShowProfileSettings(false); refreshPublicProfile(); }}
+        />
       )}
 
       {/* Referral modal */}
@@ -2989,7 +3034,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       )}
 
       {/* Referral notification toast */}
-      {referralNotification && (
+      {(toast || referralNotification) && (
         <div style={{
           position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
           zIndex: 900, maxWidth: 340, width: "calc(100% - 32px)",
@@ -3000,7 +3045,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           animation: "fadeIn 0.25s ease",
         }}>
           <span style={{ fontSize: 18, flexShrink: 0 }}>🎁</span>
-          <span style={{ fontSize: 12, color: "#e0e0e0", lineHeight: 1.5 }}>{referralNotification}</span>
+          <span style={{ fontSize: 12, color: "#e0e0e0", lineHeight: 1.5 }}>{toast || referralNotification}</span>
           <button
             onClick={() => setReferralNotification(null)}
             style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}

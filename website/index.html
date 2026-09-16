@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Vault: Card Collection Manager for Pokémon, MTG, Sports Cards and More</title>
-  <meta name="description" content="The Vault is a card collection manager for people who love their cards. Scan any card and it files itself in seconds. Sports, Pokémon, MTG, stamps and coins. Build your sets, star your favourites and share them." />
+  <meta name="description" content="The Vault is a card collection manager for people who love their cards. Scan any card and it files itself in seconds. Sports cards, Pokémon, MTG and every other TCG. Build your sets, star your favourites and share them." />
 
   <!-- Canonical & Language -->
   <link rel="canonical" href="https://www.myvaults.io/" />
@@ -18,7 +18,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.myvaults.io/" />
   <meta property="og:title" content="The Vault: Catalogue, Enjoy and Share Your Card Collection" />
-  <meta property="og:description" content="Scan a card and it is in your vault in seconds. Sports, Pokémon, MTG, stamps and coins. Build your sets, star your favourites, and share them with people who get it." />
+  <meta property="og:description" content="Scan a card and it is in your vault in seconds. Sports cards, Pokémon, MTG and every other TCG. Build your sets, star your favourites, and share them with people who get it." />
   <meta property="og:image" content="https://www.myvaults.io/og-image.jpg" />
   <meta property="og:site_name" content="The Vault" />
   <meta property="og:locale" content="en_US" />
@@ -560,7 +560,7 @@
         <span class="accent">OUT LOUD.</span>
       </h1>
       <p class="hero-sub">
-        Scan a card and it is in your vault in seconds. Sports, Pokémon, MTG, stamps and coins. Build your sets, star the ones you actually care about, and show them to people who get it.
+        Scan a card and it is in your vault in seconds. Sports cards, Pokémon, MTG and every other TCG. Build your sets, star the ones you actually care about, and show them to people who get it.
       </p>
       <div class="hero-actions">
         <a href="https://app.myvaults.io" class="btn-primary">Use the web app</a>
@@ -643,7 +643,7 @@
                  onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Everything files itself';">
           </div>
           <div class="screen-caption">Everything files itself</div>
-          <div class="screen-sub">Basketball, football, Pokémon, MTG, stamps and coins, sorted the moment they are scanned.</div>
+          <div class="screen-sub">Basketball, football, soccer, baseball, Pokémon and MTG, sorted the moment they are scanned.</div>
         </div>
         <div class="screen-item">
           <div class="screen-shot">
@@ -691,7 +691,7 @@
                  onerror="this.parentNode.classList.add('screen-shot--empty');this.parentNode.textContent='Everything files itself';">
           </div>
           <div class="screen-caption">Everything files itself</div>
-          <div class="screen-sub">Basketball, football, Pokémon, MTG, stamps and coins, sorted the moment they are scanned.</div>
+          <div class="screen-sub">Basketball, football, soccer, baseball, Pokémon and MTG, sorted the moment they are scanned.</div>
         </div>
         <div class="screen-item" aria-hidden="true">
           <div class="screen-shot">
@@ -722,63 +722,121 @@
       <p style="font-size:16px;color:#555;max-width:540px;margin:0 auto 56px;line-height:1.7;">
         Whatever you collect, it goes in the same vault and files itself the moment you scan it.
       </p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;max-width:900px;margin:0 auto;">
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">⚡</span>
-          <span class="col-pill-name">Pokémon</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">🧙</span>
-          <span class="col-pill-name">Magic: The Gathering</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">🏀</span>
-          <span class="col-pill-name">Basketball</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">🏈</span>
-          <span class="col-pill-name">American Football</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">⚽</span>
-          <span class="col-pill-name">Soccer</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">⚾</span>
-          <span class="col-pill-name">Baseball</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">🏒</span>
-          <span class="col-pill-name">Hockey</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">🐉</span>
-          <span class="col-pill-name">Yu-Gi-Oh!</span>
-        </div>
-        <div class="col-pill" onclick="document.getElementById('app-section').scrollIntoView({behavior:'smooth'})">
-          <span class="col-pill-icon">🎴</span>
-          <span class="col-pill-name">Other TCG</span>
-        </div>
+      <div class="cat-grid">
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/pokemon.jpg" alt="Pokemon" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Pok&eacute;mon</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/mtg.jpg" alt="Magic: The Gathering" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Magic: The Gathering</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/basketball.jpg" alt="Basketball" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Basketball</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/american-football.jpg" alt="American Football" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">American Football</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/soccer.jpg" alt="Soccer" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Soccer</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/baseball.jpg" alt="Baseball" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Baseball</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/hockey.jpg" alt="Hockey" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Hockey</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/yugioh.jpg" alt="Yu-Gi-Oh!" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">Yu-Gi-Oh!</figcaption>
+        </figure>
+        <figure class="cat-tile">
+          <div class="cat-art">
+            <img src="categories/other-tcg.jpg" alt="One Piece" loading="lazy" width="440" height="660">
+          </div>
+          <figcaption class="cat-name">One Piece</figcaption>
+        </figure>
+        <figure class="cat-tile cat-tile--soon">
+          <div class="cat-art">
+            <img src="categories/comics.jpg" alt="Comics" loading="lazy" width="440" height="660">
+            <span class="cat-soon">Coming soon</span>
+          </div>
+          <figcaption class="cat-name">Comics</figcaption>
+        </figure>
+        <figure class="cat-tile cat-tile--soon">
+          <div class="cat-art">
+            <img src="categories/coins.jpg" alt="Coins" loading="lazy" width="440" height="660">
+            <span class="cat-soon">Coming soon</span>
+          </div>
+          <figcaption class="cat-name">Coins</figcaption>
+        </figure>
+        <figure class="cat-tile cat-tile--soon">
+          <div class="cat-art">
+            <img src="categories/stamps.jpg" alt="Stamps" loading="lazy" width="440" height="660">
+            <span class="cat-soon">Coming soon</span>
+          </div>
+          <figcaption class="cat-name">Stamps</figcaption>
+        </figure>
       </div>
       <p style="font-size:11px;color:#333;margin-top:32px;letter-spacing:1px;text-transform:uppercase;">More categories added regularly</p>
     </div>
     <style>
-      .col-pill {
-        display:flex;flex-direction:column;align-items:center;gap:10px;
-        background:var(--dark3);border:1px solid rgba(255,255,255,0.05);
-        border-radius:16px;padding:24px 16px;cursor:pointer;
+      .cat-grid {
+        display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+        gap:18px;max-width:1000px;margin:0 auto;
+      }
+      .cat-tile { margin:0; }
+      /* The art is the same cover the app shows when it identifies a card in
+         that category, so the site and the app agree on what each one looks
+         like. Swapping a cover in app/public means re-exporting it here too. */
+      .cat-art {
+        position:relative;aspect-ratio:2 / 3;border-radius:14px;overflow:hidden;
+        background:#0d0d1a;border:1px solid rgba(255,255,255,0.07);
         transition:border-color 0.2s,transform 0.2s,box-shadow 0.2s;
-        text-align:center;
       }
-      .col-pill:hover {
-        border-color:rgba(255,107,53,0.35);
+      .cat-art img { width:100%;height:100%;object-fit:cover;display:block; }
+      .cat-tile:hover .cat-art {
+        border-color:rgba(255,107,53,0.4);
         transform:translateY(-3px);
-        box-shadow:0 8px 24px rgba(255,107,53,0.08);
+        box-shadow:0 10px 28px rgba(255,107,53,0.10);
       }
-      .col-pill-icon { font-size:30px; }
-      .col-pill-name {
-        font-family:'Barlow Condensed',sans-serif;font-size:13px;
-        font-weight:700;letter-spacing:0.5px;color:#bbb;text-transform:uppercase;
+      .cat-name {
+        margin-top:12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;
+        font-weight:700;letter-spacing:1px;color:#bbb;text-transform:uppercase;
+      }
+      .cat-tile--soon .cat-art img { opacity:0.45;filter:saturate(0.5); }
+      .cat-tile--soon .cat-name { color:#6a6a78; }
+      .cat-soon {
+        position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+        white-space:nowrap;font-family:'Barlow Condensed',sans-serif;
+        font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+        color:var(--orange);background:rgba(10,10,18,0.82);
+        border:1px solid rgba(255,107,53,0.45);border-radius:999px;padding:5px 12px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .cat-art { transition:none; }
+        .cat-tile:hover .cat-art { transform:none; }
       }
     </style>
   </section>
@@ -790,7 +848,7 @@
         <div class="section-label">Why The Vault</div>
         <h2 class="section-title">Built for<br/>every collector.</h2>
       </div>
-      <p class="section-sub" style="max-width:340px">Pokémon, MTG, basketball, football, soccer, baseball, stamps and coins. One vault for all of it, free to start.</p>
+      <p class="section-sub" style="max-width:340px">Pokémon, MTG, basketball, football, soccer, baseball and hockey. One vault for all of it, free to start.</p>
     </div>
 
     <div class="features-grid">

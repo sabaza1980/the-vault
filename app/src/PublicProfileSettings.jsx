@@ -115,11 +115,15 @@ export default function PublicProfileSettings({ user, onClose }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 400, background: "rgba(0,0,0,0.72)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+    <div style={{
+           position: "fixed", inset: 0, zIndex: 760,
+           background: "rgba(0,0,0,0.62)", backdropFilter: "blur(4px)",
+           display: "flex", alignItems: "flex-end", justifyContent: "center",
+         }}
          onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
            style={{
-             background: "var(--c)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 520,
+             background: "var(--card)", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 520,
              maxHeight: "92vh", overflowY: "auto", padding: "20px 20px calc(28px + env(safe-area-inset-bottom, 0px))",
              border: "1px solid var(--b)", borderBottom: "none",
            }}>
@@ -199,6 +203,18 @@ export default function PublicProfileSettings({ user, onClose }) {
               disabled={!savedHandle}
               onChange={v => { setEnabled(v); save({ enabled: v }); }}
             />
+
+            {/* Publishing is the one thing here that leaves the app, so say what
+                that means at the moment the switch is thrown rather than burying
+                it in the policy. */}
+            <div style={{ fontSize: 11, color: "var(--tg)", lineHeight: 1.6, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--b)" }}>
+              A public profile can be opened by anyone with the link, without an account, and may be
+              cached or screenshotted. Your email is never shown. Turning it off takes the page down.{" "}
+              <a href="https://myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer"
+                 style={{ color: "#ff6b35", textDecoration: "none", fontWeight: 600 }}>
+                How we handle your data
+              </a>
+            </div>
 
             {err && <div style={{ color: "#ff6b35", fontSize: 13, marginTop: 12 }}>{err}</div>}
 
