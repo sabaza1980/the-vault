@@ -26,6 +26,7 @@ export default function PublicProfileSettings({ user, onClose }) {
   const [bio, setBio] = useState("");
   const [enabled, setEnabled] = useState(false);
   const [showValues, setShowValues] = useState(false);
+  const [cardScope, setCardScope] = useState("all");
 
   const [check, setCheck] = useState(null); // null | 'checking' | 'free' | 'taken' | error string
   const checkTimer = useRef(null);
@@ -50,6 +51,7 @@ export default function PublicProfileSettings({ user, onClose }) {
         setBio(p.bio || "");
         setEnabled(p.enabled === true);
         setShowValues(p.show_values === true);
+        setCardScope(p.card_scope === "favourites" ? "favourites" : "all");
       } catch {
         if (alive) setErr("Could not load your profile settings");
       } finally {
@@ -89,6 +91,7 @@ export default function PublicProfileSettings({ user, onClose }) {
       if (p.handle) { setSavedHandle(p.handle); setHandle(p.handle); }
       if (typeof p.enabled === "boolean") setEnabled(p.enabled);
       if (typeof p.show_values === "boolean") setShowValues(p.show_values);
+      if (p.card_scope) setCardScope(p.card_scope);
       setCheck(null);
       return true;
     } catch (e) {
@@ -133,7 +136,7 @@ export default function PublicProfileSettings({ user, onClose }) {
                   style={{ background: "none", border: "none", color: "var(--tg)", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
         </div>
         <div style={{ fontSize: 13, color: "var(--tg)", marginBottom: 18, lineHeight: 1.5 }}>
-          A page for the cards you are proud of. Your favourites show by default.
+          A page for the cards you are proud of. Your whole collection shows by default.
         </div>
 
         {loading ? (
@@ -187,6 +190,34 @@ export default function PublicProfileSettings({ user, onClose }) {
                         placeholder="What you collect, and why"
                         style={{ ...I, resize: "vertical" }} />
               <div style={{ fontSize: 11, color: "var(--tg)", marginTop: 4 }}>{bio.length}/160</div>
+            </div>
+
+            <div style={{ padding: "13px 0", borderTop: "1px solid var(--b)" }}>
+              <div style={L}>What to show</div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[
+                  { k: "all",        label: "Whole collection" },
+                  { k: "favourites", label: "Favourites only" },
+                ].map(o => (
+                  <button
+                    key={o.k}
+                    onClick={() => { setCardScope(o.k); save({ card_scope: o.k }); }}
+                    style={{
+                      flex: 1, borderRadius: 10, padding: "9px 10px", fontSize: 13, fontWeight: 700,
+                      cursor: "pointer", fontFamily: "inherit",
+                      background: cardScope === o.k ? "#ff6b35" : "var(--gbg)",
+                      color: cardScope === o.k ? "#fff" : "var(--t)",
+                      border: `1px solid ${cardScope === o.k ? "#ff6b35" : "var(--gb)"}`,
+                    }}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--tg)", marginTop: 6, lineHeight: 1.45 }}>
+                {cardScope === "all"
+                  ? "Everything in your vault, favourites first."
+                  : "Only your starred cards. If you have not starred any, your whole collection shows instead."}
+              </div>
             </div>
 
             <Row

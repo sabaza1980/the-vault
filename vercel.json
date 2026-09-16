@@ -21,6 +21,10 @@
       "destination": "/api/article-page?slug=:slug"
     },
     {
+      "source": "/u/:handle",
+      "destination": "https://app.myvaults.io/api/profile-page?handle=:handle"
+    },
+    {
       "source": "/",
       "destination": "/website/index.html"
     },

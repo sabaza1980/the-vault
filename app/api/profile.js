@@ -5,7 +5,10 @@
  *   GET  /api/profile?check=sherif       → { available: bool }
  *   POST /api/profile                    → claim a handle / update settings
  *        Authorization: Bearer <firebase id token>
- *        { handle?, display_name?, bio?, enabled?, show_values?, featured_collection_ids? }
+ *        { handle?, display_name?, bio?, enabled?, show_values?, card_scope?,
+ *          featured_collection_ids? }
+ *
+ * card_scope is 'all' (default) or 'favourites'.
  *
  * A profile that is not enabled returns 404, never 403. A 403 would confirm
  * that the handle belongs to somebody, which is exactly what we are not
@@ -67,20 +70,33 @@ export async function loadPublicProfile(handleRaw) {
 
   const all = await fsList(`users/${uid}/cards`, token, 300);
 
-  // Favourites are the default face of a profile. Featured collections, when
-  // the owner has picked any, widen it.
-  let cards = all.filter(c => c.isFavourite === true);
-  const featured = Array.isArray(p.featured_collection_ids) ? p.featured_collection_ids : [];
-  if (featured.length) {
-    const cols = await fsList(`users/${uid}/collections`, token, 100);
-    const wanted = new Set();
-    for (const col of cols) {
-      if (!featured.includes(col.id)) continue;
-      for (const cid of (col.cardIds || col.cards || [])) wanted.add(String(cid));
+  // A profile shows the whole collection unless the owner narrows it. Showing
+  // favourites by default made a profile look broken for anyone who had not
+  // starred anything: 34 cards in the vault, one on the page.
+  const scope = p.card_scope === 'favourites' ? 'favourites' : 'all';
+  let cards = all;
+
+  if (scope === 'favourites') {
+    cards = all.filter(c => c.isFavourite === true);
+    // Featured collections, when the owner has picked any, widen it.
+    const featured = Array.isArray(p.featured_collection_ids) ? p.featured_collection_ids : [];
+    if (featured.length) {
+      const cols = await fsList(`users/${uid}/collections`, token, 100);
+      const wanted = new Set();
+      for (const col of cols) {
+        if (!featured.includes(col.id)) continue;
+        for (const cid of (col.cardIds || col.cards || [])) wanted.add(String(cid));
+      }
+      const extra = all.filter(c => wanted.has(String(c.id)) && c.isFavourite !== true);
+      cards = cards.concat(extra);
     }
-    const extra = all.filter(c => wanted.has(String(c.id)) && c.isFavourite !== true);
-    cards = cards.concat(extra);
+    // Narrowing to favourites and having none would publish an empty page, which
+    // reads as a broken profile rather than a deliberate one. Fall back.
+    if (!cards.length) cards = all;
   }
+
+  // Favourites first either way, so the cards the owner cares about lead.
+  cards = [...cards].sort((a, b) => (b.isFavourite === true) - (a.isFavourite === true));
 
   const showValues = p.show_values === true;
   return {
@@ -89,6 +105,7 @@ export async function loadPublicProfile(handleRaw) {
     displayName: p.display_name || user.display_name || handle,
     bio: typeof p.bio === 'string' ? p.bio.slice(0, 160) : '',
     showValues,
+    cardScope: scope,
     cardCount: cards.length,
     totalCards: all.length,
     cards: cards.map(c => publicCard(c, showValues)),
@@ -181,6 +198,7 @@ export default async function handler(req, res) {
   if (typeof body.bio === 'string') next.bio = body.bio.trim().slice(0, 160);
   if (typeof body.enabled === 'boolean') next.enabled = body.enabled;
   if (typeof body.show_values === 'boolean') next.show_values = body.show_values;
+  if (body.card_scope === 'all' || body.card_scope === 'favourites') next.card_scope = body.card_scope;
   if (Array.isArray(body.featured_collection_ids)) {
     next.featured_collection_ids = body.featured_collection_ids.map(String).slice(0, 20);
   }
