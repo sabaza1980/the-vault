@@ -1,5 +1,5 @@
 {
-  "//": "Composite indexes for the feed. Firestore builds single-field indexes on its own, so only the combinations a feed query actually asks for are here. __name__ is listed explicitly and DESCENDING because the feed orders newest-first and uses the document reference as its cursor tiebreaker; an index whose __name__ runs the other way will not serve the query.",
+  "//": "Composite indexes for the feed. Firestore builds single-field indexes on its own, so only the combinations a feed query actually asks for are here. Do NOT add __name__ to these: Firestore appends it implicitly, matching the direction of the last field, and declaring it is rejected as unnecessary. Every entry needs at least two real fields for the same reason.",
   "indexes": [
     {
       "//": "Newest first, whole feed. Category chips.",
@@ -7,8 +7,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "cardCategory", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -18,8 +17,7 @@
       "fields": [
         { "fieldPath": "cardCategory", "order": "ASCENDING" },
         { "fieldPath": "score", "order": "DESCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -28,8 +26,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "ownerHandle", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -39,8 +36,7 @@
       "fields": [
         { "fieldPath": "ownerHandle", "order": "ASCENDING" },
         { "fieldPath": "score", "order": "DESCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -49,11 +45,10 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "score", "order": "DESCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],
-  "//2": "The default newest-first view (createdAt DESC) is deliberately NOT here. One real field plus __name__ is a single-field index, which Firestore builds on its own and the CLI rejects outright as unnecessary — and one rejection aborts the whole deploy.",
+  "//2": "The default newest-first view (createdAt DESC) is deliberately NOT here. A single field is a single-field index, which Firestore builds on its own and rejects if declared — and one rejection aborts the whole deploy.",
   "fieldOverrides": []
 }
