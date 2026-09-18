@@ -374,7 +374,11 @@ if (CFG2) {
   // checks on load and lets go when the shared session has ended. Only a
   // definite 204 counts; a network wobble means unknown, and unknown must never
   // sign anybody out.
-  const verify = () => fetch(API_BASE + '/api/session', { credentials: 'include' })
+  // Wait out any sign-in started on this page first: the cookie is published a
+  // beat after Firebase reports the sign-in, and checking in between reads "no
+  // session" and signs the person straight back out.
+  const verify = () => Promise.resolve(window.__vaultGateWait ? window.__vaultGateWait() : null)
+    .then(() => fetch(API_BASE + '/api/session', { credentials: 'include' }))
     .then(r => { if (r.status === 204) signOut(fbAuth); })
     .catch(() => {});
 

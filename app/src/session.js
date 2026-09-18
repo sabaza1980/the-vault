@@ -20,8 +20,35 @@ const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 /** The native app has no shared-cookie problem: it is one origin, always. */
 const shared = () => !Capacitor.isNativePlatform();
 
-/** Set while a publish is in flight, so a verify does not race a fresh sign-in. */
-let publishing = null;
+/**
+ * A sign-in started here leaves the shared cookie briefly stale. Firebase fires
+ * its auth listener the moment the credential lands — before the session has
+ * been published — so a verify running in that window reads "no shared session"
+ * and signs the person straight back out. That is the bug where you logged in,
+ * saw yourself logged out, and had to refresh.
+ *
+ * Interactive sign-ins open this gate before they start. Verify waits on it, so
+ * it can never read the cookie mid-flight.
+ */
+let gate = null;
+
+/** Called before an interactive sign-in begins. */
+export function beginSignIn() {
+  if (!shared() || gate) return;
+  let release;
+  const promise = new Promise((r) => { release = r; });
+  const g = { promise, release };
+  gate = g;
+  // A gate that never closes would stop verify working for the whole session.
+  setTimeout(() => { if (gate === g) endSignInAttempt(); }, 15000);
+}
+
+/** Called when the attempt finishes, whether it published or failed. */
+export function endSignInAttempt() {
+  const g = gate;
+  gate = null;
+  if (g) g.release();
+}
 
 /**
  * Publish this sign-in so the other origin picks it up.
@@ -29,8 +56,8 @@ let publishing = null;
  * the listener verifies instead, and the two must not fight.
  */
 export async function publishSession(user) {
-  if (!shared() || !user) return;
-  publishing = (async () => {
+  if (!shared() || !user) { endSignInAttempt(); return; }
+  try {
     const idToken = await user.getIdToken();
     await fetch(`${API_BASE}/api/session`, {
       method: "POST",
@@ -38,10 +65,8 @@ export async function publishSession(user) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
     });
-  })();
-  try { await publishing; }
-  catch { /* the session stays local to this origin; nothing else breaks */ }
-  finally { publishing = null; }
+  } catch { /* the session stays local to this origin; nothing else breaks */ }
+  finally { endSignInAttempt(); }
 }
 
 /**
@@ -58,7 +83,8 @@ export async function publishSession(user) {
  */
 export async function verifySession(user, onGone) {
   if (!shared() || !user) return;
-  if (publishing) { try { await publishing; } catch { /* keep going */ } }
+  const g = gate;
+  if (g) { try { await g.promise; } catch { /* keep going */ } }
   try {
     const r = await fetch(`${API_BASE}/api/session`, { credentials: "include" });
     if (r.status === 204) onGone();

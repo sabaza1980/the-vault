@@ -165,6 +165,27 @@ window.__vaultBindReactions = () => { bindReactions(); syncReactions(); };
 // just opens.
 window.__vaultOpenSheet = () => { document.getElementById('sheet').classList.add('open'); };
 
+// A sign-in started on this page leaves the shared cookie stale for a moment:
+// Firebase fires its auth listener the instant the credential lands, before the
+// session has been published. A page that checks the cookie in that window
+// reads "no session" and signs the person straight back out — the bug where a
+// fresh login looked like it had not happened until you refreshed. Open the
+// gate before signing in, wait on it before trusting the cookie.
+let signInGate = null;
+window.__vaultGateOpen = () => {
+  if (signInGate) return;
+  let release;
+  const promise = new Promise(r => { release = r; });
+  const g = { promise: promise, release: release };
+  signInGate = g;
+  // A gate that never closes would stop the cookie check working at all.
+  setTimeout(() => { if (signInGate === g) window.__vaultGateClose(); }, 15000);
+};
+window.__vaultGateClose = () => {
+  const g = signInGate; signInGate = null; if (g) g.release();
+};
+window.__vaultGateWait = () => (signInGate ? signInGate.promise : Promise.resolve());
+
 let auth = null, signIn = null, authReady = null, fb = null;
 async function firebase() {
   if (auth || !CFG) return auth;
@@ -345,6 +366,7 @@ async function afterAuth(user, isNew) {
   // Publish the shared session so the app knows about this sign-in too. The
   // page that wants it sets this up; a page that does not simply has no hook.
   if (window.__vaultAfterSignIn) { try { await window.__vaultAfterSignIn(user); } catch {} }
+  window.__vaultGateClose();
 
   if (isNew) {
     // Credit the collector whose profile brought this person in.
@@ -363,12 +385,14 @@ async function afterAuth(user, isNew) {
 
 document.getElementById('sheet-go').addEventListener('click', async () => {
   errBox.textContent = '';
+  window.__vaultGateOpen();
   try {
     await firebase();
     const cred = await signIn();
     const isNew = !!(cred._tokenResponse && cred._tokenResponse.isNewUser);
     await afterAuth(cred.user, isNew);
   } catch (e) {
+    window.__vaultGateClose();
     errBox.textContent = humanError(e && e.code, e && e.message);
   }
 });
@@ -384,6 +408,7 @@ document.getElementById('sheet-form').addEventListener('submit', async (ev) => {
   submitEl.disabled = true;
   const label = submitEl.textContent;
   submitEl.textContent = returning ? 'Signing in...' : 'Creating...';
+  window.__vaultGateOpen();
   try {
     await firebase();
     const cred = returning
@@ -391,6 +416,7 @@ document.getElementById('sheet-form').addEventListener('submit', async (ev) => {
       : await fb.createUserWithEmailAndPassword(auth, email, pw);
     await afterAuth(cred.user, !returning);
   } catch (e) {
+    window.__vaultGateClose();
     const code = e && e.code;
     // Firebase collapses "wrong password" and "no such user" into one code, so
     // point people at the other tab when that is the likely cause.
