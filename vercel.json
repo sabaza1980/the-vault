@@ -65,6 +65,14 @@
       "destination": "/website/categories/:path*"
     },
     {
+      "source": "/brand/:path*",
+      "destination": "/website/brand/:path*"
+    },
+    {
+      "source": "/hero/:path*",
+      "destination": "/website/hero/:path*"
+    },
+    {
       "source": "/index.html",
       "destination": "/website/index.html"
     },

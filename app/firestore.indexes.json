@@ -50,5 +50,53 @@
     }
   ],
   "//2": "The default newest-first view (createdAt DESC) is deliberately NOT here. A single field is a single-field index, which Firestore builds on its own and rejects if declared — and one rejection aborts the whole deploy.",
-  "fieldOverrides": []
+  "//3": "These mirror what the project already has. They are here so a deploy stops offering to DELETE them: an empty list reads as 'this project should have none', and cards.addedAt is what orders every collection in the app.",
+  "fieldOverrides": [
+    {
+      "collectionGroup": "cards",
+      "fieldPath": "addedAt",
+      "ttl": false,
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "cards",
+      "fieldPath": "flagged",
+      "ttl": false,
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    }
+  ]
 }
