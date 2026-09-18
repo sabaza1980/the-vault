@@ -15,7 +15,7 @@ import { auth, googleProvider } from './firebase';
 
 const isNative = Capacitor.isNativePlatform();
 
-import { publishSession, adoptSession, endSession } from './session';
+import { publishSession, adoptSession, endSession, verifySession } from './session';
 
 const AuthContext = createContext(null);
 
@@ -28,11 +28,22 @@ export function AuthProvider({ children }) {
     // already signed in over there adopts it.
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u ?? null);
-      if (u) publishSession(u);
-      else adoptSession();   // 204 for a visitor who simply is not signed in
+      // Signed in here: check the shared session still exists. If it does not,
+      // somebody signed out on the other origin and this copy has to let go.
+      if (u) verifySession(u, () => firebaseSignOut(auth));
+      // Signed out here: maybe not over there. 204 for a plain visitor.
+      else adoptSession();
     });
     return unsubscribe;
   }, []);
+
+  // Every interactive sign-in publishes the shared session. The auth-state
+  // listener only ever verifies, so the two cannot fight over the cookie.
+  const afterSignIn = async (cred) => {
+    const u = cred?.user || auth.currentUser;
+    if (u) await publishSession(u);
+    return cred;
+  };
 
   const signInWithGoogle = async () => {
     if (isNative) {
@@ -42,9 +53,9 @@ export function AuthProvider({ children }) {
         result.credential?.idToken,
         result.credential?.accessToken
       );
-      return signInWithCredential(auth, credential);
+      return signInWithCredential(auth, credential).then(afterSignIn);
     }
-    return signInWithPopup(auth, googleProvider);
+    return signInWithPopup(auth, googleProvider).then(afterSignIn);
   };
   // Signing out has to end the shared session too, or the other origin would
   // sign this browser straight back in.
@@ -53,11 +64,11 @@ export function AuthProvider({ children }) {
     return firebaseSignOut(auth);
   };
   const signUpWithEmail = (email, password, displayName) =>
-    createUserWithEmailAndPassword(auth, email, password).then((cred) =>
-      displayName ? updateProfile(cred.user, { displayName }) : cred
-    );
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((cred) => (displayName ? updateProfile(cred.user, { displayName }).then(() => cred) : cred))
+      .then(afterSignIn);
   const signInWithEmail = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
+    signInWithEmailAndPassword(auth, email, password).then(afterSignIn);
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 

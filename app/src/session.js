@@ -20,13 +20,17 @@ const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 /** The native app has no shared-cookie problem: it is one origin, always. */
 const shared = () => !Capacitor.isNativePlatform();
 
+/** Set while a publish is in flight, so a verify does not race a fresh sign-in. */
+let publishing = null;
+
 /**
  * Publish this sign-in so the other origin picks it up.
- * Called whenever Firebase reports a signed-in user.
+ * Called from the interactive sign-in paths, not from the auth-state listener —
+ * the listener verifies instead, and the two must not fight.
  */
 export async function publishSession(user) {
   if (!shared() || !user) return;
-  try {
+  publishing = (async () => {
     const idToken = await user.getIdToken();
     await fetch(`${API_BASE}/api/session`, {
       method: "POST",
@@ -34,7 +38,31 @@ export async function publishSession(user) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ idToken }),
     });
-  } catch { /* the session stays local to this origin; nothing else breaks */ }
+  })();
+  try { await publishing; }
+  catch { /* the session stays local to this origin; nothing else breaks */ }
+  finally { publishing = null; }
+}
+
+/**
+ * The shared cookie is the authority on whether you are signed in.
+ *
+ * Firebase keeps a refresh token per origin, so signing out in the app did not
+ * touch the copy this site was holding — you logged out and the feed carried on
+ * greeting you by name. Deleting the shared session is now what ends it: every
+ * surface checks on load, and a surface whose shared session has gone signs
+ * itself out.
+ *
+ * Only a definite 204 counts. A network wobble means unknown, and unknown must
+ * never sign anybody out.
+ */
+export async function verifySession(user, onGone) {
+  if (!shared() || !user) return;
+  if (publishing) { try { await publishing; } catch { /* keep going */ } }
+  try {
+    const r = await fetch(`${API_BASE}/api/session`, { credentials: "include" });
+    if (r.status === 204) onGone();
+  } catch { /* unknown, so leave the session alone */ }
 }
 
 /**

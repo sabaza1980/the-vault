@@ -342,6 +342,10 @@ function humanError(code, msg) {
 
 // Everything that has to happen once someone is actually signed in.
 async function afterAuth(user, isNew) {
+  // Publish the shared session so the app knows about this sign-in too. The
+  // page that wants it sets this up; a page that does not simply has no hook.
+  if (window.__vaultAfterSignIn) { try { await window.__vaultAfterSignIn(user); } catch {} }
+
   if (isNew) {
     // Credit the collector whose profile brought this person in.
     try {

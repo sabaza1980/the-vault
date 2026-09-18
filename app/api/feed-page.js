@@ -327,12 +327,18 @@ ${authSheetHtml({
 
 <script>
 window.__VAULT_FEED = 1;
+// The sign-up sheet publishes the shared session after it signs somebody in,
+// so the app knows about it too.
+window.__vaultAfterSignIn = (u) => {
+  if (!u || !window.__vaultPublishSession) return;
+  return window.__vaultPublishSession(u);
+};
 </script>
 ${authSheetJs({ cfg, owner: null })}
 <script type="module">
 // Signed in, the band comes off and the add-a-card row takes its place. Done in
 // the browser so the served HTML is identical for everyone and stays cacheable.
-import { getAuth, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 const CFG2 = ${cfg ? JSON.stringify(cfg) : 'null'};
 const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
@@ -345,6 +351,8 @@ if (CFG2) {
   // session; arriving here already signed in on app.myvaults.io adopts it.
   // A 204 is the ordinary answer for a visitor who is not signed in — the feed
   // is public and none of this gates reading it.
+  // Called when someone signs in through the sheet on this page. The listener
+  // only verifies, so publishing and verifying never fight over the cookie.
   const publish = (u) => u.getIdToken()
     .then(idToken => fetch(API_BASE + '/api/session', {
       method: 'POST', credentials: 'include',
@@ -353,14 +361,26 @@ if (CFG2) {
     }))
     .catch(() => {});
 
+  window.__vaultPublishSession = publish;
+
   const adopt = () => fetch(API_BASE + '/api/session', { credentials: 'include' })
     .then(r => r.status === 200 ? r.json() : null)
     .then(j => j && j.customToken ? signInWithCustomToken(fbAuth, j.customToken) : null)
     .catch(() => {});
 
+  // The shared cookie is the authority. Firebase keeps a refresh token per
+  // origin, so signing out in the app never touched the copy this site holds —
+  // you logged out and the feed carried on greeting you by name. Now this page
+  // checks on load and lets go when the shared session has ended. Only a
+  // definite 204 counts; a network wobble means unknown, and unknown must never
+  // sign anybody out.
+  const verify = () => fetch(API_BASE + '/api/session', { credentials: 'include' })
+    .then(r => { if (r.status === 204) signOut(fbAuth); })
+    .catch(() => {});
+
   onAuthStateChanged(fbAuth, (u) => {
     document.body.classList.toggle('in', !!u);
-    if (u) publish(u); else adopt();
+    if (u) verify(); else adopt();
     if (u) {
       const n = (u.displayName || u.email || '?').trim().charAt(0).toUpperCase();
       for (const id of ['me-av', 'me-av2']) {
