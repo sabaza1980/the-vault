@@ -20,6 +20,7 @@ import {
   googleToken, fsGet, fsPatch, fsCommitTransform, uidFromIdToken, bearer, cors,
 } from './_fb.js';
 import { entryId } from './_feed.js';
+import { profilePublicOn, publicDisplayName } from './_fb.js';
 
 // Reactions were anonymous until this shipped, and everything tapped before it
 // was tapped under that promise. Only reactions from here on notify anybody;
@@ -67,8 +68,8 @@ async function notifyOwner({ token, ownerUid, actorUid, target, emoji }) {
   const actor = await fsGet(`users/${actorUid}`, token);
   const p = (actor && actor.profile_public) || {};
   // A handle is only worth showing when the profile it points at is live.
-  const handle = p.enabled === true && p.handle ? p.handle : null;
-  const name = p.display_name || (actor && actor.display_name) || 'A collector';
+  const handle = profilePublicOn(p) ? p.handle : null;
+  const name = publicDisplayName(p.display_name || (actor && actor.display_name), handle);
 
   let cardName = 'your vault';
   let cardImage = '';

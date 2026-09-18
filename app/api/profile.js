@@ -19,6 +19,8 @@ import {
   googleToken, fsGet, fsList, fsPatch, uidFromIdToken, bearer,
   handleError, cors,
 } from './_fb.js';
+import { backfillOwner } from './_feed.js';
+import { profilePublicOn, generateHandle, publicDisplayName } from './_fb.js';
 
 const HANDLE_GRACE_DAYS = 30;
 
@@ -56,6 +58,46 @@ async function uidForHandle(handle, token) {
   return doc.uid;
 }
 
+/**
+ * Give a collector a handle if they have none.
+ *
+ * Public profiles are opt-out, and a profile with no handle has no URL, so
+ * without this a new account would be "public" and unreachable. Assigned at
+ * sign-in, changeable any time from profile settings.
+ *
+ * The handle is neutral and random — never built from a display name or an
+ * email, because it becomes a public URL and some display names in this
+ * database are email addresses.
+ *
+ * Returns the existing handle unchanged if there already is one, so calling it
+ * on every sign-in is free after the first.
+ */
+export async function ensureHandle(uid, token) {
+  const user = await fsGet(`users/${uid}`, token);
+  const p = (user && user.profile_public) || {};
+  if (p.handle) return { handle: p.handle, created: false };
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const h = generateHandle();
+    if (handleError(h)) continue;
+    if (await uidForHandle(h, token)) continue;      // taken, try another
+
+    await fsPatch(`handles/${h}`, {
+      uid,
+      created_at: new Date().toISOString(),
+      released_at: null,
+      auto_assigned: true,
+    }, token);
+    await fsPatch(`users/${uid}`, {
+      profile_public: { ...p, handle: h, updated_at: new Date().toISOString() },
+    }, token);
+    return { handle: h, created: true };
+  }
+  // Eight collisions in a row is not bad luck, it is something wrong. Leave the
+  // account without a handle, which leaves it private, which is the safe end.
+  return { handle: null, created: false };
+}
+
 export async function loadPublicProfile(handleRaw, opts = {}) {
   const handle = String(handleRaw || '').trim().toLowerCase();
   if (handleError(handle)) return null;
@@ -66,7 +108,8 @@ export async function loadPublicProfile(handleRaw, opts = {}) {
 
   const user = await fsGet(`users/${uid}`, token);
   const p = (user && user.profile_public) || {};
-  if (p.enabled !== true) return null;           // opt-in, or it does not exist
+  // Opt-out: public unless switched off, and only once there is a handle.
+  if (!profilePublicOn(p)) return null;
 
   const all = await fsList(`users/${uid}/cards`, token);
 
@@ -122,7 +165,7 @@ export async function loadPublicProfile(handleRaw, opts = {}) {
   return {
     handle,
     uid,
-    displayName: p.display_name || user.display_name || handle,
+    displayName: publicDisplayName(p.display_name || user.display_name, handle),
     bio: typeof p.bio === 'string' ? p.bio.slice(0, 160) : '',
     showValues,
     cardScope: scope,
@@ -176,6 +219,18 @@ export default async function handler(req, res) {
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
   const token = await googleToken();
 
+  // Sign-in calls this and nothing else. Idempotent, and it must not be able to
+  // change any other setting, so it answers before the edit path is reached.
+  if (body.ensure_handle === true && Object.keys(body).length === 1) {
+    try {
+      const r = await ensureHandle(uid, token);
+      const u = await fsGet(`users/${uid}`, token);
+      return res.status(200).json({ ok: true, ...r, profile_public: (u && u.profile_public) || {} });
+    } catch (e) {
+      return res.status(500).json({ error: 'Could not assign a handle' });
+    }
+  }
+
   const user = await fsGet(`users/${uid}`, token);
   const current = (user && user.profile_public) || {};
   const next = { ...current };
@@ -227,15 +282,30 @@ export default async function handler(req, res) {
     next.featured_collection_ids = body.featured_collection_ids.map(String).slice(0, 20);
   }
 
-  // A profile cannot be switched on before there is a handle to reach it at.
-  if (next.enabled === true && !next.handle) {
-    return res.status(400).json({ error: 'Pick a handle before making your profile public' });
+  // A public profile needs a URL to be public at. Rather than refusing, assign
+  // one — the collector can change it whenever they like.
+  if (next.enabled !== false && !next.handle) {
+    const auto = await ensureHandle(uid, token);
+    if (auto.handle) next.handle = auto.handle;
+    else if (next.enabled === true) {
+      return res.status(500).json({ error: 'Could not assign a handle. Try again.' });
+    }
   }
 
   next.updated_at = new Date().toISOString();
 
+  const justWentPublic = profilePublicOn(next) && !profilePublicOn(current);
+
   try {
     await fsPatch(`users/${uid}`, { profile_public: next }, token);
+
+    // Switching a profile on should put the collector in the feed straight
+    // away, not leave them invisible until their next scan. After the save, so
+    // a failure here never costs them the setting they just chose.
+    if (justWentPublic) {
+      backfillOwner({ ownerUid: uid, token }).catch(() => {});
+    }
+
     return res.status(200).json({ ok: true, profile_public: next });
   } catch (e) {
     return res.status(500).json({ error: 'Could not save profile' });

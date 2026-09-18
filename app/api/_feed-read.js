@@ -13,7 +13,7 @@
  * drops anyone who is no longer public.
  */
 
-import { fsGet, fsQuery } from './_fb.js';
+import { fsGet, fsQuery, isProfilePublic } from './_fb.js';
 
 export const PAGE = 30;
 const MAX_PAGE = 60;
@@ -68,14 +68,14 @@ function ownerGate(token) {
     if (!uid) return false;
     if (seen.has(uid)) return seen.get(uid);
     const user = await fsGet(`users/${uid}`, token).catch(() => null);
-    const ok = !!(user && user.profile_public && user.profile_public.enabled === true);
+    const ok = isProfilePublic(user);
     seen.set(uid, ok);
     return ok;
   };
 }
 
 const matchesText = (e, q) =>
-  !q || [e.cardName, e.cardMeta, e.ownerName, e.ownerHandle]
+  !q || [e.cardName, e.cardMeta, e.ownerName, e.ownerHandle, ...(e.badges || [])]
     .some(v => String(v || '').toLowerCase().includes(q));
 
 /**
@@ -113,15 +113,22 @@ export async function readFeed({
   let exhausted = false;
   let lastRow = null;
 
-  // Up to three rounds. A feed where most owners have gone private should give
-  // up and return a short page rather than walk the whole collection.
-  for (let round = 0; round < 3 && out.length < limit && !exhausted; round++) {
+  // Free text is the one filter Firestore cannot do, so it runs over whatever
+  // the indexed query returned. That makes the window the whole story: at a
+  // normal page size it covers only the newest couple of dozen posts, and a
+  // search for a card added in March finds nothing while appearing to work.
+  // When there is a query, scan wide instead — far enough back to be useful at
+  // this scale, with a hard ceiling so one search cannot walk the collection.
+  const rounds   = text ? 8 : 3;
+  const perRound = text ? 300 : Math.ceil(limit * 1.6) + 10;
+
+  for (let round = 0; round < rounds && out.length < limit && !exhausted; round++) {
     const rows = await fsQuery({
       collection: 'feed',
       where,
       orderBy,
       startAfter,
-      limit: Math.ceil(limit * 1.6) + 10,
+      limit: perRound,
     }, token);
 
     if (!rows.length) { exhausted = true; break; }
@@ -141,6 +148,9 @@ export async function readFeed({
     }
   }
 
+  // A search page and a plain page walk the collection differently, so the
+  // cursor from one is meaningless to the other. Only hand one back when the
+  // next page will be the same kind of walk.
   const nextCursor = out.length >= limit && lastRow
     ? encodeCursor(byTop
         ? [Number(out[out.length - 1].score) || 0, out[out.length - 1].createdAt, out[out.length - 1].__name]

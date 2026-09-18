@@ -127,6 +127,17 @@ export default function AuthModal({ onClose }) {
               </span>
             </label>
           )}
+          {/* Profiles are public by default, so this is the moment to say so —
+              plainly, next to the button, not buried in the policy. GDPR asks
+              for the disclosure to be where the decision is made. */}
+          {mode === 'signup' && (
+            <p style={{ fontSize: 12, color: '#888', lineHeight: 1.6, margin: '2px 0 0' }}>
+              Your collection is <strong style={{ color: '#aaa' }}>public by default</strong> — cards you
+              add can be seen by other collectors and appear in the feed. What your cards are worth stays
+              private, and your email is never shown. You can make your collection private at any time in
+              profile settings.
+            </p>
+          )}
           {error && <p style={styles.error}>{error}</p>}
           {notice && <p style={styles.notice}>{notice}</p>}
           <button style={styles.submitBtn} type="submit" disabled={loading}>

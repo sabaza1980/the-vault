@@ -6,6 +6,10 @@
  * This makes shared vault/card links viewable without logging in.
  */
 
+// This file predates api/_fb.js and still carries its own JWT helper. The one
+// thing it must NOT keep its own copy of is the rule about who is public.
+import { profilePublicOn } from './_fb.js';
+
 // ── Google Auth JWT (same pattern as generate-article.js) ───────────────────
 function b64url(buf) {
   return Buffer.from(buf).toString('base64')
@@ -138,8 +142,7 @@ export default async function handler(req, res) {
       const r = await fetch(`${b}/users/${ownerUid}`, { headers: { Authorization: `Bearer ${tok}` } });
       if (!r.ok) return false;
       const u = docToCard(await r.json());
-      const pp = u.profile_public || {};
-      return pp.enabled === true || u.share_vault === true;
+      return profilePublicOn(u.profile_public) || u.share_vault === true;
     } catch { return false; }
   }
 

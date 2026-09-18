@@ -325,6 +325,68 @@ export const RESERVED_HANDLES = new Set([
   'thevault', 'the-vault', 'myvaults', 'vault', 'breakers', 'pj', 'toppsy',
 ]);
 
+/**
+ * Is this collector's vault public?
+ *
+ * ONE definition, used by every surface — the profile page, the feed write, the
+ * feed read, reaction notifications, shared cards. It used to be spelled out
+ * separately in six files, which is how a privacy rule quietly drifts apart.
+ *
+ * Public profiles are opt-OUT: a collector is public unless they have turned it
+ * off. Two conditions:
+ *
+ *   1. `enabled` is not false. Absent means public; only an explicit false,
+ *      which a collector can only produce by switching it off themselves,
+ *      keeps a vault private.
+ *   2. There is a handle. A profile with no handle has no URL, so there is
+ *      nothing to be public AT. New accounts are given one at sign-up.
+ *
+ * The second condition is what keeps this safe to deploy: an existing account
+ * that never claimed a handle does not become public the moment this ships.
+ */
+export function isProfilePublic(user) {
+  const p = (user && user.profile_public) || {};
+  if (p.enabled === false) return false;
+  return typeof p.handle === 'string' && p.handle.length > 0;
+}
+
+/** The same rule, when you already hold the profile_public object. */
+export function profilePublicOn(p) {
+  return isProfilePublic({ profile_public: p });
+}
+
+/**
+ * A display name safe to publish.
+ *
+ * Some accounts have an email address as their display name — from a sign-up
+ * flow that defaulted to it — and the public profile and every feed entry show
+ * that name. Publishing it would hand out an address the collector only gave us
+ * to sign in with, and it is the kind of thing nobody notices until it is
+ * indexed.
+ *
+ * Anything that looks like an address is dropped rather than masked: a partial
+ * address is still an address. Falls back to the handle, then to a neutral
+ * label, so a card always has somebody's name under it.
+ */
+export function publicDisplayName(name, handle) {
+  const n = String(name || '').trim();
+  const looksLikeEmail = /\S+@\S+\.\S+/.test(n);
+  if (n && !looksLikeEmail) return n.slice(0, 40);
+  return handle ? `@${handle}` : 'A collector';
+}
+
+/**
+ * A neutral auto-assigned handle.
+ *
+ * Never derived from a name or an email. Some display names in this database
+ * ARE email addresses, and a handle becomes a public URL — deriving one would
+ * publish an address that the collector only ever gave us to sign in with.
+ */
+export function generateHandle() {
+  const n = Math.random().toString(36).slice(2, 7).replace(/[^a-z0-9]/g, '0');
+  return `collector${n}`.slice(0, 20);
+}
+
 export function handleError(handle) {
   if (typeof handle !== 'string') return 'Handle is required';
   const h = handle.trim().toLowerCase();

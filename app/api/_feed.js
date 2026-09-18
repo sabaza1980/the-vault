@@ -20,7 +20,7 @@
  *     does not need a second read per row.
  */
 
-import { googleToken, fsGet, fsPatch, fsBase, toFsFields, getServiceAccount } from './_fb.js';
+import { googleToken, fsGet, fsList, fsPatch, fsBase, profilePublicOn, publicDisplayName } from './_fb.js';
 
 /** Deterministic, so publishing twice updates rather than duplicates. */
 export function entryId(ownerUid, cardId) {
@@ -82,7 +82,7 @@ function metaFor(card) {
  * quietly stops appearing, which is not what they asked for when they starred.
  */
 export function cardIsPublic(card, profilePublic) {
-  if (!profilePublic || profilePublic.enabled !== true) return false;
+  if (!profilePublicOn(profilePublic)) return false;
   return typeof card.imageUrl === 'string' && card.imageUrl.startsWith('https://');
 }
 
@@ -94,8 +94,8 @@ export function buildEntry({ ownerUid, profilePublic, ownerFallbackName, card })
   const p = profilePublic || {};
   return {
     ownerUid,
-    ownerHandle: p.enabled === true && p.handle ? p.handle : null,
-    ownerName: p.display_name || ownerFallbackName || 'A collector',
+    ownerHandle: profilePublicOn(p) ? p.handle : null,
+    ownerName: publicDisplayName(p.display_name || ownerFallbackName, p.handle),
 
     cardId: String(card.id),
     cardImage: card.imageUrl,
@@ -198,4 +198,46 @@ export async function underPostRate(ownerUid, token) {
   if (count >= POSTS_PER_HOUR) return false;
   await fsPatch(`users/${ownerUid}`, { feed_rate: { hour, count: count + 1 } }, token).catch(() => {});
   return true;
+}
+
+/**
+ * Backfill one collector, used when a profile is switched on.
+ *
+ * A collector who goes public and then sees nothing of theirs in the feed until
+ * their next scan has no reason to believe the switch did anything. This posts
+ * their most recent adds so they exist the moment they opt in.
+ *
+ * Bounded deliberately: the newest `limit` cards, not the whole vault. Someone
+ * with two thousand cards should not flood the feed the instant they go public,
+ * and the launch backfill script is the place for a full seed.
+ *
+ * Best-effort by design. It runs after the profile has already been saved, so a
+ * failure here costs the collector some feed presence, never their setting.
+ */
+export async function backfillOwner({ ownerUid, token, limit = 20 }) {
+  token = token || await googleToken();
+  if (!(await feedEnabled(token))) return { written: 0, reason: 'feed_disabled' };
+
+  const user = await fsGet(`users/${ownerUid}`, token);
+  const p = (user && user.profile_public) || {};
+  if (!profilePublicOn(p)) return { written: 0, reason: 'not_public' };
+
+  const all = await fsList(`users/${ownerUid}/cards`, token, 2000);
+  const cards = [...all]
+    .sort((a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || '')))
+    .slice(0, limit);
+
+  let written = 0;
+  for (const card of cards) {
+    if (!cardIsPublic(card, p)) continue;
+    const id = entryId(ownerUid, card.id);
+    const existing = await fsGet(`feed/${id}`, token).catch(() => null);
+    const entry = buildEntry({ ownerUid, profilePublic: p, ownerFallbackName: user.display_name, card });
+    // Counts, moderation state and the original timestamp belong to the entry's
+    // own life. Coming back from a spell of being private must not reset them.
+    if (!existing) Object.assign(entry, { heart: 0, fire: 0, money: 0, commentCount: 0, score: 0 });
+    else { delete entry.hidden; delete entry.createdAt; }
+    try { await fsPatch(`feed/${id}`, entry, token); written++; } catch { /* best effort */ }
+  }
+  return { written };
 }

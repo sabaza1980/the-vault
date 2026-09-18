@@ -7,7 +7,7 @@ const API_BASE = Capacitor.isNativePlatform() ? "https://app.myvaults.io" : "";
 const PROFILE_BASE = "https://www.myvaults.io/u/";
 
 /**
- * Public profile settings: claim a handle, write a bio, choose whether values
+ * Public profile settings: change your handle, write a bio, choose whether values
  * show, and switch the profile on.
  *
  * The profile is off until the collector turns it on, and it cannot be turned
@@ -24,7 +24,9 @@ export default function PublicProfileSettings({ user, onClose }) {
   const [savedHandle, setSavedHandle] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [enabled, setEnabled] = useState(false);
+  // Opt-out: public unless the collector switched it off. Starts true so the
+  // switch never flickers from off to on while settings load.
+  const [enabled, setEnabled] = useState(true);
   const [showValues, setShowValues] = useState(false);
   const [cardScope, setCardScope] = useState("all");
 
@@ -49,7 +51,7 @@ export default function PublicProfileSettings({ user, onClose }) {
         setSavedHandle(p.handle || "");
         setDisplayName(p.display_name || user.displayName || "");
         setBio(p.bio || "");
-        setEnabled(p.enabled === true);
+        setEnabled(p.enabled !== false);
         setShowValues(p.show_values === true);
         setCardScope(p.card_scope === "favourites" ? "favourites" : "all");
       } catch {
@@ -229,9 +231,10 @@ export default function PublicProfileSettings({ user, onClose }) {
 
             <Row
               title="Profile is public"
-              sub={savedHandle ? "Anyone with the link can see your favourites and react to them." : "Claim a handle first."}
+              sub={enabled
+                ? "On by default. Your collection is visible to anyone with the link — switch this off to take it down."
+                : "Your collection is private. Nobody can open your profile and none of your cards appear in the feed."}
               on={enabled}
-              disabled={!savedHandle}
               onChange={v => { setEnabled(v); save({ enabled: v }); }}
             />
 
@@ -239,8 +242,11 @@ export default function PublicProfileSettings({ user, onClose }) {
                 that means at the moment the switch is thrown rather than burying
                 it in the policy. */}
             <div style={{ fontSize: 11, color: "var(--tg)", lineHeight: 1.6, marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--b)" }}>
-              A public profile can be opened by anyone with the link, without an account, and may be
-              cached or screenshotted. Your email is never shown. Turning it off takes the page down.{" "}
+              Profiles are public by default. Yours can be opened by anyone with the link, without an
+              account, and may be cached or screenshotted. Your cards appear in the collectors' feed.
+              Your email address is never shown — not on your profile, not in the feed, and not in your
+              handle. What a card is worth stays hidden unless you turn values on above. Switching this
+              off takes the page down and removes your cards from the feed.{" "}
               <a href="https://myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer"
                  style={{ color: "#ff6b35", textDecoration: "none", fontWeight: 600 }}>
                 How we handle your data

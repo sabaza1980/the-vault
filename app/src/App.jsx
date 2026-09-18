@@ -2331,12 +2331,35 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
 
   useEffect(() => { refreshPublicProfile(); }, [refreshPublicProfile]);
 
+  // Profiles are public by default, and a profile with no handle has no URL to
+  // be public at. Ask the API to assign one on sign-in — it returns the existing
+  // handle untouched after the first time, so this is free on every later run.
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    (async () => {
+      try {
+        const token = await user.getIdToken();
+        const r = await fetch(`${API_BASE}/api/profile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ensure_handle: true }),
+        });
+        if (!r.ok || !alive) return;
+        const j = await r.json();
+        if (j.created) refreshPublicProfile();   // only re-read when it changed
+      } catch { /* a missing handle costs discoverability, never the session */ }
+    })();
+    return () => { alive = false; };
+  }, [user, refreshPublicProfile]);
+
   // The header Share button shares the collector's public profile page. If there
   // is no handle yet, or the profile is switched off, there is nothing to share,
   // so it opens the place where they can set that up instead.
   const shareProfile = useCallback(async () => {
     const handle = publicProfile?.handle;
-    if (!handle || publicProfile?.enabled !== true) { setShowProfileSettings(true); return; }
+    // Same rule the API uses: public unless switched off, once there is a handle.
+    if (!handle || publicProfile?.enabled === false) { setShowProfileSettings(true); return; }
     const url = `https://www.myvaults.io/u/${handle}`;
     const text = "My vault on The Vault";
     if (navigator.share) {
@@ -2814,7 +2837,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             {cards.length > 0 && !isMobileUI && (
               <button
                 onClick={shareProfile}
-                title={publicProfile?.enabled && publicProfile?.handle
+                title={publicProfile?.enabled !== false && publicProfile?.handle
                   ? `Share myvaults.io/u/${publicProfile.handle}`
                   : "Set up your public profile"}
                 style={{
