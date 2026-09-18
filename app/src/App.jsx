@@ -9,8 +9,9 @@ import CollectionsView, { CollectionCreatorModal, CollectionDetailView } from ".
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
-import { SELL_ENABLED, BREAKS_ENABLED, BULK_SCAN_ENABLED } from "./featureFlags";
+import { SELL_ENABLED, BREAKS_ENABLED, BULK_SCAN_ENABLED, COLLECTIONS_ENABLED } from "./featureFlags";
 import { publishToFeed } from "./feed";
+import FeedView from "./FeedView";
 import ShareModal from "./ShareModal";
 import CardDetailModal from "./CardDetailModal";
 import BottomTabBar from "./BottomTabBar";
@@ -1785,6 +1786,10 @@ export default function App() {
   const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
   const [detailCard, setDetailCard] = useState(null); // WP-3: card open in CardDetailModal (strip taps)
   const [scanMenuOpen, setScanMenuOpen] = useState(false); // WP-1: + tab → camera/upload chooser
+  // The app opens on the feed. Your own vault is one tap away under the
+  // second tab — the thing you come back for is other collectors, not a
+  // list you already know by heart.
+  const [tab, setTab] = useState("feed");   // "feed" | "vault"
   // WP-2: Breaks is a desktop-web-only feature. Track "mobile" (native app OR narrow
   // viewport) reactively so resizing a desktop browser narrow also hides Breaks.
   const [isMobileUI, setIsMobileUI] = useState(() => isNativeMobile());
@@ -2758,21 +2763,32 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · Live pricing</p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, minWidth: 0 }}>
+            {/* Desktop has no bottom tab bar, so the switch between the feed and
+                your own vault lives here. Same two places, same two names. */}
             {user && !isMobileUI && (
-              <button
-                onClick={() => setShowCollections(v => !v)}
-                title="My Collections"
-                style={{
-                  background: showCollections ? "#ff6b3518" : "var(--gbg)",
-                  border: `1px solid ${showCollections ? "#ff6b3550" : "var(--gb)"}`,
-                  borderRadius: 20, padding: "5px 12px",
-                  color: showCollections ? "#ff6b35" : "var(--gc)",
-                  fontSize: 11, fontWeight: 700, cursor: "pointer",
-                  letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0
-                }}
-              >
-                <span style={{ fontSize: 13 }}>📚</span> Collections
-              </button>
+              <div role="group" aria-label="View" style={{
+                display: "flex", gap: 3, background: "var(--gbg)", border: "1px solid var(--gb)",
+                borderRadius: 20, padding: 3, flexShrink: 0,
+              }}>
+                {[["feed", "Feed"], ["vault", "My Vault"]].map(([key, label]) => {
+                  const on = tab === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setTab(key)}
+                      aria-pressed={on}
+                      style={{
+                        background: on ? "#ff6b3518" : "transparent",
+                        border: `1px solid ${on ? "#ff6b3550" : "transparent"}`,
+                        borderRadius: 18, padding: "5px 12px",
+                        color: on ? "#ff6b35" : "var(--gc)",
+                        fontSize: 11, fontWeight: 700, cursor: "pointer",
+                        letterSpacing: 0.3, whiteSpace: "nowrap",
+                      }}
+                    >{label}</button>
+                  );
+                })}
+              </div>
             )}
             {/* WP-2: Breaks was desktop-web only. Now parked entirely while the
                 product focuses on collecting and sharing — reachable at
@@ -3167,8 +3183,24 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         {/* Non-logged-in landing page */}
         {!user && <LandingPage onSignUp={() => setShowAuth(true)} />}
 
-        {/* Logged-in content */}
-        {user && (<>
+        {/* The feed: what the app opens on. */}
+        {user && tab === "feed" && (
+          <FeedView
+            user={user}
+            onOpenCard={(entry) => {
+              // A card of your own opens the detail you already have. Somebody
+              // else's opens their profile, where it lives.
+              const own = cards.find(c => String(c.id) === String(entry.cardId));
+              if (own) setDetailCard(own);
+              else if (entry.ownerHandle) window.open(`https://www.myvaults.io/u/${entry.ownerHandle}`, "_blank", "noopener");
+            }}
+            onOpenCollector={(handle) => window.open(`https://www.myvaults.io/u/${handle}`, "_blank", "noopener")}
+            onSignInNeeded={() => setShowAuth(true)}
+          />
+        )}
+
+        {/* Your own vault — the Collections tab. */}
+        {user && tab === "vault" && (<>
         {top10.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 9, color: "var(--tg)", textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
@@ -3851,7 +3883,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         />
       )}
       {/* ── Collections overlay ─────────────────────────────────────── */}
-      {showCollections && (
+      {COLLECTIONS_ENABLED && showCollections && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 500,
           background: 'var(--bg)', overflowY: 'auto',
@@ -4010,10 +4042,10 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       )}
       {isMobileUI && (
         <BottomTabBar
-          active={showChat ? "ai" : showCollections ? "collections" : profileMenuOpen ? "profile" : "home"}
-          onHome={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); }}
-          onCollections={() => { setShowChat(false); setProfileMenuOpen(false); setScanMenuOpen(false); setShowCollections(true); }}
-          onScan={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(true); }}
+          active={showChat ? "ai" : profileMenuOpen ? "profile" : tab === "vault" ? "collections" : "home"}
+          onHome={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); setTab("feed"); }}
+          onCollections={() => { setShowChat(false); setProfileMenuOpen(false); setScanMenuOpen(false); setTab("vault"); }}
+          onScan={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setTab("vault"); setScanMenuOpen(true); }}
           onAskAI={() => { setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); setShowChat(true); }}
           onProfile={() => { setShowChat(false); setShowCollections(false); setScanMenuOpen(false); if (user) { setProfileMenuOpen(true); } else { setShowAuth(true); } }}
         />

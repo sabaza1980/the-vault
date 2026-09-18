@@ -10,6 +10,7 @@
  *   ?sell=1      or  #sell       eBay listing, bundle sell, listing badges
  *   ?breakers=1  or  #breakers   the Breakers hub
  *   ?bulk=1      or  #bulk       multi-card scanning in one go
+ *   ?collections=1 or #collections  the saved-collections builder
  *
  * Read once at module load. These do not change during a session.
  */
@@ -32,3 +33,13 @@ export const BREAKS_ENABLED = flag("breakers");
  * intact so this is one flag away from coming back.
  */
 export const BULK_SCAN_ENABLED = flag("bulk");
+
+/**
+ * The saved-collections builder.
+ *
+ * Off while the second tab becomes the way into your own vault. Grouping cards
+ * into named sets is a filing tool, and nobody had asked for it yet; parking it
+ * keeps one meaning for "Collections" instead of two. The whole feature is
+ * intact behind `?collections=1`.
+ */
+export const COLLECTIONS_ENABLED = flag("collections");

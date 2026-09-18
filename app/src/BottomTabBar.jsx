@@ -1,6 +1,11 @@
 // Mobile bottom tab bar (WP-1). Rendered only on mobile (native app + mobile web).
-// Five slots: Home · Collections · (+) Scan · Ask AI · Profile. The center (+) is a
+// Five slots: Feed · My Vault · (+) Scan · Ask AI · Profile. The center (+) is a
 // raised accent button that triggers the camera/scan flow (most frequent action).
+//
+// Five is the practical maximum on a phone, so the feed took the slot the
+// saved-collections builder had. "Collections" now means your own vault, which
+// is what people reach for when they tap it. The `active` keys are unchanged so
+// nothing that sets them had to move.
 //
 // Self-contained: takes an `active` key + handlers, no dependency on App internals.
 
@@ -46,12 +51,12 @@ export default function BottomTabBar({ active, onHome, onCollections, onScan, on
         boxShadow: "0 -4px 24px rgba(0,0,0,0.18)",
       }}
     >
-      <TabButton label="Home" active={active === "home"} onClick={onHome}>
-        <Icon d={<><path d="M3 11l9-8 9 8" /><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" /></>} />
+      <TabButton label="Feed" active={active === "home"} onClick={onHome}>
+        <Icon d={<><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M6 20h12" /><path d="M8.5 9.5h7" /></>} />
       </TabButton>
 
-      <TabButton label="Collections" active={active === "collections"} onClick={onCollections}>
-        <Icon d={<><path d="M12 3l9 5-9 5-9-5 9-5z" /><path d="M3 13l9 5 9-5" /></>} />
+      <TabButton label="My Vault" active={active === "collections"} onClick={onCollections}>
+        <Icon d={<><path d="M12 2.5 20.5 6.5v6.8c0 4.3-3.4 7.3-8.5 8.6-5.1-1.3-8.5-4.3-8.5-8.6V6.5z" /><path d="M12 9v4" /><circle cx="12" cy="16.2" r="0.6" /></>} />
       </TabButton>
 
       {/* Center raised scan / add button */}
