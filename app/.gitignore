@@ -43,3 +43,6 @@ dist-ssr
 
 .vercel
 .env*.local
+
+# Local-only service-account key (never commit)
+.secrets/

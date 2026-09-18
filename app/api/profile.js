@@ -56,7 +56,7 @@ async function uidForHandle(handle, token) {
   return doc.uid;
 }
 
-export async function loadPublicProfile(handleRaw) {
+export async function loadPublicProfile(handleRaw, opts = {}) {
   const handle = String(handleRaw || '').trim().toLowerCase();
   if (handleError(handle)) return null;
 
@@ -68,7 +68,7 @@ export async function loadPublicProfile(handleRaw) {
   const p = (user && user.profile_public) || {};
   if (p.enabled !== true) return null;           // opt-in, or it does not exist
 
-  const all = await fsList(`users/${uid}/cards`, token, 300);
+  const all = await fsList(`users/${uid}/cards`, token);
 
   // A profile shows the whole collection unless the owner narrows it. Showing
   // favourites by default made a profile look broken for anyone who had not
@@ -81,7 +81,7 @@ export async function loadPublicProfile(handleRaw) {
     // Featured collections, when the owner has picked any, widen it.
     const featured = Array.isArray(p.featured_collection_ids) ? p.featured_collection_ids : [];
     if (featured.length) {
-      const cols = await fsList(`users/${uid}/collections`, token, 100);
+      const cols = await fsList(`users/${uid}/collections`, token, 500);
       const wanted = new Set();
       for (const col of cols) {
         if (!featured.includes(col.id)) continue;
@@ -98,6 +98,26 @@ export async function loadPublicProfile(handleRaw) {
   // Favourites first either way, so the cards the owner cares about lead.
   cards = [...cards].sort((a, b) => (b.isFavourite === true) - (a.isFavourite === true));
 
+  // The page renders a first slice and the client fetches the rest. Reading
+  // every card is cheap; turning thousands of them into HTML in one response is
+  // not, and neither is asking a phone to parse it.
+  // Category counts are computed over the whole collection, not the slice, so
+  // the filter chips tell the truth even when only a first page is rendered.
+  const catCounts = new Map();
+  for (const c of cards) {
+    const k = c.cardCategory || 'Other';
+    catCounts.set(k, (catCounts.get(k) || 0) + 1);
+  }
+  const categories = [...catCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+  const total = cards.length;
+  const offset = Math.max(0, Number(opts.offset) || 0);
+  const limit = opts.limit === undefined
+    ? total
+    : Math.max(0, Math.min(500, Number(opts.limit) || 0));
+  const slice = cards.slice(offset, offset + limit);
+
   const showValues = p.show_values === true;
   return {
     handle,
@@ -106,9 +126,13 @@ export async function loadPublicProfile(handleRaw) {
     bio: typeof p.bio === 'string' ? p.bio.slice(0, 160) : '',
     showValues,
     cardScope: scope,
-    cardCount: cards.length,
-    totalCards: all.length,
-    cards: cards.map(c => publicCard(c, showValues)),
+    categories,
+    cardCount: total,                       // how many this profile shows
+    totalCards: all.length,                 // how many are in the vault
+    offset,
+    returned: slice.length,
+    hasMore: offset + slice.length < total,
+    cards: slice.map(c => publicCard(c, showValues)),
   };
 }
 

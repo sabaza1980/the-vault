@@ -51,7 +51,7 @@
       "Favourites and set tracking",
       "Ask the AI about a card",
       "eBay sold comps",
-      "Bulk card upload"
+      "Public collector profiles"
     ],
     "screenshot": "https://www.myvaults.io/og-image.jpg",
     "aggregateRating": {
@@ -64,7 +64,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700;900&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --orange: #ff6b35;
@@ -108,12 +108,17 @@
     }
 
     .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 26px; letter-spacing: 3px;
-      background: linear-gradient(135deg, var(--orange), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      text-decoration: none;
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; line-height: 1;
+    }
+    .brand-mark { height: 40px; width: auto; display: block; }
+    .brand-word {
+      font-family: 'Playfair Display', Georgia, serif; font-weight: 900;
+      font-size: 24px; letter-spacing: 0.5px; color: #fff; white-space: nowrap;
+    }
+    .brand-word span {
+      background: linear-gradient(90deg, #FF6B35, #F0C040);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
 
     .nav-links {
@@ -146,10 +151,20 @@
 
     .hero-bg {
       position: absolute; inset: 0; z-index: 0;
+      background: var(--dark) image-set(url('hero/hero-desktop.webp') type('image/webp'), url('hero/hero-desktop.jpg') type('image/jpeg')) center / cover no-repeat;
+    }
+    /* keeps the centre dark for the text and melts the edges into the page */
+    .hero-bg::after {
+      content: ''; position: absolute; inset: 0;
       background:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,53,0.12) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(240,192,64,0.06) 0%, transparent 60%),
-        linear-gradient(180deg, var(--dark) 0%, var(--dark2) 100%);
+        radial-gradient(ellipse 42% 60% at 50% 52%, rgba(7,7,15,0.82) 0%, rgba(7,7,15,0.45) 55%, transparent 100%),
+        linear-gradient(180deg, rgba(7,7,15,0.7) 0%, transparent 18%, transparent 78%, var(--dark) 100%);
+    }
+    @media (max-width: 768px) {
+      .hero-bg { background-image: image-set(url('hero/hero-mobile.webp') type('image/webp'), url('hero/hero-mobile.jpg') type('image/jpeg')); background-size: 100% auto; background-position: center top; }
+      #hero { padding-top: 45vw; min-height: auto; }
+      .hero-bg::after { background:
+        linear-gradient(180deg, rgba(7,7,15,0.35) 0%, transparent 10%); }
     }
 
     /* Diagonal stripe accent */
@@ -194,7 +209,8 @@
 
     .hero-sub {
       font-size: clamp(16px, 2.5vw, 22px);
-      color: #777; line-height: 1.6; margin: 24px auto 40px;
+      color: #b9b9c6; line-height: 1.6; margin: 24px auto 40px;
+      text-shadow: 0 2px 16px rgba(7,7,15,0.9);
       max-width: 560px; font-weight: 400;
       animation: fadeUp 0.6s 0.2s ease both;
     }
@@ -503,12 +519,9 @@
       flex-wrap: wrap; gap: 16px;
     }
 
-    .footer-logo {
-      font-family: 'Bebas Neue', sans-serif; font-size: 20px;
-      letter-spacing: 3px;
-      background: linear-gradient(135deg, var(--orange), var(--gold));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
+    .footer-logo { display: flex; align-items: center; gap: 10px; }
+    .footer-logo .brand-mark { height: 26px; }
+    .footer-logo .brand-word { font-size: 18px; }
 
     .footer-copy { font-size: 12px; color: #2a2a3a; }
 
@@ -531,6 +544,16 @@
       .features-grid { grid-template-columns: 1fr; }
       .hero-stats { gap: 28px; }
     }
+    @media (max-width: 600px) {
+      #hero { padding: 250px 20px 64px; min-height: auto; }
+      .hero-bg { background-size: 165% auto; }
+      .hero-eyebrow { font-size: 10px; letter-spacing: 1.5px; padding: 6px 12px; white-space: nowrap; background: rgba(7,7,15,0.75); }
+      .hero-stats { gap: 0; justify-content: space-between; flex-wrap: nowrap; margin-top: 40px; width: 100%;
+        background: rgba(7,7,15,0.72); border: 1px solid #ffffff10; border-radius: 12px; padding: 12px 8px; backdrop-filter: blur(6px); }
+      .hero-stat { flex: 1; }
+      .hero-stat-num { font-size: 26px; letter-spacing: 1px; }
+      .hero-stat-label { font-size: 8.5px; letter-spacing: 1px; }
+    }
   </style>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8412353811123862" crossorigin="anonymous"></script>
 </head>
@@ -538,7 +561,7 @@
 
   <!-- NAV -->
   <nav>
-    <a href="#" class="nav-logo">� The Vault</a>
+    <a href="#" class="nav-logo" aria-label="The Vault home"><img class="brand-mark" src="/brand/vault-mark_fullcolour_transparent.svg" alt="" width="32" height="34" /><span class="brand-word">THE <span>VAULT</span></span></a>
     <ul class="nav-links">
       <li><a href="#screens">Inside The App</a></li>
       <li><a href="#collections">Collections</a></li>
@@ -551,7 +574,7 @@
   <!-- HERO -->
   <section id="hero">
     <div class="hero-bg"></div>
-    <div class="hero-stripe"></div>
+    
     <div class="hero-content">
       <div class="hero-eyebrow">For people who actually love their cards</div>
       <h1 class="hero-title">
@@ -856,7 +879,7 @@
         <div class="feature-number">01</div>
         <span class="feature-emoji">🤖</span>
         <div class="feature-title">AI Card Scanner</div>
-        <p class="feature-desc">Point your camera at any card. The AI reads the exact set, parallel, serial number and condition straight off the image, so cataloguing a stack takes minutes instead of an evening.</p>
+        <p class="feature-desc">Point your camera at any card. The AI reads the exact set, parallel, serial number and condition straight off the image, so a card is catalogued properly in seconds rather than typed in by hand.</p>
       </div>
       <div class="feature-card">
         <div class="feature-number">02</div>
@@ -1088,7 +1111,7 @@ for (var i = 0; i < formContainers.length; i++) {
 
   <!-- FOOTER -->
   <footer>
-    <div class="footer-logo">🏀 The Vault</div>
+    <div class="footer-logo"><img class="brand-mark" src="/brand/vault-mark_fullcolour_transparent.svg" alt="" width="24" height="26" /><span class="brand-word">THE <span>VAULT</span></span></div>
     <div style="display:flex;gap:20px;flex-wrap:wrap;">
       <a href="/privacy-policy" style="font-size:12px;color:#555;text-decoration:none;" onmouseover="this.style.color='#ff6b35'" onmouseout="this.style.color='#555'">Privacy Policy</a>
       <a href="/terms" style="font-size:12px;color:#555;text-decoration:none;" onmouseover="this.style.color='#ff6b35'" onmouseout="this.style.color='#555'">Terms &amp; Conditions</a>

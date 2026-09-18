@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from './AuthContext';
 
 export default function AuthModal({ onClose }) {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -10,6 +10,7 @@ export default function AuthModal({ onClose }) {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState('');
 
   const handleGoogleSignIn = async () => {
     setError('');
@@ -19,7 +20,8 @@ export default function AuthModal({ onClose }) {
       onClose();
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        setError(`${err.message ?? 'Something went wrong'} [${err.code ?? 'unknown'}]`);
+        console.warn('[auth] google', err.code, err.message);
+        setError(friendlyError(err.code));
       }
     } finally {
       setLoading(false);
@@ -29,6 +31,7 @@ export default function AuthModal({ onClose }) {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
     try {
       if (mode === 'signup') {
@@ -43,7 +46,8 @@ export default function AuthModal({ onClose }) {
       }
       onClose();
     } catch (err) {
-      setError(friendlyError(err.code) + ` [${err.code}]`);
+      console.warn('[auth] email', err.code, err.message);
+      setError(friendlyError(err.code));
     } finally {
       setLoading(false);
     }
@@ -71,7 +75,11 @@ export default function AuthModal({ onClose }) {
           <a href="https://myvaults.io/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8' }}>Privacy Policy</a>
         </p>
 
-        <div style={styles.divider}><span>or</span></div>
+        <div style={styles.divider}>
+          <span style={styles.dividerLine} />
+          <span>or</span>
+          <span style={styles.dividerLine} />
+        </div>
 
         <form onSubmit={handleEmailSubmit} style={styles.form}>
           {mode === 'signup' && (
@@ -120,10 +128,32 @@ export default function AuthModal({ onClose }) {
             </label>
           )}
           {error && <p style={styles.error}>{error}</p>}
+          {notice && <p style={styles.notice}>{notice}</p>}
           <button style={styles.submitBtn} type="submit" disabled={loading}>
             {loading ? 'Please wait…' : mode === 'signin' ? 'Sign In' : 'Create Account'}
           </button>
         </form>
+
+        {mode === 'signin' && (
+          <button
+            type="button"
+            style={styles.forgotBtn}
+            disabled={loading}
+            onClick={async () => {
+              setError(''); setNotice('');
+              if (!email.trim()) { setError('Enter your email above first.'); return; }
+              try {
+                await resetPassword(email.trim());
+                setNotice('Reset link sent. Check your email.');
+              } catch (err) {
+                console.warn('[auth] reset', err.code, err.message);
+                setError(friendlyError(err.code));
+              }
+            }}
+          >
+            Forgot your password?
+          </button>
+        )}
 
         <p style={styles.toggle}>
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
@@ -145,6 +175,11 @@ function friendlyError(code) {
     case 'auth/wrong-password':
     case 'auth/invalid-credential': return 'Incorrect email or password.';
     case 'auth/too-many-requests': return 'Too many attempts. Try again later.';
+    case 'auth/operation-not-allowed': return 'Email sign-in is switched off for this app right now.';
+    case 'auth/network-request-failed': return 'No connection. Check your network and try again.';
+    case 'auth/missing-password': return 'Enter a password.';
+    case 'auth/cancelled-popup-request':
+    case 'auth/popup-blocked': return 'Your browser blocked the popup. Allow it, or use email below.';
     case 'auth/popup-closed-by-user': return 'Sign-in popup was closed.';
     default: return 'Something went wrong. Please try again.';
   }
@@ -154,11 +189,16 @@ const styles = {
   overlay: {
     position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
     display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+    padding: 16, boxSizing: 'border-box', overflowY: 'auto',
   },
   modal: {
     background: '#1a1a2e', border: '1px solid #333', borderRadius: 12,
     padding: '32px 28px', width: '100%', maxWidth: 380, position: 'relative',
     boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+    // Sign-up mode is tall: name, email, password, terms, button, toggle. With
+    // the overlay centring it and no cap, anything past the viewport was
+    // clipped at both ends with no way to scroll to the submit button.
+    maxHeight: 'calc(100dvh - 32px)', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
   },
   closeBtn: {
     position: 'absolute', top: 12, right: 16, background: 'none', border: 'none',
@@ -176,15 +216,19 @@ const styles = {
   divider: {
     display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0',
     color: '#666', fontSize: 13,
-    '::before': { content: '""', flex: 1, borderTop: '1px solid #333' },
-    '::after':  { content: '""', flex: 1, borderTop: '1px solid #333' },
   },
+  dividerLine: { flex: 1, height: 1, background: '#333' },
   form: { display: 'flex', flexDirection: 'column', gap: 12 },
   input: {
     padding: '10px 14px', background: '#0f0f1a', border: '1px solid #333',
     borderRadius: 8, color: '#fff', fontSize: 15, outline: 'none',
   },
   error: { margin: 0, color: '#f87171', fontSize: 13 },
+  notice: { margin: 0, color: '#4ade80', fontSize: 13 },
+  forgotBtn: {
+    display: 'block', margin: '12px auto 0', background: 'none', border: 'none',
+    color: '#818cf8', cursor: 'pointer', fontSize: 13, textDecoration: 'underline',
+  },
   submitBtn: {
     padding: '11px 16px', background: '#6366f1', color: '#fff', border: 'none',
     borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer',

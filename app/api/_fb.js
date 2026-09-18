@@ -94,7 +94,13 @@ export function fromFsFields(fields) {
 export function docToObj(doc) {
   if (!doc || !doc.fields) return null;
   const o = fromFsFields(doc.fields);
-  if (doc.name) o.id = doc.name.split('/').pop();
+  if (doc.name) {
+    o.id = doc.name.split('/').pop();
+    // The full resource path. A query cursor that orders by __name__ needs it,
+    // and reconstructing it from the id means knowing the project — which is
+    // exactly the kind of thing that goes wrong once.
+    Object.defineProperty(o, '__name', { value: doc.name, enumerable: false });
+  }
   return o;
 }
 
@@ -125,13 +131,95 @@ export async function fsGet(path, token) {
   return docToObj(await r.json());
 }
 
-export async function fsList(path, token, pageSize = 300) {
-  const r = await fetch(`${fsBase()}/${path}?pageSize=${pageSize}`, {
-    headers: { Authorization: `Bearer ${token}` },
+/**
+ * List a collection in full.
+ *
+ * Firestore caps listDocuments at 300 per page, and the old version took that
+ * first page and stopped, so a collector with more than 300 cards silently got
+ * an arbitrary subset. This follows nextPageToken until the collection is
+ * exhausted or `max` is reached.
+ *
+ * `max` is a guard rail, not a target: it stops one enormous account from
+ * hanging a serverless function. Hitting it is worth knowing about, so it logs.
+ */
+export async function fsList(path, token, max = 5000) {
+  const out = [];
+  let pageToken = '';
+  for (let page = 0; page < 40; page++) {
+    const qs = new URLSearchParams({ pageSize: String(Math.min(300, max - out.length)) });
+    if (pageToken) qs.set('pageToken', pageToken);
+    const r = await fetch(`${fsBase()}/${path}?${qs}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!r.ok) break;
+    const j = await r.json();
+    for (const d of (j.documents || [])) {
+      const obj = docToObj(d);
+      if (obj) out.push(obj);
+    }
+    pageToken = j.nextPageToken || '';
+    if (!pageToken || out.length >= max) break;
+  }
+  if (pageToken) console.warn(`[fsList] ${path} hit the ${max} cap and was truncated`);
+  return out;
+}
+
+/**
+ * Run a structured query (Firestore's `runQuery`).
+ *
+ * `fsList` walks a collection in document-id order and cannot filter or sort,
+ * which is fine for one collector's cards and useless for a feed. This is the
+ * indexed path: order, filter, cursor, limit.
+ *
+ * spec:
+ *   collection  collection id
+ *   where       [{ field, op, value }]  op: EQUAL | IN | LESS_THAN | ...
+ *   orderBy     [{ field, dir }]        dir: 'asc' | 'desc'
+ *   startAfter  array of values matching orderBy, or null
+ *   limit       page size
+ */
+export async function fsQuery({ collection, where = [], orderBy = [], startAfter = null, limit = 50 }, token) {
+  const filters = where.map(w => ({
+    fieldFilter: {
+      field: { fieldPath: w.field },
+      op: w.op || 'EQUAL',
+      value: w.op === 'IN'
+        ? { arrayValue: { values: w.value.map(toFsVal) } }
+        : toFsVal(w.value),
+    },
+  }));
+
+  const q = {
+    from: [{ collectionId: collection }],
+    orderBy: orderBy.map(o => ({
+      field: { fieldPath: o.field },
+      direction: o.dir === 'asc' ? 'ASCENDING' : 'DESCENDING',
+    })),
+    limit,
+  };
+  if (filters.length === 1) q.where = filters[0];
+  else if (filters.length > 1) q.where = { compositeFilter: { op: 'AND', filters } };
+  // `before: false` is startAfter — the cursor row itself is not repeated.
+  // A __name__ position is a document reference, not the string it looks like;
+  // sending it as a string silently produces a cursor that matches nothing.
+  if (startAfter) {
+    q.startAt = {
+      values: startAfter.map((v, i) =>
+        orderBy[i] && orderBy[i].field === '__name__'
+          ? { referenceValue: String(v) }
+          : toFsVal(v)),
+      before: false,
+    };
+  }
+
+  const r = await fetch(`${fsBase()}:runQuery`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structuredQuery: q }),
   });
-  if (!r.ok) return [];
-  const j = await r.json();
-  return (j.documents || []).map(docToObj).filter(Boolean);
+  if (!r.ok) throw new Error(`Firestore runQuery ${collection}: ${r.status} ${await r.text()}`);
+  const rows = await r.json();
+  return rows.map(row => docToObj(row.document)).filter(Boolean);
 }
 
 /**
@@ -153,8 +241,12 @@ export async function fsPatch(path, obj, token) {
 /**
  * Atomic field transform, used for reaction counters. `transforms` looks like
  * [{ fieldPath: 'fire', increment: 1 }].
+ *
+ * `opts.requireExists` refuses the write unless the document is already there.
+ * Without it Firestore creates the document, which would mean a reaction on a
+ * card turning into a phantom feed entry for a card that was never posted.
  */
-export async function fsCommitTransform(docPath, transforms, token) {
+export async function fsCommitTransform(docPath, transforms, token, opts = {}) {
   const { projectId } = getServiceAccount();
   const name = `projects/${projectId}/databases/(default)/documents/${docPath}`;
   const r = await fetch(
@@ -171,6 +263,7 @@ export async function fsCommitTransform(docPath, transforms, token) {
               increment: { integerValue: String(t.increment) },
             })),
           },
+          ...(opts.requireExists ? { currentDocument: { exists: true } } : {}),
         }],
       }),
     }

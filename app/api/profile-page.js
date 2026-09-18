@@ -12,6 +12,9 @@
 import { googleToken, fsGet, escHtml } from './_fb.js';
 import { loadPublicProfile } from './profile.js';
 
+// How many cards the HTML carries. The rest is fetched.
+const FIRST_PAGE = 60;
+
 const BRAND = {
   ink: '#07070f', panel: '#0d0d1a', line: 'rgba(255,255,255,0.10)',
   orange: '#FF6B35', gold: '#F0C040', green: '#4CAF50',
@@ -80,6 +83,42 @@ function notFoundPage() {
 </div></body></html>`;
 }
 
+export function cardsHtml(cards, uid, showValues, counts) {
+  return cards.map(c => {
+    const badges = [
+      c.isRookie ? '<span class="b b-rc">RC</span>' : '',
+      c.hasAutograph ? '<span class="b b-au">AUTO</span>' : '',
+      c.serialNumber ? `<span class="b b-sn">${escHtml(c.serialNumber)}</span>` : '',
+      c.rarity && c.rarity !== 'Common' ? `<span class="b b-ra">${escHtml(c.rarity)}</span>` : '',
+    ].join('');
+    const meta = [c.year, c.brand, c.series].filter(Boolean).join(' ') || c.fullCardName || '';
+    const val = showValues && c.estimatedValue
+      ? `<div class="val">$${Number(c.estimatedValue).toFixed(2)}</div>` : '';
+    const img = c.imageUrl
+      ? `<img src="${escHtml(c.imageUrl)}" alt="${escHtml(c.playerName)}" loading="lazy"/>`
+      : `<div class="noimg">No image</div>`;
+    // Everything the filter needs travels with the card, so filtering is a
+    // class toggle rather than a round trip. The haystack is lower-cased here
+    // so the browser does not redo it on every keystroke.
+    const cat = c.cardCategory || 'Other';
+    const hay = [
+      c.playerName, c.fullCardName, c.brand, c.series, c.parallel, c.team,
+      c.year, c.cardNumber, c.serialNumber, cat,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return `<article class="card" data-cat="${escHtml(cat)}" data-q="${escHtml(hay)}">
+      <div class="shot">${img}</div>
+      <div class="body">
+        <div class="set">${escHtml(meta)}</div>
+        <h3>${escHtml(c.playerName || 'Unknown')}</h3>
+        ${c.team ? `<div class="team">${escHtml(c.team)}</div>` : ''}
+        ${badges ? `<div class="badges">${badges}</div>` : ''}
+        ${val}
+        ${reactionBar(`card_${uid}_${c.id}`, counts)}
+      </div>
+    </article>`;
+  }).join('\n');
+}
+
 function page(p, counts, cfg) {
   const profileTarget = `profile_${p.uid}`;
   const title = `${p.displayName} on The Vault`;
@@ -89,31 +128,30 @@ function page(p, counts, cfg) {
   const ogImage = p.cards.find(c => c.imageUrl)?.imageUrl || 'https://app.myvaults.io/the-vault-icon.png';
   const url = `https://www.myvaults.io/u/${p.handle}`;
 
-  const cards = p.cards.map(c => {
-    const badges = [
-      c.isRookie ? '<span class="b b-rc">RC</span>' : '',
-      c.hasAutograph ? '<span class="b b-au">AUTO</span>' : '',
-      c.serialNumber ? `<span class="b b-sn">${escHtml(c.serialNumber)}</span>` : '',
-      c.rarity && c.rarity !== 'Common' ? `<span class="b b-ra">${escHtml(c.rarity)}</span>` : '',
-    ].join('');
-    const meta = [c.year, c.brand, c.series].filter(Boolean).join(' ') || c.fullCardName || '';
-    const val = p.showValues && c.estimatedValue
-      ? `<div class="val">$${Number(c.estimatedValue).toFixed(2)}</div>` : '';
-    const img = c.imageUrl
-      ? `<img src="${escHtml(c.imageUrl)}" alt="${escHtml(c.playerName)}" loading="lazy"/>`
-      : `<div class="noimg">No image</div>`;
-    return `<article class="card">
-      <div class="shot">${img}</div>
-      <div class="body">
-        <div class="set">${escHtml(meta)}</div>
-        <h3>${escHtml(c.playerName || 'Unknown')}</h3>
-        ${c.team ? `<div class="team">${escHtml(c.team)}</div>` : ''}
-        ${badges ? `<div class="badges">${badges}</div>` : ''}
-        ${val}
-        ${reactionBar(`card_${p.uid}_${c.id}`, counts)}
-      </div>
-    </article>`;
-  }).join('\n');
+  const cards = cardsHtml(p.cards, p.uid, p.showValues, counts);
+
+  // Counts come from the whole collection, computed server-side, so the chips
+  // are honest even though only a first page is in the DOM.
+  const cats = Array.isArray(p.categories) ? p.categories : [];
+  const showTools = p.cardCount > 6 || cats.length > 1;
+  const chips = [`<button class="chip on" data-cat="" aria-pressed="true">All <span class="n">${p.cardCount}</span></button>`]
+    .concat(cats.map(([k, n]) =>
+      `<button class="chip" data-cat="${escHtml(k)}" aria-pressed="false">${escHtml(k)} <span class="n">${n}</span></button>`))
+    .join('');
+
+  const tools = showTools ? `
+  <section class="tools"><div class="wrap">
+    <div class="toolrow">
+      <label class="srch">
+        <span class="vh">Search this collection</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" autocomplete="off" placeholder="Search a player, set or year"/>
+        <button id="clr" type="button" aria-label="Clear search" hidden>&times;</button>
+      </label>
+    </div>
+    <div class="chips" id="chips">${chips}</div>
+    <div class="shown" id="shown" role="status" aria-live="polite"></div>
+  </div></section>` : '';
 
   return `<!doctype html><html lang="en"><head>
 <meta charset="utf-8"/>
@@ -153,6 +191,36 @@ function page(p, counts, cfg) {
   .bio{color:${BRAND.muted};max-width:52ch;margin:14px 0 0}
   .count{color:${BRAND.muted};font-size:14px;margin-top:10px;
          font-family:'Barlow Condensed',sans-serif;letter-spacing:1.5px;text-transform:uppercase}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .tools{border-bottom:1px solid ${BRAND.line};padding:18px 0 16px}
+  .toolrow{display:flex;gap:12px;flex-wrap:wrap}
+  .srch{position:relative;display:flex;align-items:center;flex:1;min-width:240px}
+  .srch svg{position:absolute;left:14px;width:17px;height:17px;fill:none;
+            stroke:${BRAND.muted};stroke-width:2;stroke-linecap:round;pointer-events:none}
+  .srch input{width:100%;background:${BRAND.panel};border:1px solid ${BRAND.line};
+              border-radius:12px;padding:12px 40px 12px 40px;color:${BRAND.text};
+              font-family:inherit;font-size:15px;outline:none;-webkit-appearance:none}
+  .srch input::-webkit-search-cancel-button{display:none}
+  .srch input:focus{border-color:rgba(255,107,53,.55)}
+  .srch input::placeholder{color:#5a5a69}
+  #clr{position:absolute;right:8px;background:none;border:0;color:${BRAND.muted};
+       font-size:22px;line-height:1;cursor:pointer;padding:4px 8px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;
+        letter-spacing:.8px;text-transform:uppercase;cursor:pointer;
+        background:${BRAND.panel};color:${BRAND.muted};
+        border:1px solid ${BRAND.line};border-radius:999px;padding:7px 14px;
+        transition:background .15s,color .15s,border-color .15s}
+  .chip:hover{color:${BRAND.text};border-color:rgba(255,255,255,.22)}
+  .chip.on{background:${BRAND.orange};color:#fff;border-color:${BRAND.orange}}
+  .chip .n{opacity:.7;font-weight:600}
+  .shown{color:${BRAND.muted};font-size:13px;margin-top:12px;min-height:18px}
+  .card.hide{display:none}
+  .more{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 0 8px}
+  .more-n{color:${BRAND.muted};font-size:12px}
+  .more[hidden]{display:none}
+  .noresult{color:${BRAND.muted};padding:50px 0;text-align:center}
+  @media (prefers-reduced-motion: reduce){ .chip{transition:none} }
   .grid{display:grid;gap:18px;padding:30px 0 10px;
         grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
   .card{background:${BRAND.panel};border:1px solid ${BRAND.line};border-radius:16px;overflow:hidden;
@@ -207,6 +275,31 @@ function page(p, counts, cfg) {
   .sheet-in h3{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-size:24px;margin:0 0 6px}
   .sheet-in p{color:${BRAND.muted};font-size:14px;margin:0 0 20px}
   .sheet-x{background:none;border:none;color:${BRAND.muted};margin-top:14px;cursor:pointer;font:inherit;font-size:13px}
+  .seg{display:flex;gap:6px;background:#141422;border:1px solid ${BRAND.line};border-radius:12px;
+       padding:4px;margin:0 0 18px}
+  .seg-b{flex:1;background:none;border:0;border-radius:9px;padding:9px 8px;cursor:pointer;
+         color:${BRAND.muted};font:inherit;font-size:13px;font-weight:700}
+  .seg-b.on{background:${BRAND.orange};color:#fff}
+  .btn-g{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+         background:#fff;color:#1f1f1f;border:0;border-radius:12px;padding:13px 16px;
+         font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  .or{display:flex;align-items:center;gap:12px;color:#4a4a5c;font-size:12px;margin:16px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:${BRAND.line}}
+  #sheet-form{display:flex;flex-direction:column;gap:10px;text-align:left}
+  #sheet-form input{width:100%;box-sizing:border-box;background:#141422;color:${BRAND.text};
+                    border:1px solid ${BRAND.line};border-radius:12px;padding:13px 14px;
+                    font:inherit;font-size:15px;outline:none}
+  #sheet-form input:focus{border-color:rgba(255,107,53,.55)}
+  #sheet-form input::placeholder{color:#4a4a5c}
+  .err{color:#ff7a5c;font-size:13px;min-height:0;line-height:1.4}
+  .err:empty{display:none}
+  .lnk{background:none;border:0;color:${BRAND.muted};font:inherit;font-size:13px;
+       cursor:pointer;margin-top:12px;text-decoration:underline}
+  .play{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+        box-sizing:border-box;margin-top:18px;padding:11px 14px;border-radius:12px;
+        border:1px solid ${BRAND.line};color:${BRAND.muted};text-decoration:none;font-size:13px;font-weight:600}
+  .play:hover{color:${BRAND.text};border-color:rgba(255,255,255,.22)}
+  .fyi{color:#6a6a7c;font-size:12px;margin:-12px 0 18px!important;line-height:1.45}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#1a1a28;
          border:1px solid ${BRAND.line};color:${BRAND.text};padding:11px 18px;border-radius:999px;
          font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
@@ -231,10 +324,17 @@ function page(p, counts, cfg) {
   </div>
 </div></section>
 
+${tools}
+
 <div class="wrap">
+  <div class="noresult" id="noresult" hidden>No cards match that. <button class="chip" id="reset" type="button">Show everything</button></div>
   ${p.cards.length
-    ? `<div class="grid">${cards}</div>`
+    ? `<div class="grid" id="grid">${cards}</div>`
     : `<div class="empty">This collector has not put any cards on show yet.</div>`}
+  ${p.hasMore ? `<div class="more" id="more">
+    <button class="chip" id="more-btn" type="button">Show more cards</button>
+    <div class="more-n" id="more-n">${p.returned} of ${p.cardCount}</div>
+  </div>` : ''}
 
   <section class="cta">
     <h2>Your cards deserve this too</h2>
@@ -254,17 +354,203 @@ function page(p, counts, cfg) {
 
 <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h">
   <div class="sheet-in">
-    <h3 id="sheet-h">Create a free account to react</h3>
-    <p>You will also get your own vault to fill.</p>
-    <button class="btn" id="sheet-go" type="button">Continue with Google</button>
+    <h3 id="sheet-h">Join The Vault</h3>
+    <p id="sheet-sub">Free, and you get your own vault to fill.</p>
+    <p class="fyi">The collector will see that you reacted.</p>
+
+    <div class="seg" role="tablist">
+      <button class="seg-b on" id="tab-new"  type="button" role="tab" aria-selected="true">Create account</button>
+      <button class="seg-b"    id="tab-back" type="button" role="tab" aria-selected="false">I have one</button>
+    </div>
+
+    <button class="btn-g" id="sheet-go" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true" width="18" height="18">
+        <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.3z"/>
+        <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.2l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.3 15.5 46 24 46z"/>
+        <path fill="#FBBC05" d="M11.8 28.4c-.4-1.3-.7-2.700-.7-4.4s.3-3.1.7-4.4v-5.7H4.5C2.9 17.1 2 20.4 2 24s.9 6.9 2.5 10.1l7.3-5.7z"/>
+        <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.3 29.9 2 24 2 15.5 2 8.1 6.7 4.5 13.9l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="or"><span>or</span></div>
+
+    <form id="sheet-form" novalidate>
+      <label class="vh" for="em">Email</label>
+      <input id="em" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required/>
+      <label class="vh" for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" placeholder="Password" minlength="6" required/>
+      <div class="err" id="sheet-err" role="alert"></div>
+      <button class="btn" id="sheet-submit" type="submit">Create account</button>
+    </form>
+
+    <button class="lnk" id="sheet-forgot" type="button" hidden>Forgot your password?</button>
+
+    <a class="play" href="https://play.google.com/store/apps/details?id=com.thevault.app" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16"><path fill="#00D4FF" d="M3.6 1.8 13 11.2l-9.4 9.4a2 2 0 0 1-.6-1.4V3.2c0-.5.2-1 .6-1.4z"/><path fill="#FFCE00" d="m17.3 7.5 3.3 1.8c1.2.7 1.2 2.7 0 3.4l-3.3 1.8-3.4-3.3z"/><path fill="#00F076" d="M3.6 1.8c.5-.4 1.2-.5 1.8-.2l11.9 5.9-3.4 3.7z"/><path fill="#F63448" d="m13.9 12.8 3.4 3.7-11.9 5.9c-.6.3-1.3.2-1.8-.2z"/></svg>
+      Get it on Google Play
+    </a>
+
     <button class="sheet-x" id="sheet-cancel" type="button">Not now</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
 
+
+<script>
+window.__VAULT_HANDLE = ${JSON.stringify(p.handle)};
+window.__VAULT_TOTAL  = ${JSON.stringify(p.cardCount)};
+</script>
+
+<script>
+(function () {
+  var API = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+    ? location.origin
+    : 'https://app.myvaults.io';
+  var q = document.getElementById('q');
+  if (!q) return;                       // small collections get no filter bar
+  var chipBox  = document.getElementById('chips');
+  var shown    = document.getElementById('shown');
+  var noresult = document.getElementById('noresult');
+  var clr      = document.getElementById('clr');
+  var reset    = document.getElementById('reset');
+  var grid     = document.getElementById('grid');
+  var more     = document.getElementById('more');
+  var moreBtn  = document.getElementById('more-btn');
+  var moreN    = document.getElementById('more-n');
+  var cards    = [].slice.call(document.querySelectorAll('.card'));
+  var cat = '', term = '';
+
+  // The page ships a first slice. HANDLE/TOTAL are written in by the server.
+  var HANDLE   = window.__VAULT_HANDLE;
+  var TOTAL    = window.__VAULT_TOTAL;
+  var loading  = false;
+  var done     = !more;
+
+  function refreshCards() { cards = [].slice.call(document.querySelectorAll('.card')); }
+
+  // Fetch one more page and append the markup the server rendered for it, so
+  // the card template lives in one place.
+  function loadNext() {
+    if (loading || done) return Promise.resolve();
+    loading = true;
+    if (moreBtn) moreBtn.textContent = 'Loading...';
+    return fetch(API + '/api/profile-cards?handle=' + encodeURIComponent(HANDLE) +
+                 '&offset=' + cards.length + '&limit=120&format=html')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (!j || !j.html) { done = true; return; }
+        grid.insertAdjacentHTML('beforeend', j.html);
+        refreshCards();
+        done = !j.hasMore;
+        if (moreN) moreN.textContent = cards.length + ' of ' + TOTAL;
+        if (done && more) more.hidden = true;
+        // New bars need their counts, their own-reaction state and their taps.
+        if (window.__vaultBindReactions) window.__vaultBindReactions();
+        apply(false);
+      })
+      .catch(function () { done = true; })
+      .finally(function () {
+        loading = false;
+        if (moreBtn) moreBtn.textContent = 'Show more cards';
+      });
+  }
+
+  // Filtering a partly loaded collection would quietly search a subset, so pull
+  // everything in first and say so while it happens.
+  function loadAll() {
+    if (done) return Promise.resolve();
+    if (moreN) moreN.textContent = 'Loading the rest of the collection...';
+    return loadNext().then(function () { return loadAll(); });
+  }
+
+  if (moreBtn) moreBtn.addEventListener('click', function () { loadNext(); });
+
+  // Auto-load as the sentinel comes into view; the button stays as a fallback
+  // for browsers without IntersectionObserver.
+  if (more && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) loadNext();
+    }, { rootMargin: '600px' }).observe(more);
+  }
+
+  function apply(push) {
+    var needle = term.trim().toLowerCase();
+    var n = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var el = cards[i];
+      var ok = (!cat || el.getAttribute('data-cat') === cat) &&
+               (!needle || el.getAttribute('data-q').indexOf(needle) !== -1);
+      el.classList.toggle('hide', !ok);
+      if (ok) n++;
+    }
+    var filtered = cat || needle;
+    shown.textContent = filtered
+      ? 'Showing ' + n + ' of ' + TOTAL + ' cards'
+      : '';
+    noresult.hidden = n !== 0;
+    clr.hidden = !term;
+
+    // Keep the address bar in step so a filtered view can be shared as a link.
+    if (push) {
+      var u = new URL(location.href);
+      cat ? u.searchParams.set('cat', cat) : u.searchParams.delete('cat');
+      term ? u.searchParams.set('q', term) : u.searchParams.delete('q');
+      history.replaceState({}, '', u);
+    }
+  }
+
+  function setCat(v) {
+    cat = v;
+    var all = chipBox.querySelectorAll('.chip');
+    for (var i = 0; i < all.length; i++) {
+      var on = all[i].getAttribute('data-cat') === v;
+      all[i].classList.toggle('on', on);
+      all[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  }
+
+  chipBox.addEventListener('click', function (e) {
+    var b = e.target.closest('.chip');
+    if (!b) return;
+    setCat(b.getAttribute('data-cat') || '');
+    apply(true);
+    loadAll().then(function () { apply(false); });
+  });
+
+  var t;
+  q.addEventListener('input', function () {
+    term = q.value;
+    clearTimeout(t);
+    t = setTimeout(function () {
+      apply(true);
+      if (term) loadAll().then(function () { apply(false); });
+    }, 120);
+  });
+
+  clr.addEventListener('click', function () { q.value = ''; term = ''; q.focus(); apply(true); });
+  if (reset) reset.addEventListener('click', function () {
+    q.value = ''; term = ''; setCat(''); apply(true);
+  });
+
+  // Restore a shared link's filters.
+  var sp = new URLSearchParams(location.search);
+  var c0 = sp.get('cat') || '';
+  if (c0 && chipBox.querySelector('.chip[data-cat="' + c0.replace(/"/g, '') + '"]')) setCat(c0);
+  term = sp.get('q') || '';
+  q.value = term;
+  apply(false);
+})();
+</script>
 <script type="module">
 const CFG = ${cfg ? JSON.stringify(cfg) : 'null'};
-const API = 'https://app.myvaults.io';
+// In production this page is served from www.myvaults.io while the functions
+// live on app.myvaults.io, so the API host has to be absolute. Running locally,
+// the dev server serves both, and pointing at production would test the
+// deployed code rather than the code being edited.
+const API = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+  ? location.origin
+  : 'https://app.myvaults.io';
 const OWNER = ${JSON.stringify(p.uid)};
 const PENDING = 'vault.pendingReaction';
 const MINE = 'vault.myReactions';
@@ -275,24 +561,31 @@ const toast = (msg) => {
   clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600);
 };
 
-// The server renders counts but cannot know what this viewer already gave, so
-// their own toggles are remembered per device. The server stays authoritative
-// for the numbers.
+// localStorage gives an instant first paint, but it is per device and per
+// origin, so it is only a hint. Once auth resolves we ask the server which
+// reactions this account actually gave and reconcile. The server is the truth.
 const mine = (() => { try { return JSON.parse(localStorage.getItem(MINE) || '{}'); } catch { return {}; } })();
 const saveMine = () => { try { localStorage.setItem(MINE, JSON.stringify(mine)); } catch {} };
 const markMine = (target, emoji, on) => {
   mine[target] = mine[target] || {}; mine[target][emoji] = on; saveMine();
 };
 
-document.querySelectorAll('.rx').forEach(bar => {
-  const target = bar.dataset.target;
-  bar.querySelectorAll('.rx-btn').forEach(btn => {
-    if (mine[target] && mine[target][btn.dataset.emoji]) btn.classList.add('on');
-    btn.addEventListener('click', () => react(target, btn));
+function bindReactions() {
+  document.querySelectorAll('.rx').forEach(bar => {
+    if (bar.dataset.bound === '1') return;      // appended pages re-run this
+    bar.dataset.bound = '1';
+    const target = bar.dataset.target;
+    bar.querySelectorAll('.rx-btn').forEach(btn => {
+      if (mine[target] && mine[target][btn.dataset.emoji]) btn.classList.add('on');
+      btn.addEventListener('click', () => react(target, btn));
+    });
   });
-});
+}
+bindReactions();
+// The filter script appends cards after first paint and calls this to wire them.
+window.__vaultBindReactions = () => { bindReactions(); syncReactions(); };
 
-let auth = null, signIn = null;
+let auth = null, signIn = null, authReady = null, fb = null;
 async function firebase() {
   if (auth || !CFG) return auth;
   const [{ initializeApp }, fbAuth] = await Promise.all([
@@ -301,14 +594,70 @@ async function firebase() {
   ]);
   const app = initializeApp(CFG);
   auth = fbAuth.getAuth(app);
+  fb = fbAuth;
   signIn = () => fbAuth.signInWithPopup(auth, new fbAuth.GoogleAuthProvider());
   return auth;
 }
 
+// currentUser is null for a moment after getAuth() while the SDK restores the
+// session from storage, so waiting on the first auth callback is the difference
+// between "signed out" and "not resolved yet".
+function whenAuthReady(a) {
+  if (authReady) return authReady;
+  authReady = new Promise(resolve => {
+    let done = false;
+    const stop = a.onAuthStateChanged(u => {
+      if (done) return;
+      done = true;
+      try { stop(); } catch {}
+      resolve(u || null);
+    });
+    setTimeout(() => { if (!done) { done = true; resolve(a.currentUser || null); } }, 6000);
+  });
+  return authReady;
+}
+
 async function token() {
   const a = await firebase();
-  return a && a.currentUser ? a.currentUser.getIdToken() : null;
+  if (!a) return null;
+  if (a.currentUser) return a.currentUser.getIdToken();
+  const u = await whenAuthReady(a);
+  return u ? u.getIdToken() : null;
 }
+
+// Pull the real counts and this viewer's own reactions, then repaint. Runs on
+// load so a like survives a refresh, another device, or a cleared cache.
+async function syncReactions() {
+  const bars = [...document.querySelectorAll('.rx')];
+  if (!bars.length) return;
+  const targets = bars.map(b => b.dataset.target);
+  let t = null;
+  try { t = await token(); } catch {}
+  try {
+    const r = await fetch(API + '/api/react?targets=' + encodeURIComponent(targets.join(',')),
+      t ? { headers: { Authorization: 'Bearer ' + t } } : undefined);
+    if (!r.ok) return;
+    const j = await r.json();
+    for (const bar of bars) {
+      const target = bar.dataset.target;
+      const c = j.counts && j.counts[target];
+      const m = j.mine && j.mine[target];
+      for (const k of ['heart', 'fire', 'money']) {
+        if (c) {
+          const el = bar.querySelector('[data-n="' + k + '"]');
+          if (el) el.textContent = c[k];
+        }
+        if (m) {
+          const b = bar.querySelector('[data-emoji="' + k + '"]');
+          if (b) b.classList.toggle('on', !!m[k]);
+          markMine(target, k, !!m[k]);
+        }
+      }
+    }
+  } catch {}
+}
+
+if (CFG) syncReactions();
 
 async function react(target, btn) {
   const emoji = btn.dataset.emoji;
@@ -356,27 +705,129 @@ async function send(target, emoji, btn, t) {
   }
 }
 
+const sheet = document.getElementById('sheet');
+const errBox = document.getElementById('sheet-err');
+const emailEl = document.getElementById('em');
+const pwEl = document.getElementById('pw');
+const submitEl = document.getElementById('sheet-submit');
+const forgotEl = document.getElementById('sheet-forgot');
+const tabNew = document.getElementById('tab-new');
+const tabBack = document.getElementById('tab-back');
+let returning = false;
+
+function setMode(back) {
+  returning = back;
+  tabBack.classList.toggle('on', back);
+  tabNew.classList.toggle('on', !back);
+  tabBack.setAttribute('aria-selected', back ? 'true' : 'false');
+  tabNew.setAttribute('aria-selected', back ? 'false' : 'true');
+  document.getElementById('sheet-h').textContent = back ? 'Welcome back' : 'Join The Vault';
+  document.getElementById('sheet-sub').textContent = back
+    ? 'Sign in and your reaction goes through.'
+    : 'Free, and you get your own vault to fill.';
+  submitEl.textContent = back ? 'Sign in' : 'Create account';
+  pwEl.setAttribute('autocomplete', back ? 'current-password' : 'new-password');
+  forgotEl.hidden = !back;
+  errBox.textContent = '';
+}
+tabNew.addEventListener('click', () => setMode(false));
+tabBack.addEventListener('click', () => setMode(true));
+// Run once so the markup and the mode agree from the start; without this the
+// password field asks browsers to autofill an existing password on the
+// create-account tab.
+setMode(false);
+
 document.getElementById('sheet-cancel').addEventListener('click', () => {
   sessionStorage.removeItem(PENDING);
-  document.getElementById('sheet').classList.remove('open');
+  sheet.classList.remove('open');
 });
 
-document.getElementById('sheet-go').addEventListener('click', async () => {
-  try {
-    await firebase();
-    const cred = await signIn();
+// Firebase error codes are not for reading aloud.
+function humanError(code, msg) {
+  const m = {
+    'auth/invalid-email': 'That email does not look right.',
+    'auth/missing-password': 'Enter a password.',
+    'auth/weak-password': 'Use at least six characters.',
+    'auth/email-already-in-use': 'That email already has a vault. Switch to "I have one".',
+    'auth/invalid-credential': 'That email and password do not match.',
+    'auth/wrong-password': 'That email and password do not match.',
+    'auth/user-not-found': 'No vault with that email yet. Create one instead.',
+    'auth/too-many-requests': 'Too many tries. Wait a moment and try again.',
+    'auth/popup-closed-by-user': 'Sign in did not complete.',
+    'auth/popup-blocked': 'Your browser blocked the popup. Allow it, or use email instead.',
+    'auth/operation-not-allowed': 'Email sign-in is not enabled for this project yet.',
+  };
+  return m[code] || msg || 'Something went wrong. Try again.';
+}
+
+// Everything that has to happen once someone is actually signed in.
+async function afterAuth(user, isNew) {
+  if (isNew) {
     // Credit the collector whose profile brought this person in.
     try {
       await fetch(API + '/api/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await cred.user.getIdToken()) },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (await user.getIdToken()) },
         body: JSON.stringify({ referral_source_hint: OWNER }),
       });
     } catch {}
-    document.getElementById('sheet').classList.remove('open');
-    await replayPending();
-  } catch {
-    toast('Sign in did not complete');
+  }
+  sheet.classList.remove('open');
+  await replayPending();
+  syncReactions();
+}
+
+document.getElementById('sheet-go').addEventListener('click', async () => {
+  errBox.textContent = '';
+  try {
+    await firebase();
+    const cred = await signIn();
+    const isNew = !!(cred._tokenResponse && cred._tokenResponse.isNewUser);
+    await afterAuth(cred.user, isNew);
+  } catch (e) {
+    errBox.textContent = humanError(e && e.code, e && e.message);
+  }
+});
+
+document.getElementById('sheet-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  errBox.textContent = '';
+  const email = emailEl.value.trim();
+  const pw = pwEl.value;
+  if (!email || !pw) { errBox.textContent = 'Enter your email and a password.'; return; }
+  if (!returning && pw.length < 6) { errBox.textContent = 'Use at least six characters.'; return; }
+
+  submitEl.disabled = true;
+  const label = submitEl.textContent;
+  submitEl.textContent = returning ? 'Signing in...' : 'Creating...';
+  try {
+    await firebase();
+    const cred = returning
+      ? await fb.signInWithEmailAndPassword(auth, email, pw)
+      : await fb.createUserWithEmailAndPassword(auth, email, pw);
+    await afterAuth(cred.user, !returning);
+  } catch (e) {
+    const code = e && e.code;
+    // Firebase collapses "wrong password" and "no such user" into one code, so
+    // point people at the other tab when that is the likely cause.
+    if (!returning && code === 'auth/email-already-in-use') setMode(true);
+    errBox.textContent = humanError(code, e && e.message);
+  } finally {
+    submitEl.disabled = false;
+    submitEl.textContent = label;
+  }
+});
+
+forgotEl.addEventListener('click', async () => {
+  const email = emailEl.value.trim();
+  if (!email) { errBox.textContent = 'Enter your email first, then tap this again.'; return; }
+  try {
+    await firebase();
+    await fb.sendPasswordResetEmail(auth, email);
+    errBox.textContent = '';
+    toast('Reset link sent. Check your email.');
+  } catch (e) {
+    errBox.textContent = humanError(e && e.code, e && e.message);
   }
 });
 
@@ -414,7 +865,16 @@ export default async function handler(req, res) {
   const handle = String(req.query.handle || '').trim().toLowerCase();
 
   try {
-    const p = await loadPublicProfile(handle);
+    // Render a first page only. The rest arrives from /api/profile-cards, which
+    // keeps the document small and the time-to-first-card flat no matter how
+    // large the collection is.
+    const p = await loadPublicProfile(handle, {
+      // ?limit= is honoured only on localhost, so paging can be exercised
+      // against a small collection without exposing a knob that lets anyone
+      // ask production for an enormous page.
+      limit: (/^(localhost|127\.0\.0\.1)/.test(req.headers.host || '') && Number(req.query.limit))
+        || FIRST_PAGE,
+    });
     if (!p) {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.setHeader('Cache-Control', 'public, max-age=60');

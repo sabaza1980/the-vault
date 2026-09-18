@@ -9,7 +9,8 @@ import CollectionsView, { CollectionCreatorModal, CollectionDetailView } from ".
 import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
-import { SELL_ENABLED, BREAKS_ENABLED } from "./featureFlags";
+import { SELL_ENABLED, BREAKS_ENABLED, BULK_SCAN_ENABLED } from "./featureFlags";
+import { publishToFeed } from "./feed";
 import ShareModal from "./ShareModal";
 import CardDetailModal from "./CardDetailModal";
 import BottomTabBar from "./BottomTabBar";
@@ -20,6 +21,7 @@ import BreakTracker from "./BreakTracker";
 import BreaksView from "./BreaksView";
 import BreakersHub from "./BreakersHub";
 import PublicProfileSettings from "./PublicProfileSettings";
+import NotificationsSheet, { useNotifications } from "./NotificationsSheet";
 import BulkListingModal from "./breaker/BulkListingModal";
 import { cardsToItems } from "./lib/listingExport.js";
 import { storage, db } from "./firebase";
@@ -1809,6 +1811,7 @@ export default function App() {
   // Share button needs the handle, and it must reflect changes made in the
   // settings sheet, so this is refreshed whenever that sheet closes.
   const [publicProfile, setPublicProfile] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showBreakers, setShowBreakers] = useState(() => {
     if (typeof window === "undefined") return false;
     const qs = new URLSearchParams(window.location.search);
@@ -2266,6 +2269,12 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       setCards(prev => [newCard, ...prev]);
       setQueue(prev => prev.map(q => q.id === item.id ? { ...q, status: "done" } : q));
 
+      // Post it to the feed. The API checks whether this collector's profile is
+      // public and whether this card is in scope, so there is no condition to
+      // evaluate here. Fire and forget: a card belongs in the vault whether or
+      // not the feed accepts it.
+      publishToFeed(cardId);
+
       // No Ximilar comp → fall back to SportsCardsPro (secondary). The eBay-average path is retired.
       if (!xPrice) {
         fetchPricingProxy(newCard).then((proxyResult) => {
@@ -2309,6 +2318,8 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
   const handleUpdate = useCallback((id, updates) => {
     setCards(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updates } : c));
   }, []);
+
+  const { items: reactionNotifications, unread: unreadReactions } = useNotifications(user);
 
   const refreshPublicProfile = useCallback(async () => {
     if (!user) { setPublicProfile(null); return; }
@@ -2446,8 +2457,17 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
   // Keeping [runQueue] as the only dep means the function reference is stable
   // and won't cause unnecessary re-creation on every card/profile change.
   const handleFiles = useCallback(async (files) => {
-    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
-    if (!imageFiles.length) return;
+    const allImages = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (!allImages.length) return;
+
+    // One card at a time. A drag-and-drop or a gallery multi-select can still
+    // arrive with a stack in it, so take the first and say so rather than
+    // silently dropping the rest.
+    const imageFiles = BULK_SCAN_ENABLED ? allImages : allImages.slice(0, 1);
+    if (allImages.length > imageFiles.length) {
+      setToast(`One card at a time — scanning ${imageFiles[0].name}`);
+      setTimeout(() => setToast(null), 3200);
+    }
 
     // Read current values from refs — always fresh, never stale.
     const currentUser = userRef.current;
@@ -2766,6 +2786,31 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 </button>
               </>
             )}
+            {user && (
+              <button
+                onClick={() => setShowNotifications(true)}
+                title={unreadReactions ? `${unreadReactions} new reaction${unreadReactions > 1 ? 's' : ''}` : 'Reactions'}
+                style={{
+                  position: "relative",
+                  background: showNotifications ? "#ff6b3518" : "var(--gbg)",
+                  border: `1px solid ${showNotifications ? "#ff6b3550" : "var(--gb)"}`,
+                  borderRadius: 20, padding: "5px 12px",
+                  color: showNotifications ? "#ff6b35" : "var(--gc)",
+                  fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  letterSpacing: 0.3, display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+                }}
+              >
+                <span style={{ fontSize: 13 }}>🔔</span>
+                {unreadReactions > 0 && (
+                  <span style={{
+                    position: "absolute", top: -5, right: -5, minWidth: 17, height: 17,
+                    borderRadius: 999, background: "#ff6b35", color: "#fff",
+                    fontSize: 10, fontWeight: 800, display: "flex",
+                    alignItems: "center", justifyContent: "center", padding: "0 4px",
+                  }}>{unreadReactions > 9 ? "9+" : unreadReactions}</span>
+                )}
+              </button>
+            )}
             {cards.length > 0 && !isMobileUI && (
               <button
                 onClick={shareProfile}
@@ -3015,6 +3060,19 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         />
       )}
 
+      {/* Who reacted to your cards */}
+      {showNotifications && user && (
+        <NotificationsSheet
+          user={user}
+          items={reactionNotifications}
+          onClose={() => setShowNotifications(false)}
+          onOpenCard={(cardId) => {
+            const card = cards.find(c => String(c.id) === String(cardId));
+            if (card) { setShowNotifications(false); setDetailCard(card); }
+          }}
+        />
+      )}
+
       {/* Public profile settings */}
       {showProfileSettings && user && (
         <PublicProfileSettings
@@ -3215,7 +3273,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
             transition: "all 0.2s", marginBottom: 20
           }}
         >
-          <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }}
+          <input ref={fileRef} type="file" accept="image/*" multiple={BULK_SCAN_ENABLED} style={{ display: "none" }}
             onChange={e => handleFiles(e.target.files)} />
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }}
             onChange={e => handleFiles(e.target.files)} />
@@ -3270,13 +3328,13 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
               <div style={{ fontSize: 11, color: "#333", marginTop: 10, display: "flex", gap: 8, justifyContent: "center" }}>
                 <span onClick={() => cameraRef.current?.click()} style={{ cursor: "pointer", color: "#ff6b35", fontWeight: 600 }}>📷 Camera</span>
                 <span style={{ color: "#444" }}>·</span>
-                <span onClick={() => fileRef.current?.click()} style={{ cursor: "pointer", color: "var(--ts)", fontWeight: 600 }}>🗂️ Files</span>
+                <span onClick={() => fileRef.current?.click()} style={{ cursor: "pointer", color: "var(--ts)", fontWeight: 600 }}>🗂️ File</span>
               </div>
             </>
           ) : (
             <>
               <div style={{ fontSize: 32, marginBottom: 12 }}>📸</div>
-              <div style={{ color: "var(--ts)", fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Add card photos to identify</div>
+              <div style={{ color: "var(--ts)", fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Add a card to identify</div>
               <div style={{ color: "var(--td)", fontSize: 12, marginBottom: 16 }}>Reading card details &amp; researching player...</div>
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
                 <button
@@ -3299,7 +3357,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                     color: "var(--ts)", fontWeight: 700, fontSize: 13, cursor: "pointer", letterSpacing: 0.3
                   }}
                 >
-                  <span style={{ fontSize: 16 }}>🗂️</span> Choose Files
+                  <span style={{ fontSize: 16 }}>🗂️</span> Choose File
                 </button>
               </div>
               {/* Card slot indicator — free tier only */}

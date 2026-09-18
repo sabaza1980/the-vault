@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "cap:sync": "npm run build && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
-    "cap:android": "npm run cap:sync && npx cap open android"
+    "cap:android": "npm run cap:sync && npx cap open android",
+    "dev:full": "node scripts/dev-server.mjs"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.1.0",

@@ -9,6 +9,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { removeFromFeed } from './feed';
 
 /**
  * Syncs the in-memory `cards` array with the authenticated user's Firestore
@@ -81,6 +82,9 @@ export function useFirestoreSync(user, cards, setCards) {
     );
     removed.forEach(({ id }) => {
       deleteDoc(doc(db, 'users', user.uid, 'cards', String(id))).catch(console.error);
+      // Every delete path in the app ends here, so this is the one place that
+      // has to remember the card may also be sitting in the public feed.
+      removeFromFeed(id);
     });
 
     prevCards.current = cards;

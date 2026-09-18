@@ -114,6 +114,32 @@ service cloud.firestore {
       }
     }
 
+    // ── The feed ──
+    // World-readable: a feed entry only ever describes a card in a vault its
+    // owner switched on for the public. Every write goes through api/feed.js
+    // with a verified ID token, which reads the card and the owner's profile
+    // settings itself. A client that could write here could post anything
+    // under anyone's name, so no client can.
+    match /feed/{entryId} {
+      allow read: if true;
+      allow write: if false;
+
+      // Comments arrive in build step 5. Public to read, server-mediated to
+      // write, so rate limits and the owner's delete are actually enforceable.
+      match /comments/{commentId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    // ── Runtime config ──
+    // `config/feed.enabled = false` empties the feed instantly, without a
+    // deploy. Readable so the app can hide the tab; admin-only to change.
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ── Abuse reports ──
     // A signed-in user can file one; only admins read or act on them.
     match /reports/{reportId} {
