@@ -25,8 +25,16 @@
       "destination": "https://app.myvaults.io/api/profile-page?handle=:handle"
     },
     {
-      "source": "/",
+      "source": "/about",
       "destination": "/website/index.html"
+    },
+    {
+      "source": "/about.html",
+      "destination": "/website/index.html"
+    },
+    {
+      "source": "/",
+      "destination": "https://app.myvaults.io/api/feed-page"
     },
     {
       "source": "/privacy-policy",
@@ -74,7 +82,7 @@
     },
     {
       "source": "/index.html",
-      "destination": "/website/index.html"
+      "destination": "https://app.myvaults.io/api/feed-page"
     },
     {
       "source": "/privacy-policy.html",

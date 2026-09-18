@@ -136,6 +136,7 @@ const WEBSITE_ROUTES = {
   '/terms': 'terms.html', '/terms.html': 'terms.html',
   '/delete-account': 'delete-account.html', '/delete-account.html': 'delete-account.html',
   '/blog': 'blog.html', '/blog.html': 'blog.html',
+  '/about': 'index.html', '/about.html': 'index.html',
   '/admin': 'admin.html', '/admin.html': 'admin.html',
   '/home': 'index.html',
 };
@@ -148,6 +149,9 @@ const server = http.createServer(async (req, res) => {
 
   const u = p.match(/^\/u\/([A-Za-z0-9_]{1,40})\/?$/);
   if (u) return runFunction('profile-page', req, res, url, { handle: u[1] });
+
+  // The homepage is the feed; the marketing page moved to /about.
+  if (p === '/' || p === '/index.html') return runFunction('feed-page', req, res, url);
 
   if (WEBSITE_ROUTES[p]) return serveFile(path.join(WEBSITE, WEBSITE_ROUTES[p]), res);
   if (p.startsWith('/screens/') || p.startsWith('/categories/')) {
