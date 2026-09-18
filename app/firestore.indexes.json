@@ -52,16 +52,8 @@
         { "fieldPath": "createdAt", "order": "DESCENDING" },
         { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
-    },
-    {
-      "//": "Newest first with no filter. The default view.",
-      "collectionGroup": "feed",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
-      ]
     }
   ],
+  "//2": "The default newest-first view (createdAt DESC) is deliberately NOT here. One real field plus __name__ is a single-field index, which Firestore builds on its own and the CLI rejects outright as unnecessary — and one rejection aborts the whole deploy.",
   "fieldOverrides": []
 }
