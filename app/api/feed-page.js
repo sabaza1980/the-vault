@@ -55,7 +55,7 @@ export function postHtml(e) {
     ? `<a class="who-n" href="${profile}">${escHtml(e.ownerName)}</a>`
     : `<span class="who-n">${escHtml(e.ownerName)}</span>`;
 
-  return `<article class="post"${e.fromTheVaults ? ' data-vaults="1"' : ''}>
+  return `<article class="post" data-id="${escHtml(e.id)}"${e.fromTheVaults ? ' data-vaults="1"' : ''}>
   <header class="who">
     <span class="av" aria-hidden="true">${initial}</span>
     <span class="who-t">${who}<span class="who-h">${handle ? '@' + escHtml(handle) + ' · ' : ''}${timeAgo(e.createdAt)}</span></span>
@@ -86,7 +86,7 @@ function offlinePage(msg) {
 <p style="color:${BRAND.muted};font-size:14px;margin:0">Try again in a moment, or <a href="/about">read about The Vault</a>.</p></div></body></html>`;
 }
 
-function page({ entries, cfg }) {
+function page({ entries, cfg, cursor, hasMore }) {
   const title = 'The Vault — the home of collectors';
   const desc = 'Real collections from real collectors. Trading cards, coins, stamps and comics, catalogued and shown off by the people who own them. Free to start.';
   const ogImage = entries.find(e => e.cardImage)?.cardImage || `${SITE}/og-image.jpg`;
@@ -281,7 +281,7 @@ footer.foot{border-top:1px solid var(--line);background:var(--panel)}
   <h2 class="vh">Cards collectors have added</h2>
   <div id="feed">${posts}</div>
   <div id="empty" hidden>Nothing here yet. <a href="/about">Start a vault</a> and yours will be the first.</div>
-  <div id="more"${entries.length < FIRST_PAGE ? ' hidden' : ''}><button id="more-btn" type="button">Show more</button></div>
+  <div id="more"${hasMore ? '' : ' hidden'}><button id="more-btn" type="button">Show more</button></div>
 </main>
 
 <footer class="foot"><div class="wrap">
@@ -412,7 +412,18 @@ const moreWrap = document.getElementById('more');
 const moreBtn = document.getElementById('more-btn');
 const empty = document.getElementById('empty');
 const chipBox = document.getElementById('chips');
-let cursor = null, cat = '', busy = false, first = true;
+// Where the server-rendered first page stopped. Without this the client
+// starts from nothing, and the first "Show more" asks for page one again —
+// appending a second copy of the cards already on screen.
+let cursor = ${JSON.stringify(cursor || null)};
+let cat = '', busy = false;
+
+// Everything already on the page. A cursor can still land badly — a card added
+// between the render and the click shifts the window — so the client refuses a
+// duplicate outright rather than trusting the paging to be perfect.
+const seen = new Set(
+  Array.from(document.querySelectorAll('#feed .post')).map(el => el.dataset.id).filter(Boolean)
+);
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -439,7 +450,7 @@ function render(e) {
   const badges = (e.badges || []).slice(0, 3).map(b => '<span class="bdg">' + esc(b) + '</span>').join('');
   const who = h ? '<a class="who-n" href="/u/' + encodeURIComponent(h) + '">' + esc(e.ownerName) + '</a>'
                 : '<span class="who-n">' + esc(e.ownerName) + '</span>';
-  return '<article class="post">' +
+  return '<article class="post" data-id="' + esc(e.id) + '">' +
     '<header class="who"><span class="av" aria-hidden="true">' + init + '</span>' +
     '<span class="who-t">' + who + '<span class="who-h">' + (h ? '@' + esc(h) + ' · ' : '') + ago(e.createdAt) + '</span></span>' +
     (e.fromTheVaults ? '<span class="vaults">From the vaults</span>' : '') + '</header>' +
@@ -460,8 +471,10 @@ async function load(reset) {
     if (cursor && !reset) qs.set('cursor', cursor);
     const r = await fetch(API + '/api/feed?' + qs);
     const j = await r.json();
-    const list = j.entries || [];
-    if (reset) feed.innerHTML = '';
+    let list = j.entries || [];
+    if (reset) { feed.innerHTML = ''; seen.clear(); }
+    list = list.filter(e => e.id && !seen.has(e.id));
+    for (const e of list) seen.add(e.id);
     feed.insertAdjacentHTML('beforeend', list.map(render).join(''));
     cursor = j.nextCursor;
     moreWrap.hidden = !j.hasMore;
@@ -533,7 +546,14 @@ export default async function handler(req, res) {
     // every crawler. A visitor seeing the feed a minute stale costs nothing;
     // paying for a read per bot does.
     res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
-    return res.status(200).send(page({ entries, cfg: firebaseConfig() }));
+    return res.status(200).send(page({
+      entries,
+      cfg: firebaseConfig(),
+      // Hand the browser the position the server stopped at, so "Show more"
+      // continues rather than repeating.
+      cursor: page1.nextCursor,
+      hasMore: page1.hasMore,
+    }));
   } catch (e) {
     console.error('[feed-page]', e);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

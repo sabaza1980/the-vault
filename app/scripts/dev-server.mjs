@@ -74,19 +74,39 @@ try {
 // ── the Vercel request/response shim ────────────────────────────────────────
 function makeRes(res) {
   let code = 200;
-  return {
-    setHeader: (k, v) => res.setHeader(k, v),
-    status(c) { code = c; return this; },
-    json(o) { res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(o)); return this; },
-    send(b) {
-      if (!res.getHeader('Content-Type')) {
-        res.setHeader('Content-Type', typeof b === 'string' && b.startsWith('<')
-          ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8');
-      }
-      res.writeHead(code); res.end(b); return this;
+  // Enough of the Vercel/Express response surface that a handler written for
+  // production behaves the same here. A handler reaching for a method this
+  // shim lacks fails in a way that looks like a bug in the handler, so the
+  // list is deliberately generous.
+  const shim = {
+    get headersSent() { return res.headersSent; },
+    setHeader(k, v) { if (!res.headersSent) res.setHeader(k, v); return shim; },
+    getHeader: (k) => res.getHeader(k),
+    removeHeader(k) { if (!res.headersSent) res.removeHeader(k); return shim; },
+    status(c) { code = c; return shim; },
+    json(o) {
+      if (!res.headersSent) res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(o)); return shim;
     },
-    end() { res.writeHead(code); res.end(); return this; },
+    send(b) {
+      if (!res.headersSent) {
+        if (!res.getHeader('Content-Type')) {
+          res.setHeader('Content-Type', typeof b === 'string' && b.trimStart().startsWith('<')
+            ? 'text/html; charset=utf-8' : 'text/plain; charset=utf-8');
+        }
+        res.writeHead(code);
+      }
+      res.end(typeof b === 'object' && !Buffer.isBuffer(b) ? JSON.stringify(b) : b);
+      return shim;
+    },
+    write(chunk) { if (!res.headersSent) res.writeHead(code); res.write(chunk); return shim; },
+    redirect(to, status = 302) {
+      if (!res.headersSent) res.writeHead(status, { Location: to });
+      res.end(); return shim;
+    },
+    end(b) { if (!res.headersSent) res.writeHead(code); res.end(b); return shim; },
   };
+  return shim;
 }
 
 const readBody = (req) => new Promise(resolve => {
@@ -114,9 +134,24 @@ async function runFunction(name, req, res, url, extraQuery = {}) {
   try {
     await handler({ method: req.method, query, body, headers: req.headers, url: req.url }, makeRes(res));
   } catch (e) {
-    console.error(`[api/${name}]`, e);
+    // The route file is re-imported on every request (the mtime query above),
+    // but Node caches the modules IT imports for the life of this process. Edit
+    // a shared module like _fb.js and the route sees the old copy — which
+    // surfaces as "does not provide an export named X" and looks exactly like a
+    // missing export rather than a stale one. It is not worth debugging twice.
+    const stale = /does not provide an export named|Cannot find module/.test(e.message || '');
+    if (stale) {
+      console.error(`\n  [api/${name}] ${e.message}`);
+      console.error('  This is almost certainly a STALE MODULE, not a missing export.');
+      console.error('  A shared module (api/_*.js) changed after this server started.');
+      console.error('  Restart it: Ctrl+C, then npm run dev:full\n');
+    } else {
+      console.error(`[api/${name}]`, e);
+    }
     if (!res.headersSent) { res.writeHead(500, { 'Content-Type': 'application/json' }); }
-    res.end(JSON.stringify({ error: e.message }));
+    res.end(JSON.stringify({
+      error: stale ? 'Stale module — restart the dev server (Ctrl+C, npm run dev:full)' : e.message,
+    }));
   }
 }
 

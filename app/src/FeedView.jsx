@@ -168,7 +168,15 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
       if (!r.ok) throw new Error(`Feed ${r.status}`);
       const j = await r.json();
 
-      setEntries(prev => (reset ? j.entries || [] : prev.concat(j.entries || [])));
+      // Never append a card that is already on screen. Paging should not
+      // produce a duplicate, but a card added between two requests shifts the
+      // window, and one repeated card reads as the feed being broken.
+      setEntries(prev => {
+        const incoming = j.entries || [];
+        if (reset) return incoming;
+        const have = new Set(prev.map(e => e.id));
+        return prev.concat(incoming.filter(e => e.id && !have.has(e.id)));
+      });
       setCursor(j.nextCursor || null);
       setHasMore(!!j.hasMore);
       setError(j.enabled === false ? "The feed is having a moment." : null);
