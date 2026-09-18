@@ -272,6 +272,50 @@ export async function fsCommitTransform(docPath, transforms, token, opts = {}) {
   return r.json();
 }
 
+/** Delete a document. */
+export async function fsDelete(path, token) {
+  const r = await fetch(`${fsBase()}/${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return r.ok || r.status === 404;
+}
+
+/**
+ * A Firebase custom token: a short-lived JWT the client SDK trades for a real
+ * session with `signInWithCustomToken`.
+ *
+ * This is the documented token format signed with the service account key —
+ * the same signing path `googleToken()` already uses in production, not a
+ * hand-rolled scheme. It exists so one sign-in can cover both myvaults.io
+ * origins without pulling firebase-admin into a serverless function.
+ *
+ * One hour is the maximum Firebase allows, and it is only the window in which
+ * the token may be redeemed; the session it creates lasts as long as any other.
+ */
+export async function createCustomToken(uid) {
+  const { clientEmail, privateKey } = getServiceAccount();
+  if (!clientEmail || !privateKey) throw new Error('Missing service account');
+  const now = Math.floor(Date.now() / 1000);
+  const AUD = 'https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit';
+
+  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const payload = b64url(JSON.stringify({
+    iss: clientEmail, sub: clientEmail, aud: AUD,
+    iat: now, exp: now + 3600, uid: String(uid),
+  }));
+
+  const pemBody = privateKey.replace(/-----[^-]+-----|[\r\n]/g, '');
+  const key = await globalThis.crypto.subtle.importKey(
+    'pkcs8', Buffer.from(pemBody, 'base64'),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const sig = await globalThis.crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${header}.${payload}`),
+  );
+  return `${header}.${payload}.${b64url(Buffer.from(sig))}`;
+}
+
 // ── Caller identity ──────────────────────────────────────────────────────────
 
 /**

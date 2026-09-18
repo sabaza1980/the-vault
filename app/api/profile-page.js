@@ -484,6 +484,12 @@ ${authSheetJs({ cfg, owner: p.uid })}
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'HEAD') {
+    // Link checkers and uptime monitors ask with HEAD. The headers are the
+    // whole answer, so nothing is rendered for one.
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).end();
+  }
   if (req.method !== 'GET') return res.status(405).send('Method not allowed');
 
   const handle = String(req.query.handle || '').trim().toLowerCase();

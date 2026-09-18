@@ -140,6 +140,16 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── Sign-in sessions ──
+    // A session document maps a random cookie id to an account, so that one
+    // sign-in covers both myvaults.io origins. It is the closest thing in this
+    // database to a credential: no client may read one, because reading one is
+    // enough to become that person. Only api/session.js, holding the service
+    // account, ever touches them.
+    match /sessions/{sessionId} {
+      allow read, write: if false;
+    }
+
     // ── Abuse reports ──
     // A signed-in user can file one; only admins read or act on them.
     match /reports/{reportId} {

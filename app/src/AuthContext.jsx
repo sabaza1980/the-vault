@@ -15,13 +15,22 @@ import { auth, googleProvider } from './firebase';
 
 const isNative = Capacitor.isNativePlatform();
 
+import { publishSession, adoptSession, endSession } from './session';
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = loading
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u ?? null));
+    // One sign-in covers myvaults.io and app.myvaults.io. Signing in here
+    // publishes the session so the other origin picks it up; arriving here
+    // already signed in over there adopts it.
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u ?? null);
+      if (u) publishSession(u);
+      else adoptSession();   // 204 for a visitor who simply is not signed in
+    });
     return unsubscribe;
   }, []);
 
@@ -37,7 +46,12 @@ export function AuthProvider({ children }) {
     }
     return signInWithPopup(auth, googleProvider);
   };
-  const signOut = () => firebaseSignOut(auth);
+  // Signing out has to end the shared session too, or the other origin would
+  // sign this browser straight back in.
+  const signOut = async () => {
+    await endSession();
+    return firebaseSignOut(auth);
+  };
   const signUpWithEmail = (email, password, displayName) =>
     createUserWithEmailAndPassword(auth, email, password).then((cred) =>
       displayName ? updateProfile(cred.user, { displayName }) : cred

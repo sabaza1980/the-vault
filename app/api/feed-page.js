@@ -178,6 +178,13 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdr
 .band .b2{text-align:center;border:1px solid var(--line);color:#c2c2cd;font-size:14px;font-weight:600;text-decoration:none;border-radius:11px;padding:13px 18px}
 .band .fine{font-size:12px;color:var(--m)}
 
+/* Two header states. The signed-in one was missing, so a signed-in visitor
+   was told to sign in by a page that already knew who they were. */
+.out-only{display:flex;align-items:center;gap:4px}
+.in-only{display:none;align-items:center;gap:8px}
+body.in .out-only{display:none}
+body.in .in-only{display:flex}
+.me{display:flex;text-decoration:none}
 .mine{display:none;border-bottom:1px solid var(--line)}
 .mine .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px}
 .mine .add{flex:1;display:flex;align-items:center;gap:8px;background:#1a1a23;border:1px solid var(--line);border-radius:999px;padding:10px 14px;color:var(--m);font-size:13.5px;text-decoration:none}
@@ -243,8 +250,14 @@ footer.foot{border-top:1px solid var(--line);background:var(--panel)}
     <a href="/blog">Blog</a>
   </nav>
   <span class="spacer"></span>
-  <a class="ghost" href="#" id="signin">Sign in</a>
-  <a class="cta" href="#" id="start">Start free</a>
+  <span class="out-only">
+    <a class="ghost" href="#" id="signin">Sign in</a>
+    <a class="cta" href="#" id="start">Start free</a>
+  </span>
+  <span class="in-only">
+    <a class="ghost" href="https://app.myvaults.io/">Your vault</a>
+    <a class="me" id="me-link" href="#" title="Your profile"><span class="av" id="me-av2" aria-hidden="true">·</span></a>
+  </span>
 </div></header>
 
 <section class="band"><div class="wrap">
@@ -319,17 +332,52 @@ ${authSheetJs({ cfg, owner: null })}
 <script type="module">
 // Signed in, the band comes off and the add-a-card row takes its place. Done in
 // the browser so the served HTML is identical for everyone and stays cacheable.
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getAuth, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 const CFG2 = ${cfg ? JSON.stringify(cfg) : 'null'};
+const API_BASE = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+  ? location.origin : 'https://app.myvaults.io';
 if (CFG2) {
   const app = getApps().length ? getApps()[0] : initializeApp(CFG2);
-  onAuthStateChanged(getAuth(app), (u) => {
+  const fbAuth = getAuth(app);
+
+  // One sign-in covers this site and the app. Signing in here publishes the
+  // session; arriving here already signed in on app.myvaults.io adopts it.
+  // A 204 is the ordinary answer for a visitor who is not signed in — the feed
+  // is public and none of this gates reading it.
+  const publish = (u) => u.getIdToken()
+    .then(idToken => fetch(API_BASE + '/api/session', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    }))
+    .catch(() => {});
+
+  const adopt = () => fetch(API_BASE + '/api/session', { credentials: 'include' })
+    .then(r => r.status === 200 ? r.json() : null)
+    .then(j => j && j.customToken ? signInWithCustomToken(fbAuth, j.customToken) : null)
+    .catch(() => {});
+
+  onAuthStateChanged(fbAuth, (u) => {
     document.body.classList.toggle('in', !!u);
+    if (u) publish(u); else adopt();
     if (u) {
       const n = (u.displayName || u.email || '?').trim().charAt(0).toUpperCase();
-      const av = document.getElementById('me-av');
-      if (av) av.textContent = n;
+      for (const id of ['me-av', 'me-av2']) {
+        const av = document.getElementById(id);
+        if (av) av.textContent = n;
+      }
+      // Their own profile, if they have a handle. Asking the API for it also
+      // assigns one to an account that has none, which is what makes a brand
+      // new collector reachable at a URL.
+      u.getIdToken().then(t => fetch(API_BASE + '/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+        body: JSON.stringify({ ensure_handle: true }),
+      })).then(r => r && r.ok ? r.json() : null).then(j => {
+        const link = document.getElementById('me-link');
+        if (j && j.handle && link) link.href = '/u/' + encodeURIComponent(j.handle);
+      }).catch(() => {});
     }
   });
 }
@@ -436,6 +484,12 @@ for (const id of ['signin', 'start', 'start2']) {
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'HEAD') {
+    // Link checkers and uptime monitors ask with HEAD. The headers are the
+    // whole answer, so nothing is rendered for one.
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).end();
+  }
   if (req.method !== 'GET') return res.status(405).send('Method not allowed');
 
   try {
