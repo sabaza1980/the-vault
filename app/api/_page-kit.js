@@ -55,34 +55,34 @@ const esc = (s) => String(s ?? '')
  */
 export function siteHeaderCss() {
   return `
-header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdrop-filter:blur(14px);border-bottom:1px solid ${BRAND.line}}
+header.top{position:sticky;top:0;z-index:20;background:var(--head);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;gap:12px;height:58px}
 .logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto}
 .logo img{width:22px;height:24px;display:block}
-.wm{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.6px;color:${BRAND.text}}
-.wm b{color:${BRAND.orange};font-weight:400}
+.wm{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.6px;color:var(--t)}
+.wm b{color:var(--or);font-weight:400}
 .nav-out{display:none;gap:2px;flex:0 0 auto}
-.nav-out a{font-size:13.5px;font-weight:600;color:#c2c2cd;text-decoration:none;padding:9px 7px}
-.nav-out a:hover{color:${BRAND.text}}
+.nav-out a{font-size:13.5px;font-weight:600;color:var(--dim);text-decoration:none;padding:9px 7px}
+.nav-out a:hover{color:var(--t)}
 .spacer{flex:1}
-.ghost{font-size:13px;font-weight:600;color:#c2c2cd;text-decoration:none;padding:9px 6px}
-.cta{background:${BRAND.orange};color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;border-radius:999px;padding:9px 15px;border:none;cursor:pointer;font-family:inherit}
+.ghost{font-size:13px;font-weight:600;color:var(--dim);text-decoration:none;padding:9px 6px}
+.cta{background:var(--or);color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;border-radius:999px;padding:9px 15px;border:none;cursor:pointer;font-family:inherit}
 .cta:hover{background:#ff8353}
 
 /* The switch. One control, three destinations, same order on every surface. */
-.sw{display:flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid ${BRAND.line};border-radius:999px;padding:3px;flex:0 0 auto}
-.sw-b{display:flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:999px;padding:7px 13px;color:${BRAND.muted};font-size:12px;font-weight:700;letter-spacing:.3px;text-decoration:none;white-space:nowrap}
-.sw-b:hover{color:${BRAND.text}}
-.sw-b.on{background:rgba(255,107,53,.14);border-color:rgba(255,107,53,.38);color:${BRAND.orange}}
+.sw{display:flex;gap:3px;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:3px;flex:0 0 auto}
+.sw-b{display:flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:999px;padding:7px 13px;color:var(--m);font-size:12px;font-weight:700;letter-spacing:.3px;text-decoration:none;white-space:nowrap}
+.sw-b:hover{color:var(--t)}
+.sw-b.on{background:rgba(255,107,53,.14);border-color:rgba(255,107,53,.38);color:var(--or)}
 .sw-b svg{width:15px;height:15px;flex:0 0 auto}
 .sw-b .short{display:none}
-.bell{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid ${BRAND.line};color:#c2c2cd;flex:0 0 auto;text-decoration:none}
-.bell:hover{color:${BRAND.text}}
+.bell{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:var(--chip);border:1px solid var(--line);color:var(--dim);flex:0 0 auto;text-decoration:none}
+.bell:hover{color:var(--t)}
 .me{display:flex;text-decoration:none;flex:0 0 auto}
 
 /* Signed in, you should be able to see it — your own picture when Google gave
    us one, the first letter of your name when it did not. */
-.av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#2a2a36;color:#c2c2cd;font-size:12px;font-weight:700;overflow:hidden}
+.av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:var(--av);color:var(--dim);font-size:12px;font-weight:700;overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* The account menu. An avatar you can click is what people expect; one that
@@ -91,15 +91,15 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdr
 .me-box{position:relative;flex:0 0 auto}
 .me-btn{background:none;border:none;padding:0;cursor:pointer;display:flex}
 .me-scrim{position:fixed;inset:0;z-index:30}
-.me-menu{position:absolute;top:calc(100% + 9px);right:0;min-width:218px;background:#12121c;border:1px solid ${BRAND.line};border-radius:12px;padding:6px;box-shadow:0 18px 44px rgba(0,0,0,.55);z-index:40}
+.me-menu{position:absolute;top:calc(100% + 9px);right:0;min-width:218px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:var(--shadow);z-index:40}
 .me-menu[hidden],.me-scrim[hidden]{display:none}
-.me-who{padding:8px 10px;border-bottom:1px solid ${BRAND.line};margin-bottom:4px}
-.me-n{font-size:12.5px;font-weight:700;color:${BRAND.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.me-e{font-size:10.5px;color:${BRAND.muted};overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.me-menu a,.me-menu button{display:block;width:100%;box-sizing:border-box;text-align:left;background:none;border:none;border-radius:8px;padding:9px 10px;color:#c2c2cd;font-family:inherit;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer}
-.me-menu a:hover,.me-menu button:hover{background:rgba(255,255,255,.06);color:${BRAND.text}}
-.me-sep{height:1px;background:${BRAND.line};margin:5px 2px}
-#me-out{color:${BRAND.orange}}
+.me-who{padding:8px 10px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.me-n{font-size:12.5px;font-weight:700;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-e{font-size:10.5px;color:var(--m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-menu a,.me-menu button{display:block;width:100%;box-sizing:border-box;text-align:left;background:none;border:none;border-radius:8px;padding:9px 10px;color:var(--dim);font-family:inherit;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer}
+.me-menu a:hover,.me-menu button:hover{background:var(--wash);color:var(--t)}
+.me-sep{height:1px;background:var(--line);margin:5px 2px}
+#me-out{color:var(--or)}
 
 .out-only{display:flex;align-items:center;gap:4px}
 .in-only{display:none;align-items:center;gap:8px}
@@ -143,7 +143,7 @@ export function siteHeaderHtml({ active = null, feedHref = '/' } = {}) {
   </nav>
   <nav class="sw in-only" aria-label="Sections">
     ${item('feed', feedHref, 'Feed', 'Feed')}
-    ${item('vault', 'https://app.myvaults.io/', 'My Vault', 'Vault')}
+    ${item('vault', 'https://app.myvaults.io/?view=vault', 'My Vault', 'Vault')}
     ${item('me', '#', 'My Profile', 'Profile', 'sw-me')}
   </nav>
   <span class="spacer"></span>
@@ -163,9 +163,10 @@ export function siteHeaderHtml({ active = null, feedHref = '/' } = {}) {
           <div class="me-e" id="me-email"></div>
         </div>
         <a role="menuitem" id="me-link" href="#">View my profile</a>
-        <a role="menuitem" href="https://app.myvaults.io/">My vault</a>
+        <a role="menuitem" href="https://app.myvaults.io/?view=vault">My vault</a>
         <a role="menuitem" href="https://app.myvaults.io/?profile=1">Public profile settings</a>
         <a role="menuitem" href="https://app.myvaults.io/?referral=1">Invite friends</a>
+        <button type="button" role="menuitem" id="me-theme">Light mode</button>
         <div class="me-sep"></div>
         <a role="menuitem" href="https://www.myvaults.io/privacy-policy">Privacy policy</a>
         <a role="menuitem" href="https://www.myvaults.io/terms">Terms</a>
@@ -648,6 +649,26 @@ window.__vaultPaintUser = (u) => {
     }
   }).catch(() => {});
 };
+
+// Dark and light, kept in a cookie on the parent domain so the app and this
+// site agree. The app writes the same cookie when you flip it there.
+(function theme() {
+  const btn = document.getElementById('me-theme');
+  const current = () => document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const label = () => { if (btn) btn.textContent = current() === 'light' ? 'Dark mode' : 'Light mode'; };
+  label();
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const next = current() === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    try {
+      const bits = ['__vault_theme=' + next, 'Path=/', 'SameSite=Lax', 'Max-Age=31536000'];
+      if (location.hostname.indexOf('myvaults.io') >= 0) bits.push('Domain=.myvaults.io', 'Secure');
+      document.cookie = bits.join('; ');
+    } catch (e) {}
+    label();
+  });
+})();
 
 // The avatar opens the account menu.
 (function accountMenu() {

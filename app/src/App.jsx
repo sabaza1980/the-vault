@@ -1793,7 +1793,17 @@ export default function App() {
   const [view, setView] = useState("cards"); // "cards" | "table"
   const [sportFilters, setSportFilters] = useState({ rookieOnly: false, autoOnly: false, patchOnly: false, numberedOnly: false, gradedOnly: false, insertOnly: false });
   const [insertFilter, setInsertFilter] = useState(null); // null | "Express Lane" etc.
-  const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
+  const [theme, setTheme] = useState(() => {
+    // localStorage first: it is this origin's own answer. Then the cookie the
+    // website writes, so a choice made out there arrives here. Then dark.
+    try {
+      const own = localStorage.getItem("vault-theme");
+      if (own === "light" || own === "dark") return own;
+    } catch { /* private browsing */ }
+    const m = typeof document !== "undefined" &&
+      document.cookie.match(/(?:^|; *)__vault_theme=(light|dark)/);
+    return m ? m[1] : "dark";
+  });
   const [showChat, setShowChat] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   // A Google avatar can 404 or be blocked. When it does, fall back to the
@@ -1869,7 +1879,14 @@ export default function App() {
 
   const toggleTheme = () => setTheme(t => {
     const next = t === "dark" ? "light" : "dark";
-    localStorage.setItem("vault-theme", next);
+    try { localStorage.setItem("vault-theme", next); } catch { /* private browsing */ }
+    // The same cookie the feed and the public profiles read, on the parent
+    // domain so both origins see it.
+    try {
+      const bits = ["__vault_theme=" + next, "Path=/", "SameSite=Lax", "Max-Age=31536000"];
+      if (location.hostname.indexOf("myvaults.io") >= 0) bits.push("Domain=.myvaults.io", "Secure");
+      document.cookie = bits.join("; ");
+    } catch { /* the app still remembers it locally */ }
     return next;
   });
   // Sync theme to <html> so portalled elements (e.g. dropdowns) can use CSS vars
@@ -1884,6 +1901,13 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     const url = new URL(window.location.href);
+    // "My Vault" out on the website means the vault, not the feed the app
+    // opens with.
+    if (url.searchParams.get("view") === "vault") {
+      setTab("vault");
+      url.searchParams.delete("view");
+      window.history.replaceState({}, "", url);
+    }
     const opens = [
       ["notifications", setShowNotifications],
       ["profile", setShowProfileSettings],
