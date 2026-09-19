@@ -242,6 +242,16 @@ footer.foot{border-top:1px solid var(--line);background:var(--panel)}
 </style>
 </head>
 <body>
+<script>
+// The served HTML is the same for everyone, so it starts signed-out and the
+// header flipped once Firebase had loaded and the shared session had been
+// fetched. A returning collector watched "Sign in / Start free" sit there for
+// most of a second while the page already knew better. This cookie carries no
+// secret and grants nothing; it only says a session probably exists, which is
+// enough to paint the right header on the first frame. The auth listener below
+// corrects it either way.
+try { if (/(?:^|;\s*)__vault_in=1/.test(document.cookie)) document.body.classList.add('in'); } catch (e) {}
+</script>
 
 <header class="top"><div class="wrap">
   <a class="logo" href="/"><img src="/brand/vault-mark_fullcolour_transparent.svg" alt=""/><span class="wm">THE <b>VAULT</b></span></a>
@@ -363,8 +373,18 @@ if (CFG2) {
 
   window.__vaultPublishSession = publish;
 
+  // The hint cookie is a guess, and a wrong guess has to be taken back: a
+  // session that ended on the other origin would otherwise leave this page
+  // painting a signed-in header at nobody.
+  const clearHint = () => {
+    try {
+      document.cookie = '__vault_in=; Path=/; Max-Age=0';
+      document.cookie = '__vault_in=; Path=/; Max-Age=0; Domain=.myvaults.io';
+    } catch (e) {}
+  };
+
   const adopt = () => fetch(API_BASE + '/api/session', { credentials: 'include' })
-    .then(r => r.status === 200 ? r.json() : null)
+    .then(r => r.status === 200 ? r.json() : (clearHint(), document.body.classList.remove('in'), null))
     .then(j => j && j.customToken ? signInWithCustomToken(fbAuth, j.customToken) : null)
     .catch(() => {});
 
@@ -379,12 +399,15 @@ if (CFG2) {
   // session" and signs the person straight back out.
   const verify = () => Promise.resolve(window.__vaultGateWait ? window.__vaultGateWait() : null)
     .then(() => fetch(API_BASE + '/api/session', { credentials: 'include' }))
-    .then(r => { if (r.status === 204) signOut(fbAuth); })
+    .then(r => { if (r.status === 204) { clearHint(); signOut(fbAuth); } })
     .catch(() => {});
 
   onAuthStateChanged(fbAuth, (u) => {
     document.body.classList.toggle('in', !!u);
-    if (u) verify(); else adopt();
+    // A tap landing before the shared session has been adopted would open the
+    // sign-up sheet at somebody who is already a member. Anything that needs a
+    // token waits on this.
+    if (u) verify(); else window.__vaultAdopting = adopt();
     if (u) {
       const n = (u.displayName || u.email || '?').trim().charAt(0).toUpperCase();
       for (const id of ['me-av', 'me-av2']) {

@@ -32,6 +32,11 @@ import {
 } from './_fb.js';
 
 const COOKIE = '__vault_session';
+// A companion the page can read. It carries no secret and grants nothing: it
+// says only "there is probably a session here", which is enough for a page to
+// paint the signed-in header on the first frame instead of flashing "Sign in"
+// at somebody who is already signed in. The real cookie stays HttpOnly.
+const HINT = '__vault_in';
 const DAYS = 14;
 const MAX_AGE = DAYS * 24 * 60 * 60;
 
@@ -74,12 +79,13 @@ function readCookie(req, name) {
  */
 function setCookie(req, res, value, maxAge) {
   const local = isLocal(req.headers.origin || '') || /^(localhost|127\.0\.0\.1)/.test(req.headers.host || '');
-  const bits = [
-    `${COOKIE}=${encodeURIComponent(value)}`,
-    'Path=/', 'HttpOnly', 'SameSite=Lax', `Max-Age=${maxAge}`,
-  ];
-  if (!local) bits.push('Domain=.myvaults.io', 'Secure');
-  res.setHeader('Set-Cookie', bits.join('; '));
+  const common = ['Path=/', 'SameSite=Lax', `Max-Age=${maxAge}`];
+  const scope = local ? [] : ['Domain=.myvaults.io', 'Secure'];
+  const session = [`${COOKIE}=${encodeURIComponent(value)}`, ...common, 'HttpOnly', ...scope].join('; ');
+  // Same lifetime, same scope, no HttpOnly. The two are set and cleared
+  // together, so the hint can never outlive the session it hints at.
+  const hint = [`${HINT}=${maxAge ? '1' : ''}`, ...common, ...scope].join('; ');
+  res.setHeader('Set-Cookie', [session, hint]);
 }
 
 /** 32 random bytes. Guessing one is not a threat model worth entertaining. */

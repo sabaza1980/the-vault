@@ -223,7 +223,12 @@ async function token() {
   if (!a) return null;
   if (a.currentUser) return a.currentUser.getIdToken();
   const u = await whenAuthReady(a);
-  return u ? u.getIdToken() : null;
+  if (u) return u.getIdToken();
+  // Firebase says nobody, but a session may still be arriving from the other
+  // origin. Concluding "signed out" before that lands is what let a member tap
+  // a reaction and get handed a sign-up sheet.
+  if (window.__vaultAdopting) { try { await window.__vaultAdopting; } catch (e) {} }
+  return a.currentUser ? a.currentUser.getIdToken() : null;
 }
 
 // Pull the real counts and this viewer's own reactions, then repaint. Runs on
