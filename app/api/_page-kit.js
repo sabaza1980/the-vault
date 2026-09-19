@@ -329,11 +329,18 @@ window.__vaultGateWait = () => (signInGate ? signInGate.promise : Promise.resolv
 let auth = null, signIn = null, authReady = null, fb = null;
 async function firebase() {
   if (auth || !CFG) return auth;
-  const [{ initializeApp }, fbAuth] = await Promise.all([
-    import('https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js'),
+  // Same version, same app as the page's own module, and never a second
+  // initializeApp. Two copies of the SDK keep two separate registries and two
+  // separate auth states: the feed adopted the shared session on one of them
+  // while every reaction and comment asked the other, which had never heard of
+  // it. On a fast desktop both happened to settle signed in; on a phone the
+  // second one answered "nobody" first and the sheet came up at somebody who
+  // was already signed in.
+  const [{ initializeApp, getApps }, fbAuth] = await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js'),
   ]);
-  const app = initializeApp(CFG);
+  const app = getApps().length ? getApps()[0] : initializeApp(CFG);
   auth = fbAuth.getAuth(app);
   fb = fbAuth;
   signIn = () => fbAuth.signInWithPopup(auth, new fbAuth.GoogleAuthProvider());
@@ -344,6 +351,7 @@ async function firebase() {
 // session from storage, so waiting on the first auth callback is the difference
 // between "signed out" and "not resolved yet".
 function whenAuthReady(a) {
+  if (a.currentUser) return Promise.resolve(a.currentUser);
   if (authReady) return authReady;
   authReady = new Promise(resolve => {
     let done = false;
@@ -355,6 +363,10 @@ function whenAuthReady(a) {
     });
     setTimeout(() => { if (!done) { done = true; resolve(a.currentUser || null); } }, 6000);
   });
+  // "Nobody" is never a final answer. A session adopted from the other origin
+  // lands a moment later, and a cached null would outlive it for the whole
+  // page view.
+  authReady.then(u => { if (!u) authReady = null; });
   return authReady;
 }
 
@@ -839,7 +851,7 @@ window.__vaultBindComments = bindComments;
 if (CFG) {
   firebase().then(a => {
     if (!a) return;
-    import('https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js').then(({ onAuthStateChanged }) => {
+    import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js').then(({ onAuthStateChanged }) => {
       onAuthStateChanged(a, u => { if (u) replayPending(); });
     });
   }).catch(() => {});
