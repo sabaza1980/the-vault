@@ -45,6 +45,10 @@ function timeAgo(iso) {
  * Exported so /api/feed-cards renders later pages with the same markup rather
  * than a second template that drifts from this one.
  */
+const commentLabel = (e) => e.commentCount
+  ? `${e.commentCount} comment${e.commentCount === 1 ? '' : 's'}`
+  : 'Comment';
+
 export function postHtml(e) {
   const handle = e.ownerHandle || '';
   const initial = escHtml((e.ownerName || handle || '?').trim().charAt(0).toUpperCase());
@@ -56,7 +60,7 @@ export function postHtml(e) {
     ? `<a class="who-n" href="${profile}">${escHtml(e.ownerName)}</a>`
     : `<span class="who-n">${escHtml(e.ownerName)}</span>`;
 
-  return `<article class="post" data-id="${escHtml(e.id)}"${e.fromTheVaults ? ' data-vaults="1"' : ''}>
+  return `<article class="post" data-id="${escHtml(e.id)}" data-owner="${escHtml(e.ownerUid || '')}"${e.fromTheVaults ? ' data-vaults="1"' : ''}>
   <header class="who">
     <span class="av" aria-hidden="true">${initial}</span>
     <span class="who-t">${who}<span class="who-h">${handle ? '@' + escHtml(handle) + ' · ' : ''}${timeAgo(e.createdAt)}</span></span>
@@ -74,6 +78,8 @@ export function postHtml(e) {
       ${e.cardMeta ? `<span class="meta">${escHtml(e.cardMeta)}</span>` : ''}
       <h2 class="name">${escHtml(e.cardName)}</h2>
       ${badges ? `<div class="bdgs">${badges}</div>` : ''}
+      <button type="button" class="cbtn" data-entry="${escHtml(e.id)}" aria-expanded="false">${commentLabel(e)}</button>
+      <div class="cbox" hidden></div>
     </div>
   </div>
 </article>`;
@@ -221,6 +227,24 @@ body.in .band{display:none}
 .name{margin:0;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.8px;line-height:1.1;font-weight:400}
 .shot{position:relative}
 .sale{position:absolute;left:10px;top:10px;background:rgba(76,175,80,.92);color:#04140a;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.cbtn{align-self:flex-start;background:none;border:none;padding:0;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--m);cursor:pointer}
+.cbtn:hover{color:var(--t)}
+.cbox{display:flex;flex-direction:column;gap:10px;margin-top:2px}
+.cbox[hidden]{display:none}
+.cm{display:flex;gap:9px}
+.cm .av{width:24px;height:24px;font-size:10px}
+.cm-b{min-width:0;flex:1}
+.cm-h{font-size:12px;font-weight:700;color:var(--t)}
+.cm-h span{color:var(--m);font-weight:400}
+.cm-t{font-size:13px;color:var(--t);white-space:pre-wrap;word-break:break-word}
+.cm-gone .cm-t{color:var(--m);font-style:italic}
+.cm-x{background:none;border:none;padding:0 2px;font-family:inherit;font-size:11px;font-weight:700;color:var(--m);cursor:pointer}
+.cform{display:flex;gap:8px;align-items:flex-start}
+.cform input{flex:1;min-width:0;background:var(--panel3);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--t);font-family:inherit;font-size:13px}
+.cform button{background:var(--or-solid);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.cform button:disabled{opacity:.55;cursor:default}
+.cerr{font-size:12px;color:var(--err)}
+.cnote{font-size:12.5px;color:var(--m)}
 .bdgs{display:flex;gap:6px;flex-wrap:wrap}
 .bdg{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--dim);background:var(--wash);border:1px solid var(--line);border-radius:5px;padding:3px 7px}
 
@@ -459,7 +483,7 @@ function render(e) {
   const badges = (e.badges || []).slice(0, 3).map(b => '<span class="bdg">' + esc(b) + '</span>').join('');
   const who = h ? '<a class="who-n" href="/u/' + encodeURIComponent(h) + '">' + esc(e.ownerName) + '</a>'
                 : '<span class="who-n">' + esc(e.ownerName) + '</span>';
-  return '<article class="post" data-id="' + esc(e.id) + '">' +
+  return '<article class="post" data-id="' + esc(e.id) + '" data-owner="' + esc(e.ownerUid || '') + '">' +
     '<header class="who"><span class="av" aria-hidden="true">' + init + '</span>' +
     '<span class="who-t">' + who + '<span class="who-h">' + (h ? '@' + esc(h) + ' · ' : '') + ago(e.createdAt) + '</span></span>' +
     (e.fromTheVaults ? '<span class="vaults">From the vaults</span>' : '') + '</header>' +
@@ -468,7 +492,10 @@ function render(e) {
     '<div class="body"><div class="acts"><div class="rx" data-target="' + esc(e.reactionTarget) + '">' + rx + '</div></div>' +
     '<div class="cap">' + (e.cardMeta ? '<span class="meta">' + esc(e.cardMeta) + '</span>' : '') +
     '<h2 class="name">' + esc(e.cardName) + '</h2>' +
-    (badges ? '<div class="bdgs">' + badges + '</div>' : '') + '</div></div></article>';
+    (badges ? '<div class="bdgs">' + badges + '</div>' : '') +
+    '<button type="button" class="cbtn" data-entry="' + esc(e.id) + '" aria-expanded="false">' +
+    (e.commentCount ? e.commentCount + ' comment' + (e.commentCount === 1 ? '' : 's') : 'Comment') + '</button>' +
+    '<div class="cbox" hidden></div>' + '</div></div></article>';
 }
 
 async function load(reset) {

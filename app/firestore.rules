@@ -124,8 +124,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
 
-      // Comments arrive in build step 5. Public to read, server-mediated to
-      // write, so rate limits and the owner's delete are actually enforceable.
+      // Public to read, server-mediated to write. Every comment passes the
+      // policy check in api/comments.js on its way in, the counter is kept by
+      // the same request, and a delete has to prove it is the author or the
+      // card's owner. None of that is expressible in a rule, so no client
+      // writes here.
       match /comments/{commentId} {
         allow read: if true;
         allow write: if false;

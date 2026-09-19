@@ -36,7 +36,153 @@ function timeAgo(iso) {
   return `${Math.floor(d / 365)}y`;
 }
 
-function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, busy }) {
+/**
+ * The conversation under a card.
+ *
+ * Folded away until somebody asks for it: a feed of open threads is a wall of
+ * text, and the card is what people came for. Loads once per open.
+ */
+function Comments({ entry, user, onSignInNeeded, onCount }) {
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState(null);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const count = entry.commentCount || 0;
+
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch(`${API_BASE}/api/comments?entry=${encodeURIComponent(entry.id)}`);
+      const j = await r.json();
+      setRows(Array.isArray(j.comments) ? j.comments : []);
+    } catch { setRows([]); }
+  }, [entry.id]);
+
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    if (next && rows === null) load();
+  };
+
+  const send = async (ev) => {
+    ev.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+    if (!user) { onSignInNeeded?.(); return; }
+    setBusy(true); setErr("");
+    try {
+      const token = await user.getIdToken();
+      const r = await fetch(`${API_BASE}/api/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ entry: entry.id, text }),
+      });
+      const j = await r.json();
+      // 422 is the policy, not a failure. It says which rule and why, and the
+      // words stay in the box so nothing is lost.
+      if (!r.ok) { setErr(j.error || "Could not post that"); return; }
+      setRows(prev => [...(prev || []), j.comment]);
+      setDraft("");
+      onCount?.(entry.id, 1);
+    } catch {
+      setErr("Could not post that");
+    } finally { setBusy(false); }
+  };
+
+  const remove = async (c) => {
+    if (!user) return;
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${API_BASE}/api/comments?entry=${encodeURIComponent(entry.id)}&id=${encodeURIComponent(c.id)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      setRows(prev => (prev || []).filter(x => x.id !== c.id));
+      onCount?.(entry.id, -1);
+    } catch { /* it stays on screen; a reload sorts it out */ }
+  };
+
+  const mineOrMyCard = (c) =>
+    !!user && (c.uid === user.uid || entry.ownerUid === user.uid);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <button
+        onClick={toggle}
+        aria-expanded={open}
+        style={{
+          alignSelf: "flex-start", background: "none", border: "none", padding: 0,
+          font: "inherit", fontSize: 12.5, fontWeight: 700, color: "var(--tg)", cursor: "pointer",
+        }}
+      >{count ? `${count} comment${count === 1 ? "" : "s"}` : "Comment"}</button>
+
+      {open && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {rows === null && <div style={{ fontSize: 12.5, color: "var(--tg)" }}>Loading…</div>}
+          {rows && rows.length === 0 && (
+            <div style={{ fontSize: 12.5, color: "var(--tg)" }}>Nothing yet. Say the first thing.</div>
+          )}
+          {(rows || []).map(c => (
+            <div key={c.id} style={{ display: "flex", gap: 9 }}>
+              <span style={{
+                width: 24, height: 24, borderRadius: "50%", flexShrink: 0, display: "flex",
+                alignItems: "center", justifyContent: "center", background: "var(--deep)",
+                color: "var(--ts)", fontSize: 10, fontWeight: 700,
+              }}>{c.hidden ? "·" : (c.name || "?").trim().charAt(0).toUpperCase()}</span>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--t)" }}>
+                  {c.hidden ? "Removed" : c.name}
+                  {!c.hidden && c.handle ? <span style={{ color: "var(--tg)", fontWeight: 400 }}> @{c.handle}</span> : null}
+                  <span style={{ color: "var(--tg)", fontWeight: 400 }}> · {timeAgo(c.createdAt)}</span>
+                </div>
+                <div style={{
+                  fontSize: 13, color: c.hidden ? "var(--tg)" : "var(--t)",
+                  fontStyle: c.hidden ? "italic" : "normal", whiteSpace: "pre-wrap", wordBreak: "break-word",
+                }}>{c.hidden ? "This comment was removed." : c.text}</div>
+              </div>
+              {!c.hidden && mineOrMyCard(c) && (
+                <button
+                  onClick={() => remove(c)}
+                  aria-label="Remove this comment"
+                  style={{
+                    background: "none", border: "none", padding: "0 2px", cursor: "pointer",
+                    font: "inherit", fontSize: 11, fontWeight: 700, color: "var(--tg)",
+                  }}
+                >Remove</button>
+              )}
+            </div>
+          ))}
+
+          <form onSubmit={send} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <input
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onFocus={() => { if (!user) onSignInNeeded?.(); }}
+              maxLength={1000}
+              placeholder="Say something"
+              aria-label="Your comment"
+              style={{
+                flex: 1, minWidth: 0, background: "var(--deep)", border: "1px solid var(--b)",
+                borderRadius: 10, padding: "10px 12px", color: "var(--t)", font: "inherit", fontSize: 13,
+              }}
+            />
+            <button
+              type="submit"
+              disabled={busy || !draft.trim()}
+              style={{
+                background: "#ff6b35", color: "#fff", border: "none", borderRadius: 10,
+                padding: "10px 14px", font: "inherit", fontSize: 12.5, fontWeight: 700,
+                cursor: busy || !draft.trim() ? "default" : "pointer",
+                opacity: busy || !draft.trim() ? 0.55 : 1,
+              }}
+            >{busy ? "…" : "Post"}</button>
+          </form>
+          {err && <div style={{ fontSize: 12, color: "#ff8a70" }}>{err}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, onSignInNeeded, user, onCount, busy }) {
   const counts = entry.counts || {};
   const handle = entry.ownerHandle;
 
@@ -130,6 +276,8 @@ function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, busy }) {
           }}>{entry.cardName}</div>
         </div>
 
+        <Comments entry={entry} user={user} onSignInNeeded={onSignInNeeded} onCount={onCount} />
+
         {!!(entry.badges || []).length && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {entry.badges.slice(0, 3).map((b, i) => (
@@ -148,6 +296,14 @@ function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, busy }) {
 
 export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNeeded }) {
   const [entries, setEntries] = useState([]);
+
+  // The count on the fold-out button is the entry's own, so a comment posted
+  // here has to move it. Cheaper and steadier than refetching the page.
+  const bumpCount = useCallback((entryId, by) => {
+    setEntries(prev => prev.map(e => e.id === entryId
+      ? { ...e, commentCount: Math.max(0, (e.commentCount || 0) + by) }
+      : e));
+  }, []);
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [cat, setCat] = useState("");
@@ -331,6 +487,9 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
           onReact={react}
           onOpenCard={onOpenCard}
           onOpenCollector={onOpenCollector}
+          onSignInNeeded={onSignInNeeded}
+          user={user}
+          onCount={bumpCount}
         />
       ))}
 

@@ -35,6 +35,10 @@ function decodeCursor(raw) {
 function publicEntry(e, extra = {}) {
   return {
     id: e.id,
+    // Already inferable from reactionTarget, which is card_<uid>_<cardId>.
+    // Named here because the comment thread needs to know whose card it is:
+    // the owner can take a comment down on their own card.
+    ownerUid: e.ownerUid,
     ownerHandle: e.ownerHandle || null,
     ownerName: e.ownerName || 'A collector',
     cardId: e.cardId,

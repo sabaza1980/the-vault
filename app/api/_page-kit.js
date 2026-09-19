@@ -299,7 +299,7 @@ function bindReactions() {
 }
 bindReactions();
 // The filter script appends cards after first paint and calls this to wire them.
-window.__vaultBindReactions = () => { bindReactions(); syncReactions(); };
+window.__vaultBindReactions = () => { bindReactions(); syncReactions(); bindComments(); };
 // Any page can raise the sheet from its own button — the feed's header
 // 'Sign in' and 'Start free' both do. No pending reaction to replay, so it
 // just opens.
@@ -607,6 +607,7 @@ async function replayPending() {
 // disagree with itself about who you are.
 window.__vaultPaintUser = (u) => {
   document.body.classList.toggle('in', !!u);
+  myUid = u ? u.uid : null;
   if (!u) return;
   const letter = String(u.displayName || u.email || '?').trim().charAt(0).toUpperCase() || '?';
   const photo = typeof u.photoURL === 'string' && u.photoURL.indexOf('https://') === 0 ? u.photoURL : '';
@@ -649,6 +650,131 @@ window.__vaultPaintUser = (u) => {
     }
   }).catch(() => {});
 };
+
+// Comments, folded away until asked for. The card is what people came for;
+// a page of open threads is a wall of text.
+const cesc = (t) => { const d = document.createElement('div'); d.textContent = String(t == null ? '' : t); return d.innerHTML; };
+
+const cAgo = (iso) => {
+  const s = (Date.now() - Date.parse(iso)) / 1000;
+  if (!isFinite(s) || s < 0) return '';
+  if (s < 3600) return Math.max(1, Math.floor(s / 60)) + 'm';
+  if (s < 86400) return Math.floor(s / 3600) + 'h';
+  const d = Math.floor(s / 86400);
+  if (d < 30) return d + 'd';
+  if (d < 365) return Math.floor(d / 30) + 'mo';
+  return Math.floor(d / 365) + 'y';
+};
+
+let myUid = null;
+const ownerOf = (box) => {
+  const art = box.closest('.post');
+  return art ? art.getAttribute('data-owner') : null;
+};
+
+function cRow(c, box) {
+  const gone = !!c.hidden;
+  const canRemove = !gone && myUid && (c.uid === myUid || ownerOf(box) === myUid);
+  return '<div class="cm' + (gone ? ' cm-gone' : '') + '" data-id="' + cesc(c.id) + '">' +
+    '<span class="av" aria-hidden="true">' + (gone ? '·' : cesc(String(c.name || '?').trim().charAt(0).toUpperCase())) + '</span>' +
+    '<div class="cm-b"><div class="cm-h">' + (gone ? 'Removed' : cesc(c.name)) +
+    (!gone && c.handle ? '<span> @' + cesc(c.handle) + '</span>' : '') +
+    '<span> · ' + cAgo(c.createdAt) + '</span></div>' +
+    '<div class="cm-t">' + (gone ? 'This comment was removed.' : cesc(c.text)) + '</div></div>' +
+    (canRemove ? '<button type="button" class="cm-x" aria-label="Remove this comment">Remove</button>' : '') +
+    '</div>';
+}
+
+function cPaint(box, rows) {
+  const list = rows.length
+    ? rows.map(c => cRow(c, box)).join('')
+    : '<div class="cnote">Nothing yet. Say the first thing.</div>';
+  box.innerHTML = list +
+    '<form class="cform"><input maxlength="1000" placeholder="Say something" aria-label="Your comment"/>' +
+    '<button type="submit">Post</button></form><div class="cerr"></div>';
+}
+
+function cLabel(btn, n) {
+  btn.textContent = n ? n + ' comment' + (n === 1 ? '' : 's') : 'Comment';
+}
+
+function bindComments() {
+  document.querySelectorAll('.cbtn').forEach(btn => {
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    const box = btn.nextElementSibling;
+    const entry = btn.dataset.entry;
+    let rows = null;
+
+    const refresh = () => {
+      cPaint(box, rows || []);
+      box.querySelector('.cform').addEventListener('submit', send);
+      box.querySelectorAll('.cm-x').forEach(x =>
+        x.addEventListener('click', () => remove(x.closest('.cm').dataset.id)));
+    };
+
+    async function load() {
+      try {
+        const r = await fetch(API + '/api/comments?entry=' + encodeURIComponent(entry));
+        const j = await r.json();
+        rows = Array.isArray(j.comments) ? j.comments : [];
+      } catch { rows = []; }
+      refresh();
+    }
+
+    async function send(ev) {
+      ev.preventDefault();
+      const input = box.querySelector('.cform input');
+      const submit = box.querySelector('.cform button');
+      const err = box.querySelector('.cerr');
+      const text = input.value.trim();
+      if (!text) return;
+      err.textContent = '';
+      const t = await token();
+      if (!t) { window.__vaultOpenSheet(); return; }
+      submit.disabled = true;
+      try {
+        const r = await fetch(API + '/api/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+          body: JSON.stringify({ entry: entry, text: text }),
+        });
+        const j = await r.json();
+        // A 422 is the house rules answering, not a failure. It says which rule
+        // and why, and the words stay in the box.
+        if (!r.ok) { err.textContent = j.error || 'Could not post that'; return; }
+        rows = (rows || []).concat([j.comment]);
+        input.value = '';
+        refresh();
+        cLabel(btn, rows.filter(c => !c.hidden).length);
+      } catch {
+        err.textContent = 'Could not post that';
+      } finally { submit.disabled = false; }
+    }
+
+    async function remove(id) {
+      const t = await token();
+      if (!t) return;
+      try {
+        await fetch(API + '/api/comments?entry=' + encodeURIComponent(entry) + '&id=' + encodeURIComponent(id),
+          { method: 'DELETE', headers: { Authorization: 'Bearer ' + t } });
+        rows = (rows || []).filter(c => c.id !== id);
+        refresh();
+        cLabel(btn, rows.length);
+      } catch {}
+    }
+
+    btn.addEventListener('click', async () => {
+      const opening = box.hidden;
+      box.hidden = !opening;
+      btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      if (opening && rows === null) { box.innerHTML = '<div class="cnote">Loading…</div>'; await load(); }
+    });
+  });
+}
+bindComments();
+// The filter and the paging append posts after first paint.
+window.__vaultBindComments = bindComments;
 
 // Dark and light, kept in a cookie on the parent domain so the app and this
 // site agree. The app writes the same cookie when you flip it there.
