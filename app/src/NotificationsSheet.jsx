@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { collection, doc, onSnapshot, orderBy, query, limit, updateDoc, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 
-const EMOJI = { heart: "❤️", fire: "🔥", money: "💰" };
-const VERB  = { heart: "loved", fire: "is fired up about", money: "rates" };
+const EMOJI = { heart: "❤️", fire: "🔥", money: "💰", comment: "💬" };
+const VERB  = { heart: "loved", fire: "is fired up about", money: "rates", comment: "commented on" };
 
 /**
  * Who reacted to your cards.
@@ -32,7 +32,7 @@ export function useNotifications(user) {
   }, [user?.uid]);
 
   // The gift toast owns credit_gift and marks those read itself.
-  const social = items.filter(n => n.type === "reaction");
+  const social = items.filter(n => n.type === "reaction" || n.type === "comment");
   const unread = social.filter(n => !n.read).length;
   return { items: social, unread };
 }
@@ -122,7 +122,7 @@ function Row({ n, onOpenCard }) {
       background: n.read ? "transparent" : "rgba(255,107,53,0.06)",
       borderRadius: 12,
     }}>
-      <div style={{ fontSize: 22, flexShrink: 0, width: 28, textAlign: "center" }}>{EMOJI[n.emoji] || "⭐"}</div>
+      <div style={{ fontSize: 22, flexShrink: 0, width: 28, textAlign: "center" }}>{EMOJI[n.type === "comment" ? "comment" : n.emoji] || "⭐"}</div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, lineHeight: 1.45, color: "var(--t)" }}>
@@ -135,9 +135,15 @@ function Row({ n, onOpenCard }) {
             // No public profile, so the name is not a link to anywhere.
             <span style={{ fontWeight: 700 }}>{n.actorName}</span>
           )}
-          {" "}{VERB[n.emoji] || "reacted to"}{" "}
+          {" "}{VERB[n.type === "comment" ? "comment" : n.emoji] || "reacted to"}{" "}
           <span style={{ color: "var(--ts)" }}>{n.cardId ? n.cardName : "your profile"}</span>
         </div>
+        {n.excerpt && (
+          <div style={{
+            fontSize: 12.5, color: "var(--ts)", marginTop: 3,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>“{n.excerpt}”</div>
+        )}
         <div style={{ fontSize: 11, color: "var(--tg)", marginTop: 2 }}>{timeAgo(n.createdAt)}</div>
       </div>
 

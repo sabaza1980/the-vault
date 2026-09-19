@@ -58,10 +58,13 @@ function Comments({ entry, user, onSignInNeeded, onCount }) {
     } catch { setRows([]); }
   }, [entry.id]);
 
+  const boxRef = useRef(null);
   const toggle = () => {
     const next = !open;
     setOpen(next);
     if (next && rows === null) load();
+    // Opening a thread is nearly always the first half of writing in it.
+    if (next) setTimeout(() => boxRef.current?.focus(), 60);
   };
 
   const send = async (ev) => {
@@ -109,10 +112,18 @@ function Comments({ entry, user, onSignInNeeded, onCount }) {
         onClick={toggle}
         aria-expanded={open}
         style={{
-          alignSelf: "flex-start", background: "none", border: "none", padding: 0,
+          alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 7,
+          background: "transparent", border: "1px solid var(--b)", borderRadius: 999,
+          padding: "7px 13px", minHeight: 36,
           font: "inherit", fontSize: 12.5, fontWeight: 700, color: "var(--tg)", cursor: "pointer",
         }}
-      >{count ? `${count} comment${count === 1 ? "" : "s"}` : "Comment"}</button>
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 20.5l1.6-4.6A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z" />
+        </svg>
+        {count ? `${count} comment${count === 1 ? "" : "s"}` : "Add a comment"}
+      </button>
 
       {open && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -153,6 +164,7 @@ function Comments({ entry, user, onSignInNeeded, onCount }) {
 
           <form onSubmit={send} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <input
+              ref={boxRef}
               value={draft}
               onChange={e => setDraft(e.target.value)}
               onFocus={() => { if (!user) onSignInNeeded?.(); }}

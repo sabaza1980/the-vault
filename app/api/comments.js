@@ -158,6 +158,11 @@ export default async function handler(req, res) {
     text,
     context: `A comment under a photo of "${entry.cardName || 'a card'}" in a collector's vault.`,
   });
+  if (verdict.decision === 'unavailable') {
+    // Nothing goes up unchecked. The words stay in the box and a retry in a
+    // moment usually lands.
+    return res.status(503).json({ error: 'Could not check that just now. Try again in a moment.' });
+  }
   if (verdict.decision === 'block') {
     return res.status(422).json({
       error: verdict.reason || 'That breaks the house rules.',

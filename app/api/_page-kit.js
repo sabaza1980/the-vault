@@ -695,7 +695,9 @@ function cPaint(box, rows) {
 }
 
 function cLabel(btn, n) {
-  btn.textContent = n ? n + ' comment' + (n === 1 ? '' : 's') : 'Comment';
+  const span = btn.querySelector('span');
+  const text = n ? n + ' comment' + (n === 1 ? '' : 's') : 'Add a comment';
+  if (span) span.textContent = text; else btn.textContent = text;
 }
 
 function bindComments() {

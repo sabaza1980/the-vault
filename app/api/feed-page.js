@@ -45,9 +45,11 @@ function timeAgo(iso) {
  * Exported so /api/feed-cards renders later pages with the same markup rather
  * than a second template that drifts from this one.
  */
+const BUBBLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.9-.9L3 20.5l1.6-4.6A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"></path></svg>';
+
 const commentLabel = (e) => e.commentCount
   ? `${e.commentCount} comment${e.commentCount === 1 ? '' : 's'}`
-  : 'Comment';
+  : 'Add a comment';
 
 export function postHtml(e) {
   const handle = e.ownerHandle || '';
@@ -78,7 +80,7 @@ export function postHtml(e) {
       ${e.cardMeta ? `<span class="meta">${escHtml(e.cardMeta)}</span>` : ''}
       <h2 class="name">${escHtml(e.cardName)}</h2>
       ${badges ? `<div class="bdgs">${badges}</div>` : ''}
-      <button type="button" class="cbtn" data-entry="${escHtml(e.id)}" aria-expanded="false">${commentLabel(e)}</button>
+      <button type="button" class="cbtn" data-entry="${escHtml(e.id)}" aria-expanded="false">${BUBBLE}<span>${commentLabel(e)}</span></button>
       <div class="cbox" hidden></div>
     </div>
   </div>
@@ -227,8 +229,9 @@ body.in .band{display:none}
 .name{margin:0;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.8px;line-height:1.1;font-weight:400}
 .shot{position:relative}
 .sale{position:absolute;left:10px;top:10px;background:rgba(76,175,80,.92);color:#04140a;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
-.cbtn{align-self:flex-start;background:none;border:none;padding:0;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--m);cursor:pointer}
+.cbtn{align-self:flex-start;display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 13px;min-height:36px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--m);cursor:pointer}
 .cbtn:hover{color:var(--t)}
+.cbtn svg{width:15px;height:15px;flex:0 0 auto}
 .cbox{display:flex;flex-direction:column;gap:10px;margin-top:2px}
 .cbox[hidden]{display:none}
 .cm{display:flex;gap:9px}
@@ -493,8 +496,8 @@ function render(e) {
     '<div class="cap">' + (e.cardMeta ? '<span class="meta">' + esc(e.cardMeta) + '</span>' : '') +
     '<h2 class="name">' + esc(e.cardName) + '</h2>' +
     (badges ? '<div class="bdgs">' + badges + '</div>' : '') +
-    '<button type="button" class="cbtn" data-entry="' + esc(e.id) + '" aria-expanded="false">' +
-    (e.commentCount ? e.commentCount + ' comment' + (e.commentCount === 1 ? '' : 's') : 'Comment') + '</button>' +
+    '<button type="button" class="cbtn" data-entry="' + esc(e.id) + '" aria-expanded="false">' + BUBBLE +
+    '<span>' + (e.commentCount ? e.commentCount + ' comment' + (e.commentCount === 1 ? '' : 's') : 'Add a comment') + '</span></button>' +
     '<div class="cbox" hidden></div>' + '</div></div></article>';
 }
 

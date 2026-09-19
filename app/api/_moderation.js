@@ -74,12 +74,20 @@ A confidence below ${CONFIDENCE_BAR} means you are unsure: answer "flag", never
  * Judge one piece of text.
  *
  * Never throws. When the check cannot run — no key, upstream down, a reply
- * that will not parse — the answer is `flag`, so the comment publishes and the
- * digest picks it up. A moderation outage must not become an outage of the
- * product, and silence is worse than a queue.
+ * that will not parse — the answer is `unavailable`, and the caller refuses
+ * the comment rather than publishing it.
+ *
+ * This used to publish and flag instead, on the argument that a moderation
+ * outage should not become an outage of the product. The first thing that
+ * argument produced was a death threat sitting in public, because the key was
+ * read under the wrong name and the check had never run once. At this volume a
+ * retry costs somebody five seconds. Publishing unchecked costs more.
  */
 export async function moderate({ text, context = '' }) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // The rest of this app reads the key under VITE_ANTHROPIC_API_KEY. Both
+  // names are accepted so a rename on either side cannot silently disable
+  // moderation again.
+  const apiKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const clean = String(text || '').trim();
   if (!clean) return { decision: 'block', rule: 'empty', reason: 'Say something first.', confidence: 1 };
   if (!apiKey) return unavailable('no key configured');
@@ -115,6 +123,8 @@ export async function moderate({ text, context = '' }) {
     const confidence = Number(out.confidence);
     const decision = ['block', 'flag', 'allow'].includes(out.decision) ? out.decision : 'flag';
 
+    console.log('[moderation]', decision, '| rule:', out.rule, '| confidence:', confidence);
+
     return {
       // Unsure never blocks. The model is told this, and it is enforced here
       // too, because a rule that depends on the model following it is not a
@@ -130,8 +140,11 @@ export async function moderate({ text, context = '' }) {
 }
 
 function unavailable(why) {
+  // Loud, because a moderation check that has quietly stopped working looks
+  // exactly like a moderation check that is working.
+  console.error('[moderation] check unavailable:', why);
   return {
-    decision: 'flag',
+    decision: 'unavailable',
     rule: 'check-unavailable',
     reason: '',
     confidence: 0,
