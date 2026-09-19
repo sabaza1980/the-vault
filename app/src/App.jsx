@@ -1903,8 +1903,9 @@ export default function App() {
     const url = new URL(window.location.href);
     // "My Vault" out on the website means the vault, not the feed the app
     // opens with.
-    if (url.searchParams.get("view") === "vault") {
-      setTab("vault");
+    const view = url.searchParams.get("view");
+    if (view === "vault" || view === "me") {
+      setTab(view);
       url.searchParams.delete("view");
       window.history.replaceState({}, "", url);
     }
@@ -2850,7 +2851,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                 display: "flex", gap: 3, background: "var(--gbg)", border: "1px solid var(--gb)",
                 borderRadius: 20, padding: 3, flexShrink: 0,
               }}>
-                {[["feed", "Feed"], ["vault", "My Vault"]].map(([key, label]) => {
+                {[["feed", "Feed"], ["vault", "My Vault"], ["me", "My Profile"]].map(([key, label]) => {
                   const on = tab === key;
                   return (
                     <button
@@ -2868,18 +2869,6 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                     >{label}</button>
                   );
                 })}
-                <a
-                  href={publicProfile?.handle ? `https://www.myvaults.io/u/${publicProfile.handle}` : "#"}
-                  target={publicProfile?.handle ? "_blank" : undefined}
-                  rel="noreferrer"
-                  onClick={publicProfile?.handle ? undefined : (e) => { e.preventDefault(); setShowProfileSettings(true); }}
-                  style={{
-                    background: "transparent", border: "1px solid transparent",
-                    borderRadius: 18, padding: "5px 12px",
-                    color: "var(--gc)", fontSize: 11, fontWeight: 700,
-                    letterSpacing: 0.3, whiteSpace: "nowrap", textDecoration: "none",
-                  }}
-                >My Profile</a>
               </div>
             )}
             {/* WP-2: Breaks was desktop-web only. Now parked entirely while the
@@ -3293,6 +3282,65 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
               const own = cards.find(c => String(c.id) === String(entry.cardId));
               if (own) setDetailCard(own);
               else if (entry.ownerHandle) window.open(`https://www.myvaults.io/u/${entry.ownerHandle}`, "_blank", "noopener");
+            }}
+            onOpenCollector={(handle) => window.open(`https://www.myvaults.io/u/${handle}`, "_blank", "noopener")}
+            onSignInNeeded={() => setShowAuth(true)}
+          />
+        )}
+
+        {/* Your public profile, inside the app: the same feed, narrowed to your
+            own cards. The page at /u/<handle> stays the public one - one
+            profile, one URL, shareable and indexable. This is the view of it
+            you get without leaving. */}
+        {user && tab === "me" && (
+          <FeedView
+            user={user}
+            collector={publicProfile?.handle || null}
+            header={
+              <div style={{
+                display: "flex", alignItems: "center", gap: 13,
+                background: "var(--card)", border: "1px solid var(--b)",
+                borderRadius: 16, padding: "14px 16px",
+              }}>
+                <span style={{
+                  width: 44, height: 44, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "var(--deep)", color: "var(--ts)", fontSize: 16, fontWeight: 700,
+                }}>
+                  {user.photoURL && !avatarBroken
+                    ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer"
+                           onError={() => setAvatarBroken(true)}
+                           style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    : (user.displayName || user.email || "?").trim().charAt(0).toUpperCase()}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 0.8,
+                    color: "var(--t)", lineHeight: 1.1,
+                  }}>{user.displayName || "Your vault"}</div>
+                  <div style={{ fontSize: 12, color: "var(--tg)", marginTop: 1 }}>
+                    {publicProfile?.handle ? `@${publicProfile.handle}` : "No public handle yet"}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (publicProfile?.handle) {
+                      window.open(`https://www.myvaults.io/u/${publicProfile.handle}`, "_blank", "noopener");
+                    } else {
+                      setShowProfileSettings(true);
+                    }
+                  }}
+                  style={{
+                    background: "var(--gbg)", border: "1px solid var(--gb)", borderRadius: 999,
+                    padding: "7px 13px", color: "var(--gc)", fontSize: 11.5, fontWeight: 700,
+                    letterSpacing: 0.3, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap",
+                  }}
+                >{publicProfile?.handle ? "View public page" : "Set up"}</button>
+              </div>
+            }
+            onOpenCard={(entry) => {
+              const own = cards.find(c => String(c.id) === String(entry.cardId));
+              if (own) setDetailCard(own);
             }}
             onOpenCollector={(handle) => window.open(`https://www.myvaults.io/u/${handle}`, "_blank", "noopener")}
             onSignInNeeded={() => setShowAuth(true)}
@@ -4143,12 +4191,14 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
       )}
       {isMobileUI && (
         <BottomTabBar
-          active={showChat ? "ai" : profileMenuOpen ? "profile" : tab === "vault" ? "collections" : "home"}
+          active={showChat ? "ai" : tab === "me" ? "profile" : tab === "vault" ? "collections" : "home"}
           onHome={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); setTab("feed"); }}
           onCollections={() => { setShowChat(false); setProfileMenuOpen(false); setScanMenuOpen(false); setTab("vault"); }}
           onScan={() => { setShowChat(false); setShowCollections(false); setProfileMenuOpen(false); setTab("vault"); setScanMenuOpen(true); }}
           onAskAI={() => { setShowCollections(false); setProfileMenuOpen(false); setScanMenuOpen(false); setShowChat(true); }}
-          onProfile={() => { setShowChat(false); setShowCollections(false); setScanMenuOpen(false); if (user) { setProfileMenuOpen(true); } else { setShowAuth(true); } }}
+          // The avatar up top opens the account menu now, so this tab is free
+          // to be what people expect of it: your profile.
+          onProfile={() => { setShowChat(false); setShowCollections(false); setScanMenuOpen(false); setProfileMenuOpen(false); if (user) { setTab("me"); } else { setShowAuth(true); } }}
         />
       )}
       {scanMenuOpen && (

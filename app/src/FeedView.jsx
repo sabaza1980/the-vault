@@ -194,7 +194,7 @@ function Comments({ entry, user, onSignInNeeded, onCount }) {
   );
 }
 
-function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, onSignInNeeded, user, onCount, busy }) {
+function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, onSignInNeeded, user, onCount, busy, showOwner = true }) {
   const counts = entry.counts || {};
   const handle = entry.ownerHandle;
 
@@ -203,7 +203,7 @@ function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, onSignInNeede
       background: "var(--card)", border: "1px solid var(--b)", borderRadius: 16,
       overflow: "hidden", display: "flex", flexDirection: "column",
     }}>
-      <header style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+      <header style={{ display: showOwner ? "flex" : "none", alignItems: "center", gap: 10, padding: "12px 14px" }}>
         <span style={{
           width: 30, height: 30, borderRadius: "50%", flexShrink: 0, display: "flex",
           alignItems: "center", justifyContent: "center", background: "var(--deep)",
@@ -306,7 +306,7 @@ function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, onSignInNeede
   );
 }
 
-export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNeeded }) {
+export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNeeded, collector = null, header = null }) {
   const [entries, setEntries] = useState([]);
 
   // The count on the fold-out button is the entry's own, so a comment posted
@@ -341,6 +341,9 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
       // Scanned server-side across the whole collection - card names, set
       // details, badges, collector names and handles - not just what is loaded.
       if (opts.q) qs.set("q", opts.q);
+      // One collector's posts. The server filters on ownerHandle, so this is
+      // the same feed, narrowed - not a second thing to keep in step.
+      if (opts.collector) qs.set("collector", opts.collector);
       if (!reset && cursor) qs.set("cursor", cursor);
 
       // Signed in, the token buys blocking. Signed out, the feed is still the
@@ -372,10 +375,10 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
       setLoading(false);
       loadingRef.current = false;
     }
-  }, [cursor, user]);
+  }, [cursor, user, collector]);
 
   // First load, and whenever the category changes.
-  useEffect(() => { load({ reset: true, cat, q: query }); /* eslint-disable-next-line */ }, [cat, query, user?.uid]);
+  useEffect(() => { load({ reset: true, cat, q: query, collector }); /* eslint-disable-next-line */ }, [cat, query, collector, user?.uid]);
 
   // Enter skips the wait: somebody who pressed it has finished typing.
   useEffect(() => {
@@ -476,6 +479,7 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {header}
       <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
@@ -526,7 +530,7 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
           borderRadius: 12, padding: "14px 16px", color: "var(--ts)", fontSize: 13,
         }}>
           {error}
-          <button onClick={() => load({ reset: true, cat, q: query })}
+          <button onClick={() => load({ reset: true, cat, q: query, collector })}
                   style={{ marginLeft: 10, background: "none", border: "none", color: "#ff6b35",
                            font: "inherit", fontWeight: 700, cursor: "pointer" }}>Try again</button>
         </div>
@@ -554,6 +558,7 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
           onSignInNeeded={onSignInNeeded}
           user={user}
           onCount={bumpCount}
+          showOwner={!collector}
         />
       ))}
 
