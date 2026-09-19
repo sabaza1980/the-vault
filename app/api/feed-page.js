@@ -496,7 +496,7 @@ function render(e) {
     '<div class="cap">' + (e.cardMeta ? '<span class="meta">' + esc(e.cardMeta) + '</span>' : '') +
     '<h2 class="name">' + esc(e.cardName) + '</h2>' +
     (badges ? '<div class="bdgs">' + badges + '</div>' : '') +
-    '<button type="button" class="cbtn" data-entry="' + esc(e.id) + '" aria-expanded="false">' + BUBBLE +
+    '<button type="button" class="cbtn" data-entry="' + esc(e.id) + '" aria-expanded="false">' + '${BUBBLE}' +
     '<span>' + (e.commentCount ? e.commentCount + ' comment' + (e.commentCount === 1 ? '' : 's') : 'Add a comment') + '</span></button>' +
     '<div class="cbox" hidden></div>' + '</div></div></article>';
 }
