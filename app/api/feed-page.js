@@ -208,8 +208,16 @@ body.in .mine{display:block}
 body.in .band{display:none}
 
 .tools{border-bottom:1px solid var(--line);position:sticky;top:58px;z-index:15;background:var(--head);backdrop-filter:blur(14px)}
-.tools .wrap{display:flex;gap:8px;overflow-x:auto;padding-top:11px;padding-bottom:11px;scrollbar-width:none}
-.tools .wrap::-webkit-scrollbar{display:none}
+.tools .wrap{display:flex;flex-direction:column;gap:10px;padding-top:11px;padding-bottom:11px}
+.srch{position:relative;display:flex;align-items:center}
+.srch>svg{position:absolute;left:13px;width:16px;height:16px;color:var(--m);pointer-events:none}
+.srch input{width:100%;box-sizing:border-box;background:var(--panel3);border:1px solid var(--line);border-radius:999px;padding:11px 40px 11px 37px;color:var(--t);font-family:inherit;font-size:13.5px}
+.srch input::placeholder{color:var(--m)}
+.srch input:focus{outline:2px solid rgba(255,107,53,.45);outline-offset:1px}
+#qx{position:absolute;right:9px;background:none;border:none;color:var(--m);font-family:inherit;font-size:17px;line-height:1;cursor:pointer;padding:5px 8px}
+#qx[hidden]{display:none}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:8px 14px;min-height:36px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .chip.on{background:rgba(255,107,53,.14);border-color:rgba(255,107,53,.4);color:var(--or)}
 
@@ -306,7 +314,14 @@ ${siteHeaderHtml({ active: 'feed' })}
   <a class="add" href="https://app.myvaults.io/">+ Add a card to your vault</a>
 </div></section>
 
-<section class="tools"><div class="wrap" id="chips">${chips}</div></section>
+<section class="tools"><div class="wrap">
+  <div class="srch">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+    <input id="q" type="search" placeholder="Search cards or collectors" aria-label="Search the feed" autocomplete="off"/>
+    <button id="qx" type="button" aria-label="Clear search" hidden>\u00d7</button>
+  </div>
+  <div class="chips" id="chips">${chips}</div>
+</div></section>
 
 <main class="wrap">
   <h2 class="vh">Cards collectors have added</h2>
@@ -452,7 +467,7 @@ const chipBox = document.getElementById('chips');
 // starts from nothing, and the first "Show more" asks for page one again —
 // appending a second copy of the cards already on screen.
 let cursor = ${JSON.stringify(cursor || null)};
-let cat = '', busy = false;
+let cat = '', qText = '', busy = false;
 
 // Everything already on the page. A cursor can still land badly — a card added
 // between the render and the click shifts the window — so the client refuses a
@@ -508,6 +523,9 @@ async function load(reset) {
   try {
     const qs = new URLSearchParams({ limit: '24' });
     if (cat) qs.set('cat', cat);
+    // The server scans the whole collection for this, not just what is on the
+    // page: card names, set details, badges, collector names and handles.
+    if (qText) qs.set('q', qText);
     if (cursor && !reset) qs.set('cursor', cursor);
     const r = await fetch(API + '/api/feed?' + qs);
     const j = await r.json();
@@ -519,6 +537,11 @@ async function load(reset) {
     cursor = j.nextCursor;
     moreWrap.hidden = !j.hasMore;
     empty.hidden = !(feed.children.length === 0);
+    if (!empty.hidden) {
+      empty.textContent = qText
+        ? 'Nothing matches \u201c' + qText + '\u201d.'
+        : 'Nothing here yet.';
+    }
     if (window.__vaultBindReactions) window.__vaultBindReactions();
   } catch {
     moreWrap.hidden = false;
@@ -529,6 +552,43 @@ async function load(reset) {
 }
 
 moreBtn.addEventListener('click', () => load(false));
+
+// Searching is a round trip over the whole collection, so it waits for a
+// pause in the typing rather than firing on every keystroke. Enter skips the
+// wait, because somebody who pressed Enter has finished.
+const qBox = document.getElementById('q');
+const qClear = document.getElementById('qx');
+let qTimer = null;
+
+function runSearch() {
+  const v = qBox.value.trim();
+  if (v === qText) return;
+  if (v && v.length < 2) return;
+  qText = v;
+  cursor = null;
+  load(true);
+}
+
+qBox.addEventListener('input', () => {
+  qClear.hidden = !qBox.value;
+  clearTimeout(qTimer);
+  qTimer = setTimeout(runSearch, 500);
+});
+qBox.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Enter') return;
+  ev.preventDefault();
+  clearTimeout(qTimer);
+  runSearch();
+});
+qClear.addEventListener('click', () => {
+  qBox.value = '';
+  qClear.hidden = true;
+  clearTimeout(qTimer);
+  if (!qText) return;
+  qText = '';
+  cursor = null;
+  load(true);
+});
 
 chipBox.addEventListener('click', (ev) => {
   const b = ev.target.closest('.chip');

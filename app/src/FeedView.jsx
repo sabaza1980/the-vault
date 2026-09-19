@@ -319,6 +319,10 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
   const [cursor, setCursor] = useState(null);
   const [hasMore, setHasMore] = useState(false);
   const [cat, setCat] = useState("");
+  // `query` is what has been asked for; `draft` is what is being typed. A
+  // search is a round trip over the whole collection, so it waits for a pause.
+  const [query, setQuery] = useState("");
+  const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mine, setMine] = useState({});          // reactionTarget -> { heart, fire, money }
@@ -334,6 +338,9 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
     try {
       const qs = new URLSearchParams({ limit: String(PAGE) });
       if (opts.cat) qs.set("cat", opts.cat);
+      // Scanned server-side across the whole collection - card names, set
+      // details, badges, collector names and handles - not just what is loaded.
+      if (opts.q) qs.set("q", opts.q);
       if (!reset && cursor) qs.set("cursor", cursor);
 
       // Signed in, the token buys blocking. Signed out, the feed is still the
@@ -368,7 +375,16 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
   }, [cursor, user]);
 
   // First load, and whenever the category changes.
-  useEffect(() => { load({ reset: true, cat }); /* eslint-disable-next-line */ }, [cat, user?.uid]);
+  useEffect(() => { load({ reset: true, cat, q: query }); /* eslint-disable-next-line */ }, [cat, query, user?.uid]);
+
+  // Enter skips the wait: somebody who pressed it has finished typing.
+  useEffect(() => {
+    const v = draft.trim();
+    if (v === query) return;
+    if (v && v.length < 2) return;
+    const t = setTimeout(() => setQuery(v), 500);
+    return () => clearTimeout(t);
+  }, [draft, query]);
 
   // Which reactions are already yours. One batched call for the page rather
   // than one per card.
@@ -460,6 +476,39 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+             style={{ position: "absolute", left: 13, color: "var(--tg)", pointerEvents: "none" }}>
+          <circle cx="11" cy="11" r="7" /><path d="m20 20-3.2-3.2" />
+        </svg>
+        <input
+          type="search"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); setQuery(draft.trim()); } }}
+          placeholder="Search cards or collectors"
+          aria-label="Search the feed"
+          autoComplete="off"
+          style={{
+            width: "100%", boxSizing: "border-box", background: "var(--deep)",
+            border: "1px solid var(--b)", borderRadius: 999,
+            padding: "11px 40px 11px 37px", color: "var(--t)", font: "inherit", fontSize: 13.5,
+          }}
+        />
+        {draft && (
+          <button
+            onClick={() => { setDraft(""); setQuery(""); }}
+            aria-label="Clear search"
+            style={{
+              position: "absolute", right: 9, background: "none", border: "none",
+              color: "var(--tg)", font: "inherit", fontSize: 17, lineHeight: 1,
+              cursor: "pointer", padding: "5px 8px",
+            }}
+          >×</button>
+        )}
+      </div>
+
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
         {chip("All", "")}
         {CHIPS.map(c => chip(c, c))}
@@ -477,7 +526,7 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
           borderRadius: 12, padding: "14px 16px", color: "var(--ts)", fontSize: 13,
         }}>
           {error}
-          <button onClick={() => load({ reset: true, cat })}
+          <button onClick={() => load({ reset: true, cat, q: query })}
                   style={{ marginLeft: 10, background: "none", border: "none", color: "#ff6b35",
                            font: "inherit", fontWeight: 700, cursor: "pointer" }}>Try again</button>
         </div>
@@ -485,8 +534,11 @@ export default function FeedView({ user, onOpenCard, onOpenCollector, onSignInNe
 
       {!loading && !error && entries.length === 0 && (
         <div style={{ padding: "48px 16px", textAlign: "center", color: "var(--tg)", fontSize: 13, lineHeight: 1.7 }}>
-          Nothing here in {cat || "the feed"} yet.<br />
-          Add a card and yours could be the first.
+          {query ? (
+            <>Nothing matches “{query}”.<br />Try a player, a set, or a collector's handle.</>
+          ) : (
+            <>Nothing here in {cat || "the feed"} yet.<br />Add a card and yours could be the first.</>
+          )}
         </div>
       )}
 
