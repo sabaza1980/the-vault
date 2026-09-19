@@ -30,7 +30,7 @@ function Badge({ label, color }) {
   );
 }
 
-export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClose, onRefreshPrice }) {
+export default function CardDetailModal({ card, onUpdate, onForSale, onShare, onSell, onClose, onRefreshPrice }) {
   const [zoomed, setZoomed] = useState(false);
   const [confirming, setConfirming] = useState(false); // WP-5a L3: confirm unverified cards
   const [draft, setDraft] = useState({});
@@ -168,6 +168,7 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
           {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
           {card.cardNumber && <Badge label={`#${String(card.cardNumber).replace(/^#+/, "")}`} color="#888" />}
           {card.isPC && <Badge label="PC" color="#2196f3" />}
+          {card.forSale && <Badge label="FOR SALE" color="#4CAF50" />}
           {SELL_ENABLED && card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
         </div>
 
@@ -263,6 +264,21 @@ export default function CardDetailModal({ card, onUpdate, onShare, onSell, onClo
               color: card.isFavourite ? "#f0c040" : "var(--gc)", fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
             }}
           >{card.isFavourite ? "★ Favourited" : "☆ Favourite"}</button>
+
+          {/* Marked for sale here, and the tag follows the card into the feed
+              and onto your public profile. No price: the conversation belongs
+              in the comments. */}
+          <button
+            onClick={() => onForSale?.(card.id, !card.forSale)}
+            aria-pressed={!!card.forSale}
+            style={{
+              flex: "1 1 auto", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+              background: card.forSale ? "rgba(76,175,80,0.15)" : "var(--gbg)",
+              border: `1px solid ${card.forSale ? "rgba(76,175,80,0.45)" : "var(--gb)"}`,
+              borderRadius: 12, padding: "11px 12px", cursor: "pointer",
+              color: card.forSale ? "#4CAF50" : "var(--gc)", fontSize: 12, fontWeight: 700, letterSpacing: 0.3,
+            }}
+          >{card.forSale ? "● For sale" : "○ For sale"}</button>
 
           <button
             onClick={() => onUpdate?.(card.id, { isPC: !card.isPC })}

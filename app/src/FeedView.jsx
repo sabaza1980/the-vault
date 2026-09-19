@@ -73,12 +73,23 @@ function Post({ entry, mine, onReact, onOpenCard, onOpenCollector, busy }) {
         onClick={() => onOpenCard(entry)}
         aria-label={`Open ${entry.cardName}`}
         style={{
+          position: "relative",
           height: 380, background: "var(--deep)", border: "none", padding: 0, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
         <img src={entry.cardImage} alt={entry.cardName} loading="lazy"
              style={{ maxWidth: "100%", maxHeight: 380, objectFit: "contain", display: "block" }} />
+        {/* Green, so it reads as available and never competes with the orange
+            the brand and the reactions already own. */}
+        {entry.forSale && (
+          <span style={{
+            position: "absolute", left: 12, top: 12,
+            background: "rgba(76,175,80,0.92)", color: "#04140a",
+            borderRadius: 999, padding: "5px 11px",
+            fontSize: 11, fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase",
+          }}>For sale</span>
+        )}
       </button>
 
       <div style={{ padding: "12px 14px 14px", display: "flex", flexDirection: "column", gap: 10 }}>

@@ -10,7 +10,7 @@ import AuthModal from "./AuthModal";
 import VaultChat from "./VaultChat";
 import EbayListingModal from "./EbayListingModal";
 import { SELL_ENABLED, BREAKS_ENABLED, BULK_SCAN_ENABLED, COLLECTIONS_ENABLED } from "./featureFlags";
-import { publishToFeed } from "./feed";
+import { publishToFeed, refreshFeedEntry } from "./feed";
 import FeedView from "./FeedView";
 import ShareModal from "./ShareModal";
 import CardDetailModal from "./CardDetailModal";
@@ -216,7 +216,7 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-function CardItem({ card, onDelete, onUpdate, user, bundleMode, inBundle, onToggleBundle, onSell, onShare }) {
+function CardItem({ card, onDelete, onUpdate, onForSale, user, bundleMode, inBundle, onToggleBundle, onSell, onShare }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [pricingData, setPricingData] = useState(null);
@@ -572,6 +572,7 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               {card.serialNumber && <Badge label={card.serialNumber} color="#ce93d8" />}
               {card.cardNumber && <Badge label={`#${String(card.cardNumber).replace(/^#+/, "")}`} color="#555" />}
               {card.isPC && <Badge label="PC" color="#2196f3" />}
+              {card.forSale && <Badge label="FOR SALE" color="#4CAF50" />}
               {card.confidenceLevel === "Low" && <Badge label="⚠ Low Confidence" color="#ff6666" />}
               {SELL_ENABLED && card.ebayListingUrl && <Badge label="Listed on eBay" color="#e53935" />}
             </div>
@@ -591,6 +592,18 @@ Output ONLY a valid JSON object — no markdown, no extra text — with these fi
               onMouseEnter={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--sh)"}
               onMouseLeave={e => e.currentTarget.style.color = card.isFavourite ? "#f0c040" : "var(--so)"}
             >{card.isFavourite ? "★" : "☆"}</button>
+            <button
+              onClick={e => { e.stopPropagation(); onForSale?.(card.id, !card.forSale); }}
+              title={card.forSale ? "No longer for sale" : "Mark as for sale"}
+              aria-pressed={!!card.forSale}
+              style={{
+                background: card.forSale ? "rgba(76,175,80,0.15)" : "none",
+                border: card.forSale ? "1px solid rgba(76,175,80,0.45)" : "1px solid transparent",
+                borderRadius: 5, cursor: "pointer", padding: "2px 5px",
+                color: card.forSale ? "#4CAF50" : "var(--so)",
+                fontSize: 9, fontWeight: 800, letterSpacing: 0.4,
+              }}
+            >SALE</button>
             <button
               onClick={e => { e.stopPropagation(); onUpdate(card.id, { isPC: !card.isPC }); }}
               title={card.isPC ? "Remove from Personal Collection" : "Add to Personal Collection (PC)"}
@@ -2348,6 +2361,22 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
     setCards(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updates } : c));
   }, []);
 
+  // Marking a card for sale is a fact about the card, kept on the card. The
+  // share module's for-sale tag is a separate decision made per image and
+  // saved nowhere, so the two never move together.
+  //
+  // Written straight through rather than left to the sync pass, because the
+  // feed entry is refreshed the moment it lands and the API reads the card
+  // from Firestore. The post keeps its reactions and its place in the feed.
+  const handleForSale = useCallback(async (id, next) => {
+    handleUpdate(id, { forSale: next });
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, "users", user.uid, "cards", String(id)), { forSale: next });
+    } catch { /* the sync pass carries it; the feed catches up on the next edit */ }
+    refreshFeedEntry(id);
+  }, [user, handleUpdate]);
+
   const { items: reactionNotifications, unread: unreadReactions } = useNotifications(user);
 
   const refreshPublicProfile = useCallback(async () => {
@@ -3783,7 +3812,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredCards.map(card => (
               <div key={card.id} style={{ animation: "fadeIn 0.25s ease" }}>
-                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={SELL_ENABLED ? handleSellCard : undefined} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
+                <CardItem card={card} onDelete={id => setCards(prev => prev.filter(c => c.id !== id))} onUpdate={handleUpdate} onForSale={handleForSale} user={user} bundleMode={bundleMode} inBundle={bundleCardIds.has(String(card.id))} onToggleBundle={handleBundleToggle} onSell={SELL_ENABLED ? handleSellCard : undefined} onShare={card => setShareModal({ mode: 'card', card, cards: null, filterLabel: null })} />
               </div>
             ))}
             {cards.length === 0 && queue.length === 0 && (
@@ -3992,6 +4021,7 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         <CardDetailModal
           card={cards.find(c => String(c.id) === String(detailCard.id)) || detailCard}
           onUpdate={handleUpdate}
+          onForSale={handleForSale}
           onShare={(card) => { setDetailCard(null); setShareModal({ mode: 'card', card, cards: null, filterLabel: null }); }}
           onSell={SELL_ENABLED ? (card) => { setDetailCard(null); handleSellCard(card); } : undefined}
           onRefreshPrice={handleRefreshPrice}

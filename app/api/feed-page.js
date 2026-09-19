@@ -64,6 +64,7 @@ export function postHtml(e) {
   </header>
   <div class="shot">
     <img src="${escHtml(e.cardImage)}" alt="${escHtml(e.cardName)}" loading="lazy" decoding="async"/>
+    ${e.forSale ? '<span class="sale">For sale</span>' : ''}
   </div>
   <div class="body">
     <div class="acts">
@@ -194,6 +195,8 @@ body.in .band{display:none}
 .cap{display:flex;flex-direction:column;gap:5px}
 .meta{font-size:11.5px;color:var(--m)}
 .name{margin:0;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.8px;line-height:1.1;font-weight:400}
+.shot{position:relative}
+.sale{position:absolute;left:10px;top:10px;background:rgba(76,175,80,.92);color:#04140a;border-radius:999px;padding:5px 11px;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
 .bdgs{display:flex;gap:6px;flex-wrap:wrap}
 .bdg{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#c2c2cd;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:5px;padding:3px 7px}
 
@@ -436,7 +439,8 @@ function render(e) {
     '<header class="who"><span class="av" aria-hidden="true">' + init + '</span>' +
     '<span class="who-t">' + who + '<span class="who-h">' + (h ? '@' + esc(h) + ' · ' : '') + ago(e.createdAt) + '</span></span>' +
     (e.fromTheVaults ? '<span class="vaults">From the vaults</span>' : '') + '</header>' +
-    '<div class="shot"><img src="' + esc(e.cardImage) + '" alt="' + esc(e.cardName) + '" loading="lazy" decoding="async"/></div>' +
+    '<div class="shot"><img src="' + esc(e.cardImage) + '" alt="' + esc(e.cardName) + '" loading="lazy" decoding="async"/>' +
+    (e.forSale ? '<span class="sale">For sale</span>' : '') + '</div>' +
     '<div class="body"><div class="acts"><div class="rx" data-target="' + esc(e.reactionTarget) + '">' + rx + '</div></div>' +
     '<div class="cap">' + (e.cardMeta ? '<span class="meta">' + esc(e.cardMeta) + '</span>' : '') +
     '<h2 class="name">' + esc(e.cardName) + '</h2>' +

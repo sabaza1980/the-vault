@@ -109,10 +109,11 @@ export function buildEntry({ ownerUid, profilePublic, ownerFallbackName, card })
 
     hidden: false,
 
-    // Selling, later. Nullable and unused — a "For sale" badge and filter then
-    // need no migration. The entry is a snapshot and never the source of truth
-    // for a price; that will be a listings collection of its own.
-    forSale: false,
+    // Marked for sale in the owner's vault. This is the card's own flag and has
+    // nothing to do with the share module, which decides per image and saves
+    // nothing. The entry is a snapshot and never the source of truth for a
+    // price; that will be a listings collection of its own.
+    forSale: card.forSale === true,
     askingPrice: null,
     currency: null,
   };

@@ -43,6 +43,16 @@ export function publishToFeed(cardId) {
 }
 
 /**
+ * A card that already has a post and changed — marked for sale, or corrected
+ * by a rescan. The post is updated in place: it keeps its reactions and its
+ * position, so flipping a toggle does not shove the card back to the top of
+ * everybody's feed.
+ */
+export function refreshFeedEntry(cardId) {
+  return call(cardId, "refresh");
+}
+
+/**
  * Take a card's post down.
  *
  * Deleting a card from a vault has to delete it from the feed, and that has to

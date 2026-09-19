@@ -81,7 +81,7 @@ export function cardsHtml(cards, uid, showValues, counts) {
       c.year, c.cardNumber, c.serialNumber, cat,
     ].filter(Boolean).join(' ').toLowerCase();
     return `<article class="card" data-cat="${escHtml(cat)}" data-q="${escHtml(hay)}">
-      <div class="shot">${img}</div>
+      <div class="shot">${img}${c.forSale ? '<span class="sale">For sale</span>' : ''}</div>
       <div class="body">
         <div class="set">${escHtml(meta)}</div>
         <h3>${escHtml(c.playerName || 'Unknown')}</h3>
@@ -208,6 +208,9 @@ ${siteHeaderCss()}
   .card h3{font-family:'Barlow Condensed',sans-serif;font-size:22px;text-transform:uppercase;
            margin:0;letter-spacing:.5px;line-height:1.1}
   .team{font-size:13px;color:${BRAND.muted}}
+  .card .shot{position:relative}
+  .sale{position:absolute;left:8px;top:8px;background:rgba(76,175,80,.92);color:#04140a;border-radius:999px;
+        padding:4px 10px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
   .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
   .b{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.8px;
      padding:3px 8px;border-radius:6px;border:1px solid}

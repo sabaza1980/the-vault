@@ -99,7 +99,9 @@ export default async function handler(req, res) {
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
   const cardId = String(body.cardId || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
-  const action = body.action === 'remove' ? 'remove' : 'publish';
+  const action = body.action === 'remove' ? 'remove'
+    : body.action === 'refresh' ? 'refresh'
+    : 'publish';
   if (!cardId) return res.status(400).json({ error: 'cardId is required' });
 
   try {
@@ -115,7 +117,14 @@ export default async function handler(req, res) {
     if (!(await feedEnabled(token))) {
       return res.status(200).json({ ok: true, published: false, reason: 'feed_disabled' });
     }
-    if (!(await underPostRate(uid, token))) {
+    // A refresh is a card that already has a post and changed — its for-sale
+    // flag flipped, or a rescan corrected it. It never creates a post and it
+    // never counts against the posting rate, so flipping a toggle a few times
+    // cannot lock somebody out of adding cards.
+    if (action === 'refresh') {
+      const existing = await fsGet(`feed/${entryId(uid, cardId)}`, token).catch(() => null);
+      if (!existing) return res.status(200).json({ ok: true, published: false, reason: 'not_posted' });
+    } else if (!(await underPostRate(uid, token))) {
       return res.status(200).json({ ok: true, published: false, reason: 'rate_limited' });
     }
 
