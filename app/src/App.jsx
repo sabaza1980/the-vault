@@ -1783,6 +1783,9 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("vault-theme") || "dark");
   const [showChat, setShowChat] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  // A Google avatar can 404 or be blocked. When it does, fall back to the
+  // letter rather than leaving an empty circle where your face should be.
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const [shareModal, setShareModal] = useState(null); // null | { mode, card, cards, filterLabel }
   const [detailCard, setDetailCard] = useState(null); // WP-3: card open in CardDetailModal (strip taps)
   const [scanMenuOpen, setScanMenuOpen] = useState(false); // WP-1: + tab → camera/upload chooser
@@ -1862,6 +1865,18 @@ export default function App() {
   }, [theme]);
   const fileRef = useRef();
   const cameraRef = useRef();
+  // The bell in the website header has no surface of its own, so it sends
+  // people here with ?notifications=1. Wait for the account to resolve, open
+  // the sheet, then tidy the URL so a refresh does not reopen it.
+  useEffect(() => {
+    if (!user) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("notifications") !== "1") return;
+    setShowNotifications(true);
+    url.searchParams.delete("notifications");
+    window.history.replaceState({}, "", url);
+  }, [user]);
+
   const headerRef = useRef();
   const [headerHeight, setHeaderHeight] = useState(0);
   useEffect(() => {
@@ -2750,23 +2765,26 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
         position: "sticky", top: 0, zIndex: 600, backdropFilter: "blur(20px)"
       }}>
         <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, minWidth: 0 }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 24 }}>🏀</span>
-              <h1 style={{
-                margin: 0, fontSize: 26, fontWeight: 800,
-                fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 3,
-                background: "linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%)",
-                WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
-              }}>The Vault</h1>
-            </div>
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--tg)" }}>AI card identification · Live pricing</p>
-          </div>
+          {/* The same mark and wordmark the feed and the public profiles use.
+              The gradient title and the tagline went: the tagline sold the app
+              to somebody who had not signed up, on a screen you only reach once
+              you have. */}
+          <a href="https://www.myvaults.io/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", flexShrink: 0 }}>
+            <img src="/brand/vault-mark_fullcolour_transparent.svg" alt="" style={{ width: 22, height: 24, display: "block" }} />
+            <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 19, letterSpacing: 1.6, color: "var(--t)" }}>
+              THE <span style={{ color: "#ff6b35" }}>VAULT</span>
+            </span>
+          </a>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, minWidth: 0 }}>
             {/* Desktop has no bottom tab bar, so the switch between the feed and
                 your own vault lives here. Same two places, same two names. */}
+            {/* The switch: three destinations, same order as on the website.
+                Feed and My Vault change the view in place; My Profile opens
+                your public page — or the setup for it if you have no handle
+                yet, since sending somebody to a page that does not exist is
+                not navigation. */}
             {user && !isMobileUI && (
-              <div role="group" aria-label="View" style={{
+              <div role="group" aria-label="Sections" style={{
                 display: "flex", gap: 3, background: "var(--gbg)", border: "1px solid var(--gb)",
                 borderRadius: 20, padding: 3, flexShrink: 0,
               }}>
@@ -2788,6 +2806,18 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                     >{label}</button>
                   );
                 })}
+                <a
+                  href={publicProfile?.handle ? `https://www.myvaults.io/u/${publicProfile.handle}` : "#"}
+                  target={publicProfile?.handle ? "_blank" : undefined}
+                  rel="noreferrer"
+                  onClick={publicProfile?.handle ? undefined : (e) => { e.preventDefault(); setShowProfileSettings(true); }}
+                  style={{
+                    background: "transparent", border: "1px solid transparent",
+                    borderRadius: 18, padding: "5px 12px",
+                    color: "var(--gc)", fontSize: 11, fontWeight: 700,
+                    letterSpacing: 0.3, whiteSpace: "nowrap", textDecoration: "none",
+                  }}
+                >My Profile</a>
               </div>
             )}
             {/* WP-2: Breaks was desktop-web only. Now parked entirely while the
@@ -2901,9 +2931,17 @@ Grade-to-condition: 10=Mint, 9–9.5=Mint, 8–8.5=Near Mint, 7=Excellent, ≤6=
                   onMouseEnter={e => e.currentTarget.style.borderColor = "#ff6b3580"}
                   onMouseLeave={e => e.currentTarget.style.borderColor = "var(--b)"}
                 >
-                  {user.photoURL
-                    ? <img src={user.photoURL} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <span style={{ fontSize: 14, color: "var(--gc)" }}>👤</span>
+                  {user.photoURL && !avatarBroken
+                    ? <img
+                        src={user.photoURL}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        onError={() => setAvatarBroken(true)}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    : <span style={{ fontSize: 13, fontWeight: 700, color: "var(--gc)" }}>
+                        {(user.displayName || user.email || "?").trim().charAt(0).toUpperCase()}
+                      </span>
                   }
                 </button>
                 {profileMenuOpen && (

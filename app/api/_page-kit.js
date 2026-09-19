@@ -39,6 +39,109 @@ const esc = (s) => String(s ?? '')
   .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/**
+ * The header, and it is the same one everywhere.
+ *
+ * The app, the feed and a public profile each grew their own: an emoji and a
+ * gradient wordmark here, a logo and a marketing nav there, a bare text link on
+ * a profile. Nothing carried you between them, so from inside the app there was
+ * no way back to the feed at all.
+ *
+ * One bar now, in two states. Signed out it is the marketing header, because a
+ * switch between places you do not have yet points at nothing. Signed in it is
+ * a three-way switch — Feed, My Vault, My Profile — in the same order on every
+ * surface. Inside the app the first two change the view in place; here they are
+ * links. Same control, same order, wherever you are.
+ */
+export function siteHeaderCss() {
+  return `
+header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdrop-filter:blur(14px);border-bottom:1px solid ${BRAND.line}}
+.top .wrap{display:flex;align-items:center;gap:12px;height:58px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto}
+.logo img{width:22px;height:24px;display:block}
+.wm{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.6px;color:${BRAND.text}}
+.wm b{color:${BRAND.orange};font-weight:400}
+.nav-out{display:none;gap:2px;flex:0 0 auto}
+.nav-out a{font-size:13.5px;font-weight:600;color:#c2c2cd;text-decoration:none;padding:9px 7px}
+.nav-out a:hover{color:${BRAND.text}}
+.spacer{flex:1}
+.ghost{font-size:13px;font-weight:600;color:#c2c2cd;text-decoration:none;padding:9px 6px}
+.cta{background:${BRAND.orange};color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;border-radius:999px;padding:9px 15px;border:none;cursor:pointer;font-family:inherit}
+.cta:hover{background:#ff8353}
+
+/* The switch. One control, three destinations, same order on every surface. */
+.sw{display:flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid ${BRAND.line};border-radius:999px;padding:3px;flex:0 0 auto}
+.sw-b{display:flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:999px;padding:7px 13px;color:${BRAND.muted};font-size:12px;font-weight:700;letter-spacing:.3px;text-decoration:none;white-space:nowrap}
+.sw-b:hover{color:${BRAND.text}}
+.sw-b.on{background:rgba(255,107,53,.14);border-color:rgba(255,107,53,.38);color:${BRAND.orange}}
+.sw-b svg{width:15px;height:15px;flex:0 0 auto}
+.sw-b .short{display:none}
+.bell{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid ${BRAND.line};color:#c2c2cd;flex:0 0 auto;text-decoration:none}
+.bell:hover{color:${BRAND.text}}
+.me{display:flex;text-decoration:none;flex:0 0 auto}
+
+/* Signed in, you should be able to see it — your own picture when Google gave
+   us one, the first letter of your name when it did not. */
+.av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#2a2a36;color:#c2c2cd;font-size:12px;font-weight:700;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+
+.out-only{display:flex;align-items:center;gap:4px}
+.in-only{display:none;align-items:center;gap:8px}
+body.in .out-only{display:none}
+body.in .in-only{display:flex}
+
+@media(min-width:900px){.nav-out{display:flex}}
+@media(max-width:680px){
+  .wm{display:none}
+  .top .wrap{gap:8px}
+  .sw-b{padding:7px 10px;font-size:11px}
+  .sw-b .full{display:none}
+  .sw-b .short{display:inline}
+}`;
+}
+
+const SW_ICONS = {
+  feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"></rect><path d="M6 20h12"></path><path d="M8.5 9.5h7"></path></svg>',
+  vault: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20.5 6.5v6.8c0 4.3-3.4 7.3-8.5 8.6-5.1-1.3-8.5-4.3-8.5-8.6V6.5z"></path><path d="M12 9v4"></path><circle cx="12" cy="16.2" r="0.6"></circle></svg>',
+  me: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"></circle><path d="M4.8 20a7.4 7.4 0 0 1 14.4 0"></path></svg>',
+};
+
+const BELL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 6-2 7-2 7h16s-2-1-2-7"></path><path d="M13.7 20a2 2 0 0 1-3.4 0"></path></svg>';
+
+/**
+ * `active` is 'feed', 'vault', 'me', or null when the page cannot know — a
+ * profile you are only visiting is nobody's section. The client lights up
+ * 'me' once it finds the handle belongs to the signed-in account.
+ */
+export function siteHeaderHtml({ active = null, feedHref = '/' } = {}) {
+  const item = (key, href, full, short, id) =>
+    `<a class="sw-b${active === key ? ' on' : ''}" href="${href}"${id ? ` id="${id}"` : ''}` +
+    `${active === key ? ' aria-current="page"' : ''} aria-label="${full}">` +
+    `${SW_ICONS[key]}<span class="full">${full}</span><span class="short">${short}</span></a>`;
+
+  return `<header class="top"><div class="wrap">
+  <a class="logo" href="${feedHref}"><img src="https://www.myvaults.io/brand/vault-mark_fullcolour_transparent.svg" alt=""/><span class="wm">THE <b>VAULT</b></span></a>
+  <nav class="nav-out out-only" aria-label="About">
+    <a href="https://www.myvaults.io/about">How it works</a>
+    <a href="https://www.myvaults.io/blog">Blog</a>
+  </nav>
+  <nav class="sw in-only" aria-label="Sections">
+    ${item('feed', feedHref, 'Feed', 'Feed')}
+    ${item('vault', 'https://app.myvaults.io/', 'My Vault', 'Vault')}
+    ${item('me', '#', 'My Profile', 'Profile', 'sw-me')}
+  </nav>
+  <span class="spacer"></span>
+  <span class="out-only">
+    <a class="ghost" href="#" id="signin">Sign in</a>
+    <a class="cta" href="#" id="start">Start free</a>
+  </span>
+  <span class="in-only">
+    <a class="bell" href="https://app.myvaults.io/?notifications=1" aria-label="Your reactions">${BELL_ICON}</a>
+    <a class="me" id="me-link" href="#" title="Your profile"><span class="av" id="me-av2" aria-hidden="true">·</span></a>
+  </span>
+</div></header>`;
+}
+
 export function reactionBar(target, counts, size) {
   const c = counts[target] || { heart: 0, fire: 0, money: 0 };
   const cls = size === 'lg' ? 'rx rx-lg' : 'rx';
@@ -461,6 +564,51 @@ async function replayPending() {
   }
 }
 
+// Paint the signed-in header. Your own picture when Google gave us one, the
+// first letter of your name when it did not, and the link to your own public
+// page. Every surface calls this with the same user, so the header can never
+// disagree with itself about who you are.
+window.__vaultPaintUser = (u) => {
+  document.body.classList.toggle('in', !!u);
+  if (!u) return;
+  const letter = String(u.displayName || u.email || '?').trim().charAt(0).toUpperCase() || '?';
+  const photo = typeof u.photoURL === 'string' && u.photoURL.indexOf('https://') === 0 ? u.photoURL : '';
+  for (const id of ['me-av', 'me-av2']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    if (!photo) { el.textContent = letter; continue; }
+    const img = document.createElement('img');
+    img.alt = '';
+    // Google's avatar host refuses a request that carries a referrer.
+    img.referrerPolicy = 'no-referrer';
+    // A picture that will not load must not leave an empty circle behind.
+    img.addEventListener('error', () => { el.textContent = letter; });
+    img.src = photo;
+    el.textContent = '';
+    el.appendChild(img);
+  }
+  // Their own public page. Asking for it also assigns a handle to an account
+  // that has none, which is what makes a new collector reachable at a URL.
+  u.getIdToken().then(t => fetch(API + '/api/profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+    body: JSON.stringify({ ensure_handle: true }),
+  })).then(r => (r && r.ok ? r.json() : null)).then(j => {
+    if (!j || !j.handle) return;
+    const href = 'https://www.myvaults.io/u/' + encodeURIComponent(j.handle);
+    for (const id of ['me-link', 'sw-me']) {
+      const a = document.getElementById(id);
+      if (a) a.href = href;
+    }
+    // Standing on your own profile, the switch should say so.
+    const me = document.getElementById('sw-me');
+    if (me && location.pathname.toLowerCase() === '/u/' + String(j.handle).toLowerCase()) {
+      me.classList.add('on');
+      me.setAttribute('aria-current', 'page');
+    }
+  }).catch(() => {});
+};
+
 // Somebody may land back here already signed in, e.g. after a redirect.
 if (CFG) {
   firebase().then(a => {
@@ -469,4 +617,11 @@ if (CFG) {
       onAuthStateChanged(a, u => { if (u) replayPending(); });
     });
   }).catch(() => {});
+}
+
+// A page that runs its own auth listener (the feed, which also adopts and
+// verifies the shared session) paints the header itself. A page without one
+// gets it here, so no surface has to repeat this.
+if (CFG && !window.__VAULT_OWN_AUTH) {
+  firebase().then(a => { if (a) whenAuthReady(a).then(u => window.__vaultPaintUser(u)); }).catch(() => {});
 }`;

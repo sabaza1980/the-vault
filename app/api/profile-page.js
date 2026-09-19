@@ -19,6 +19,7 @@ const FIRST_PAGE = 60;
 // module now live in _page-kit.js, shared with the feed at /.
 import {
   BRAND, EMOJI, firebaseConfig, reactionBar, authSheetHtml, authSheetJs,
+  siteHeaderCss, siteHeaderHtml,
 } from './_page-kit.js';
 
 async function countsFor(targets, token) {
@@ -146,16 +147,14 @@ function page(p, counts, cfg) {
 <link rel="icon" href="https://app.myvaults.io/the-vault-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:wght@700&family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet"/>
 <style>
   *{box-sizing:border-box}
   body{margin:0;background:${BRAND.ink};color:${BRAND.text};
        font-family:Barlow,system-ui,-apple-system,sans-serif;line-height:1.5}
   a{color:inherit}
   .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
-  header.site{border-bottom:1px solid ${BRAND.line};padding:18px 0}
-  .brand{font-family:'Playfair Display',Georgia,serif;font-size:26px;text-decoration:none;letter-spacing:.5px}
-  .brand .o{color:${BRAND.orange}}
+${siteHeaderCss()}
   .hero{padding:44px 0 30px;border-bottom:1px solid ${BRAND.line}}
   .who{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;justify-content:space-between}
   h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(34px,7vw,56px);
@@ -282,9 +281,7 @@ function page(p, counts, cfg) {
 </style>
 </head><body>
 
-<header class="site"><div class="wrap">
-  <a class="brand" href="https://www.myvaults.io">The <span class="o">Vault</span></a>
-</div></header>
+${siteHeaderHtml({ active: null, feedHref: 'https://www.myvaults.io/' })}
 
 <section class="hero"><div class="wrap">
   <div class="who">

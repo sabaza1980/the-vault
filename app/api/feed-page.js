@@ -19,7 +19,8 @@
 import { googleToken, cors, escHtml } from './_fb.js';
 import { readFeed, topUp } from './_feed-read.js';
 import { feedEnabled } from './_feed.js';
-import { BRAND, EMOJI, firebaseConfig, reactionBar, authSheetHtml, authSheetJs } from './_page-kit.js';
+import { BRAND, EMOJI, firebaseConfig, reactionBar, authSheetHtml, authSheetJs,
+         siteHeaderCss, siteHeaderHtml } from './_page-kit.js';
 
 const FIRST_PAGE = 24;
 const SITE = 'https://www.myvaults.io';
@@ -154,19 +155,7 @@ a{color:var(--or)}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .wrap{max-width:1240px;margin:0 auto;padding:0 16px}
 
-header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:10px;height:58px}
-.logo{display:flex;align-items:center;gap:9px;text-decoration:none}
-.logo img{width:22px;height:24px;display:block}
-.wm{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.6px;color:var(--t)}
-.wm b{color:var(--or);font-weight:400}
-.top nav{display:none;gap:22px;margin-left:30px}
-.top nav a{font-size:14px;font-weight:600;color:#c2c2cd;text-decoration:none}
-.top nav a:hover{color:var(--t)}
-.spacer{flex:1}
-.ghost{font-size:13px;font-weight:600;color:#c2c2cd;text-decoration:none;padding:9px 6px}
-.cta{background:var(--or);color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;border-radius:999px;padding:9px 15px;border:none;cursor:pointer;font-family:inherit}
-.cta:hover{background:#ff8353}
+${siteHeaderCss()}
 
 .band{border-bottom:1px solid var(--line);background:linear-gradient(180deg,#141420 0%,var(--ink) 100%)}
 .band .wrap{padding-top:26px;padding-bottom:24px;display:flex;flex-direction:column;gap:14px}
@@ -178,13 +167,7 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdr
 .band .b2{text-align:center;border:1px solid var(--line);color:#c2c2cd;font-size:14px;font-weight:600;text-decoration:none;border-radius:11px;padding:13px 18px}
 .band .fine{font-size:12px;color:var(--m)}
 
-/* Two header states. The signed-in one was missing, so a signed-in visitor
-   was told to sign in by a page that already knew who they were. */
-.out-only{display:flex;align-items:center;gap:4px}
-.in-only{display:none;align-items:center;gap:8px}
-body.in .out-only{display:none}
-body.in .in-only{display:flex}
-.me{display:flex;text-decoration:none}
+/* The two header states live in siteHeaderCss(); these are the page's own. */
 .mine{display:none;border-bottom:1px solid var(--line)}
 .mine .wrap{display:flex;align-items:center;gap:10px;padding-top:12px;padding-bottom:12px}
 .mine .add{flex:1;display:flex;align-items:center;gap:8px;background:#1a1a23;border:1px solid var(--line);border-radius:999px;padding:10px 14px;color:var(--m);font-size:13.5px;text-decoration:none}
@@ -200,7 +183,6 @@ body.in .band{display:none}
 #feed{display:grid;grid-template-columns:1fr;gap:16px;padding:18px 0 40px}
 .post{background:#1a1a23;border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
 .who{display:flex;align-items:center;gap:10px;padding:12px 14px}
-.av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#2a2a36;color:#c2c2cd;font-size:12px;font-weight:700}
 .who-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .who-n{font-size:13.5px;font-weight:700;color:var(--t);text-decoration:none}
 .who-n:hover{color:var(--or)}
@@ -253,22 +235,7 @@ footer.foot{border-top:1px solid var(--line);background:var(--panel)}
 try { if (/(?:^|;\s*)__vault_in=1/.test(document.cookie)) document.body.classList.add('in'); } catch (e) {}
 </script>
 
-<header class="top"><div class="wrap">
-  <a class="logo" href="/"><img src="/brand/vault-mark_fullcolour_transparent.svg" alt=""/><span class="wm">THE <b>VAULT</b></span></a>
-  <nav>
-    <a href="/about">How it works</a>
-    <a href="/blog">Blog</a>
-  </nav>
-  <span class="spacer"></span>
-  <span class="out-only">
-    <a class="ghost" href="#" id="signin">Sign in</a>
-    <a class="cta" href="#" id="start">Start free</a>
-  </span>
-  <span class="in-only">
-    <a class="ghost" href="https://app.myvaults.io/">Your vault</a>
-    <a class="me" id="me-link" href="#" title="Your profile"><span class="av" id="me-av2" aria-hidden="true">·</span></a>
-  </span>
-</div></header>
+${siteHeaderHtml({ active: 'feed' })}
 
 <section class="band"><div class="wrap">
   <h1>THE HOME OF <span>COLLECTORS</span></h1>
@@ -337,6 +304,9 @@ ${authSheetHtml({
 
 <script>
 window.__VAULT_FEED = 1;
+// This page adopts and verifies the shared session itself, so it also paints
+// the header itself; the page kit must not do it a second time.
+window.__VAULT_OWN_AUTH = 1;
 // The sign-up sheet publishes the shared session after it signs somebody in,
 // so the app knows about it too.
 window.__vaultAfterSignIn = (u) => {
@@ -403,29 +373,14 @@ if (CFG2) {
     .catch(() => {});
 
   onAuthStateChanged(fbAuth, (u) => {
-    document.body.classList.toggle('in', !!u);
+    // The avatar, the letter fallback and the link to your own page are the
+    // page kit's job now, so every surface shows the same thing.
+    if (window.__vaultPaintUser) window.__vaultPaintUser(u);
+    else document.body.classList.toggle('in', !!u);
     // A tap landing before the shared session has been adopted would open the
     // sign-up sheet at somebody who is already a member. Anything that needs a
     // token waits on this.
     if (u) verify(); else window.__vaultAdopting = adopt();
-    if (u) {
-      const n = (u.displayName || u.email || '?').trim().charAt(0).toUpperCase();
-      for (const id of ['me-av', 'me-av2']) {
-        const av = document.getElementById(id);
-        if (av) av.textContent = n;
-      }
-      // Their own profile, if they have a handle. Asking the API for it also
-      // assigns one to an account that has none, which is what makes a brand
-      // new collector reachable at a URL.
-      u.getIdToken().then(t => fetch(API_BASE + '/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
-        body: JSON.stringify({ ensure_handle: true }),
-      })).then(r => r && r.ok ? r.json() : null).then(j => {
-        const link = document.getElementById('me-link');
-        if (j && j.handle && link) link.href = '/u/' + encodeURIComponent(j.handle);
-      }).catch(() => {});
-    }
   });
 }
 </script>
