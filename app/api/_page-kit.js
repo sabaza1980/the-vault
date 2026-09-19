@@ -85,6 +85,22 @@ header.top{position:sticky;top:0;z-index:20;background:rgba(13,13,26,.92);backdr
 .av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#2a2a36;color:#c2c2cd;font-size:12px;font-weight:700;overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
 
+/* The account menu. An avatar you can click is what people expect; one that
+   does nothing reads as broken. Same contents as the app's, minus the things
+   that only make sense inside it. */
+.me-box{position:relative;flex:0 0 auto}
+.me-btn{background:none;border:none;padding:0;cursor:pointer;display:flex}
+.me-scrim{position:fixed;inset:0;z-index:30}
+.me-menu{position:absolute;top:calc(100% + 9px);right:0;min-width:218px;background:#12121c;border:1px solid ${BRAND.line};border-radius:12px;padding:6px;box-shadow:0 18px 44px rgba(0,0,0,.55);z-index:40}
+.me-menu[hidden],.me-scrim[hidden]{display:none}
+.me-who{padding:8px 10px;border-bottom:1px solid ${BRAND.line};margin-bottom:4px}
+.me-n{font-size:12.5px;font-weight:700;color:${BRAND.text};overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-e{font-size:10.5px;color:${BRAND.muted};overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-menu a,.me-menu button{display:block;width:100%;box-sizing:border-box;text-align:left;background:none;border:none;border-radius:8px;padding:9px 10px;color:#c2c2cd;font-family:inherit;font-size:12.5px;font-weight:600;text-decoration:none;cursor:pointer}
+.me-menu a:hover,.me-menu button:hover{background:rgba(255,255,255,.06);color:${BRAND.text}}
+.me-sep{height:1px;background:${BRAND.line};margin:5px 2px}
+#me-out{color:${BRAND.orange}}
+
 .out-only{display:flex;align-items:center;gap:4px}
 .in-only{display:none;align-items:center;gap:8px}
 body.in .out-only{display:none}
@@ -137,8 +153,28 @@ export function siteHeaderHtml({ active = null, feedHref = '/' } = {}) {
   </span>
   <span class="in-only">
     <a class="bell" href="https://app.myvaults.io/?notifications=1" aria-label="Your reactions">${BELL_ICON}</a>
-    <a class="me" id="me-link" href="#" title="Your profile"><span class="av" id="me-av2" aria-hidden="true">·</span></a>
+    <span class="me-box">
+      <button type="button" class="me-btn" id="me-btn" aria-haspopup="menu" aria-expanded="false" aria-label="Your account">
+        <span class="av" id="me-av2" aria-hidden="true">·</span>
+      </button>
+      <div class="me-menu" id="me-menu" role="menu" hidden>
+        <div class="me-who">
+          <div class="me-n" id="me-name">Signed in</div>
+          <div class="me-e" id="me-email"></div>
+        </div>
+        <a role="menuitem" id="me-link" href="#">View my profile</a>
+        <a role="menuitem" href="https://app.myvaults.io/">My vault</a>
+        <a role="menuitem" href="https://app.myvaults.io/?profile=1">Public profile settings</a>
+        <a role="menuitem" href="https://app.myvaults.io/?referral=1">Invite friends</a>
+        <div class="me-sep"></div>
+        <a role="menuitem" href="https://www.myvaults.io/privacy-policy">Privacy policy</a>
+        <a role="menuitem" href="https://www.myvaults.io/terms">Terms</a>
+        <div class="me-sep"></div>
+        <button type="button" role="menuitem" id="me-out">Sign out</button>
+      </div>
+    </span>
   </span>
+  <div class="me-scrim" id="me-scrim" hidden></div>
 </div></header>`;
 }
 
@@ -587,6 +623,10 @@ window.__vaultPaintUser = (u) => {
     el.textContent = '';
     el.appendChild(img);
   }
+  const nameEl = document.getElementById('me-name');
+  if (nameEl) nameEl.textContent = u.displayName || 'Signed in';
+  const mailEl = document.getElementById('me-email');
+  if (mailEl) mailEl.textContent = u.email || '';
   // Their own public page. Asking for it also assigns a handle to an account
   // that has none, which is what makes a new collector reachable at a URL.
   u.getIdToken().then(t => fetch(API + '/api/profile', {
@@ -608,6 +648,43 @@ window.__vaultPaintUser = (u) => {
     }
   }).catch(() => {});
 };
+
+// The avatar opens the account menu.
+(function accountMenu() {
+  const btn = document.getElementById('me-btn');
+  const menu = document.getElementById('me-menu');
+  const scrim = document.getElementById('me-scrim');
+  if (!btn || !menu) return;
+
+  const close = () => {
+    menu.hidden = true;
+    if (scrim) scrim.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  };
+  const open = () => {
+    menu.hidden = false;
+    if (scrim) scrim.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  };
+
+  btn.addEventListener('click', (ev) => { ev.stopPropagation(); if (menu.hidden) open(); else close(); });
+  if (scrim) scrim.addEventListener('click', close);
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); });
+
+  const out = document.getElementById('me-out');
+  if (out) out.addEventListener('click', async () => {
+    close();
+    // Ending the shared session is what actually signs you out. Without it the
+    // other origin hands this browser straight back in on the next page load.
+    try { await fetch(API + '/api/session', { method: 'DELETE', credentials: 'include' }); } catch {}
+    try {
+      document.cookie = '__vault_in=; Path=/; Max-Age=0';
+      document.cookie = '__vault_in=; Path=/; Max-Age=0; Domain=.myvaults.io';
+    } catch {}
+    try { const a = await firebase(); if (a && fb) await fb.signOut(a); } catch {}
+    location.reload();
+  });
+})();
 
 // Somebody may land back here already signed in, e.g. after a redirect.
 if (CFG) {

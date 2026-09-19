@@ -1871,10 +1871,19 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     const url = new URL(window.location.href);
-    if (url.searchParams.get("notifications") !== "1") return;
-    setShowNotifications(true);
-    url.searchParams.delete("notifications");
-    window.history.replaceState({}, "", url);
+    const opens = [
+      ["notifications", setShowNotifications],
+      ["profile", setShowProfileSettings],
+      ["referral", setShowReferral],
+    ];
+    let hit = false;
+    for (const [param, open] of opens) {
+      if (url.searchParams.get(param) !== "1") continue;
+      open(true);
+      url.searchParams.delete(param);
+      hit = true;
+    }
+    if (hit) window.history.replaceState({}, "", url);
   }, [user]);
 
   const headerRef = useRef();
