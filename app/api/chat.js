@@ -10,7 +10,9 @@ export const config = {
   api: { bodyParser: { sizeLimit: "256kb" } },
 };
 
-const ALLOWED_MODELS = ["claude-sonnet-4-6", "claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"];
+// Retired models (claude-3-5-sonnet-20241022, claude-sonnet-4-20250514) are deliberately
+// not listed: any request for them falls back to ALLOWED_MODELS[0] instead of failing.
+const ALLOWED_MODELS = ["claude-sonnet-4-6"];
 const DEFAULT_MAX_TOKENS = 2000;
 const MAX_TOKENS_CEILING = 2500;
 
